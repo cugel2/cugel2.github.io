@@ -1,6 +1,5 @@
 /* style.css */
 
-/* Base font size adapts to screen width */
 html {
   font-size: 18px;
 }
@@ -16,9 +15,10 @@ body {
   color: #000;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
+  /* 1rem side margin so content always fits */
+  margin: 2rem 1rem;
+  /* cap width for readability on big screens */
   max-width: 650px;
-  margin: 2rem auto;
-  padding: 0 1rem;
 }
 
 a {
