@@ -15,17 +15,107 @@ body {
   color: #000;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
-  /* 1rem side margin so content always fits */
-  margin: 2rem 1rem;
-  /* cap width for readability on big screens */
+  margin: 0 auto;
+  padding: 2rem 1rem;
   max-width: 650px;
 }
 
-a {
-  color: #00f;
+/* Navigation */
+nav {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #a8c7e0;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+nav a {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav a:hover {
   text-decoration: underline;
 }
 
+/* Header */
+h1 {
+  color: #0066cc;
+  margin-top: 0;
+}
+
+h2 {
+  color: #0066cc;
+  margin-top: 2rem;
+}
+
+/* Links */
+a {
+  color: #0066cc;
+  text-decoration: underline;
+}
+
+a:hover {
+  color: #004499;
+}
+
+/* Content */
 p {
   margin-bottom: 1em;
+}
+
+/* Post list */
+.post-list {
+  list-style: none;
+  padding: 0;
+}
+
+.post-list li {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #a8c7e0;
+}
+
+.post-list li:last-child {
+  border-bottom: none;
+}
+
+.post-date {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Photo gallery */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.photo-grid img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 2px solid #a8c7e0;
+}
+
+.photo-grid img:hover {
+  border-color: #0066cc;
+}
+
+/* Back link */
+.back-link {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #a8c7e0;
 }
