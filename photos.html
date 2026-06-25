@@ -4,35 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Photos - John Braybrooke</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
+  <main class="site-shell">
+    <header class="site-header">
+      <a class="site-name" href="index.html">John Braybrooke</a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a class="active" href="photos.html" aria-current="page">Photos</a>
+        <a href="notes.html">Notes</a>
+        <a href="about.html">About</a>
+      </nav>
+    </header>
 
-  <nav>
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="thoughts.html">Thoughts</a></li>
-      <li><a href="photos.html">Photos</a></li>
-    </ul>
-    <div class="owl pixel-creature" title="Hoot!"></div>
-  </nav>
-
-  <h1>Photos</h1>
-  <p>Photography and visual moments.</p>
-
-  <div class="photo-grid">
-    <!-- Add your photos here like this: -->
-    <!-- <img src="images/photo1.jpg" alt="Description of photo"> -->
-    <!-- <img src="images/photo2.jpg" alt="Description of photo"> -->
-
-    <!-- Example placeholders - replace with your actual photos -->
-    <!-- Once you add photos to the /images folder, uncomment and update these -->
-  </div>
-
-  <p style="margin-top: 2rem; color: #666;">
-    To add photos: Place your image files in the <code>images</code> folder,
-    then add <code>&lt;img&gt;</code> tags above pointing to them.
-  </p>
-
+    <section class="photos-page" aria-labelledby="photos-title">
+      <h1 class="visually-hidden" id="photos-title">Photos</h1>
+      <div class="photo-grid" data-photo-grid hidden></div>
+      <div class="empty-state empty-photos" data-empty-state>
+        <h2>Photos</h2>
+        <p>No photos yet.</p>
+      </div>
+    </section>
+  </main>
+  <script src="photo-gallery.js?v=4" defer></script>
 </body>
 </html>

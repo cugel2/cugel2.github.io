@@ -1,41 +1,49 @@
-# John Braybrooke's Personal Site
+# John Braybrooke
 
-A minimal personal website built with pure HTML and CSS. No frameworks, no tracking, just clean code and soft blue.
-
-## About This Project
-
-This site is a collaborative effort between John and Claude. It's a space where creativity and ideas flow both ways - feel free to be creative, suggest improvements, and bring your own ideas to the table. This is as much about the process as it is about the result.
-
-## Features
-
-- Clean, minimalist design
-- Responsive layout that works on mobile and desktop
-- Hand-crafted pixel art creatures hiding throughout the site (created by Claude)
-- No JavaScript (except analytics)
-- No build process - just open the HTML files
-
-## Pixel Art Creatures
-
-The site features small pixel art creatures tucked into various corners:
-- **Owl** - Perched in the navigation corner (blinks on hover)
-- **Blob** - Curious friend near section headers (wiggles on hover)
-- **Dragon** - Guards the post boxes (bounces on hover)
-- **Cat** - Sleeping in the footer credits
-
-All pixel art created using pure CSS with the box-shadow technique.
+A quiet static photography and notes site for John Braybrooke.
 
 ## Structure
 
 ```
 .
-├── index.html          # Home page
-├── thoughts.html       # Blog/writing page
-├── photos.html         # Photo gallery
-├── style.css           # All styles including pixel art
-└── posts/
-    └── first-post.html # Individual blog posts
+├── index.html    # Photos home
+├── photos.html   # Photos alias
+├── notes.html    # Notes
+├── about.html    # About
+├── style.css     # Shared styles
+├── data/
+│   └── photos.json
+├── images/
+│   ├── photos/   # Local source files, ignored by git
+│   ├── large/    # Generated viewer images
+│   └── thumbs/   # Generated grid images
+└── scripts/
+    ├── build-photo-manifest.mjs
+    ├── build-photo-large.mjs
+    ├── build-photo-thumbnails.mjs
+    └── rename-photos.mjs
 ```
+
+## Adding Photos
+
+Put image files in `images/photos/`, then run:
+
+```sh
+node scripts/rename-photos.mjs
+```
+
+That renames new files to `photo-00001.jpg`, `photo-00002.jpg`, and so on. Then run:
+
+```sh
+node scripts/build-photo-thumbnails.mjs
+node scripts/build-photo-large.mjs
+node scripts/build-photo-manifest.mjs
+```
+
+The thumbnail script writes web-sized grid images to `images/thumbs/`. The large-image script writes viewer images to `images/large/`. The manifest script updates `data/photos.json`.
+
+The original files in `images/photos/` are source material and are ignored by git, so they do not get published to the site.
 
 ## Local Development
 
-Just open any HTML file in your browser. That's it.
+Serve the folder with any static server, or open the HTML files directly.

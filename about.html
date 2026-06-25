@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>John Braybrooke</title>
+  <title>About - John Braybrooke</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css?v=6">
 </head>
@@ -12,21 +12,15 @@
     <header class="site-header">
       <a class="site-name" href="index.html">John Braybrooke</a>
       <nav class="site-nav" aria-label="Primary navigation">
-        <a class="active" href="index.html" aria-current="page">Photos</a>
+        <a href="index.html">Photos</a>
         <a href="notes.html">Notes</a>
-        <a href="about.html">About</a>
+        <a class="active" href="about.html" aria-current="page">About</a>
       </nav>
     </header>
 
-    <section class="photos-page" aria-labelledby="photos-title">
-      <h1 class="visually-hidden" id="photos-title">Photos</h1>
-      <div class="photo-grid" data-photo-grid hidden></div>
-      <div class="empty-state empty-photos" data-empty-state>
-        <h2>Photos</h2>
-        <p>No photos yet.</p>
-      </div>
+    <section class="about-page" aria-labelledby="about-title">
+      <h1 id="about-title">John Braybrooke</h1>
     </section>
   </main>
-  <script src="photo-gallery.js?v=4" defer></script>
 </body>
 </html>
