@@ -6,13 +6,18 @@
   <title>John Braybrooke</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css?v=6">
+  <script>
+    if (window.location.pathname.endsWith("/index.html")) {
+      window.history.replaceState(null, "", `/${window.location.search}${window.location.hash}`);
+    }
+  </script>
 </head>
 <body>
   <main class="site-shell">
     <header class="site-header">
-      <a class="site-name" href="index.html">John Braybrooke</a>
+      <a class="site-name" href="/">John Braybrooke</a>
       <nav class="site-nav" aria-label="Primary navigation">
-        <a class="active" href="index.html" aria-current="page">Photos</a>
+        <a class="active" href="/" aria-current="page">Photos</a>
         <a href="notes.html">Notes</a>
         <a href="about.html">About</a>
       </nav>
