@@ -8,8 +8,10 @@ A quiet static photography and notes site for John Braybrooke.
 .
 ├── index.html    # Photos home
 ├── photos.html   # Photos alias
-├── notes.html    # Notes
-├── about.html    # About
+├── notes/        # Notes
+├── about/        # About
+├── notes.html    # Notes redirect
+├── about.html    # About redirect
 ├── style.css     # Shared styles
 ├── data/
 │   └── photos.json
