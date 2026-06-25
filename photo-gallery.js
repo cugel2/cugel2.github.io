@@ -5,6 +5,9 @@ function createViewer(photos) {
   const nextButton = document.createElement("button");
   const closeButton = document.createElement("button");
   let currentIndex = 0;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartedOnControl = false;
 
   viewer.className = "photo-viewer";
   viewer.hidden = true;
@@ -62,9 +65,53 @@ function createViewer(photos) {
     updateViewer();
   }
 
+  function isViewerControl(element) {
+    if (!(element instanceof Element)) {
+      return false;
+    }
+
+    return element.closest("button");
+  }
+
+  function handleTouchStart(event) {
+    if (photos.length < 2 || event.touches.length !== 1) {
+      return;
+    }
+
+    const touch = event.touches[0];
+
+    touchStartedOnControl = isViewerControl(event.target);
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+  }
+
+  function handleTouchEnd(event) {
+    if (photos.length < 2 || touchStartedOnControl || event.changedTouches.length !== 1) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+    const swipeDistance = 48;
+    const horizontalIntent = Math.abs(deltaX) > Math.abs(deltaY) * 1.2;
+
+    if (!horizontalIntent || Math.abs(deltaX) < swipeDistance) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      showNext();
+    } else {
+      showPrevious();
+    }
+  }
+
   previousButton.addEventListener("click", showPrevious);
   nextButton.addEventListener("click", showNext);
   closeButton.addEventListener("click", closeViewer);
+  viewer.addEventListener("touchstart", handleTouchStart, { passive: true });
+  viewer.addEventListener("touchend", handleTouchEnd, { passive: true });
   viewer.addEventListener("click", (event) => {
     if (event.target === viewer) {
       closeViewer();
