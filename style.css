@@ -199,7 +199,12 @@ a {
   position: absolute;
   top: 1.5rem;
   right: 2rem;
-  padding: 0.5rem;
+  z-index: 4;
+  padding: 0.55rem 0.72rem;
+  background: rgba(255, 254, 250, 0.9);
+  border: 1px solid rgba(222, 217, 207, 0.86);
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
 }
 
 .empty-state {

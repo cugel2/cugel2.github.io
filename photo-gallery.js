@@ -18,6 +18,7 @@ function createViewer(photos) {
   let panX = 0;
   let panY = 0;
   let isZoomed = false;
+  let isMousePanning = false;
   let lastTapTime = 0;
   let lastTapX = 0;
   let lastTapY = 0;
@@ -110,8 +111,11 @@ function createViewer(photos) {
 
   function resetZoom() {
     isZoomed = false;
+    isPanning = false;
+    isMousePanning = false;
     panX = 0;
     panY = 0;
+    viewer.classList.remove("photo-viewer-panning");
     applyZoom();
   }
 
@@ -326,6 +330,42 @@ function createViewer(photos) {
     toggleZoom(event.clientX, event.clientY);
   }
 
+  function beginMousePan(event) {
+    if (!isZoomed || event.button !== 0 || isViewerControl(event.target)) {
+      return;
+    }
+
+    event.preventDefault();
+    isPanning = true;
+    isMousePanning = true;
+    panStartX = event.clientX;
+    panStartY = event.clientY;
+    panOriginX = panX;
+    panOriginY = panY;
+    viewer.classList.add("photo-viewer-panning");
+  }
+
+  function moveMousePan(event) {
+    if (!isMousePanning) {
+      return;
+    }
+
+    event.preventDefault();
+    panX = panOriginX + event.clientX - panStartX;
+    panY = panOriginY + event.clientY - panStartY;
+    applyZoom();
+  }
+
+  function endMousePan() {
+    if (!isMousePanning) {
+      return;
+    }
+
+    isPanning = false;
+    isMousePanning = false;
+    viewer.classList.remove("photo-viewer-panning");
+  }
+
   previousButton.addEventListener("click", showPrevious);
   nextButton.addEventListener("click", showNext);
   closeButton.addEventListener("click", closeViewer);
@@ -334,6 +374,9 @@ function createViewer(photos) {
   viewer.addEventListener("touchend", handleTouchEnd, { passive: false });
   viewer.addEventListener("touchcancel", resetTouch, { passive: true });
   image.addEventListener("dblclick", handleDoubleClick);
+  image.addEventListener("mousedown", beginMousePan);
+  document.addEventListener("mousemove", moveMousePan);
+  document.addEventListener("mouseup", endMousePan);
   viewer.addEventListener("click", (event) => {
     if (event.target === viewer) {
       closeViewer();
