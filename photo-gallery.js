@@ -8,6 +8,7 @@ function createViewer(photos) {
   let touchStartX = 0;
   let touchStartY = 0;
   let touchStartedOnControl = false;
+  let touchWasMultiTouch = false;
   const preloadedPhotos = new Set();
 
   viewer.className = "photo-viewer";
@@ -109,18 +110,43 @@ function createViewer(photos) {
   }
 
   function handleTouchStart(event) {
-    if (photos.length < 2 || event.touches.length !== 1) {
+    if (photos.length < 2) {
+      return;
+    }
+
+    if (event.touches.length > 1) {
+      touchWasMultiTouch = true;
       return;
     }
 
     const touch = event.touches[0];
 
+    touchWasMultiTouch = false;
     touchStartedOnControl = isViewerControl(event.target);
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
   }
 
+  function handleTouchMove(event) {
+    if (event.touches.length > 1) {
+      touchWasMultiTouch = true;
+    }
+  }
+
+  function resetTouch() {
+    touchStartedOnControl = false;
+    touchWasMultiTouch = false;
+  }
+
   function handleTouchEnd(event) {
+    if (touchWasMultiTouch) {
+      if (event.touches.length === 0) {
+        resetTouch();
+      }
+
+      return;
+    }
+
     if (photos.length < 2 || touchStartedOnControl || event.changedTouches.length !== 1) {
       return;
     }
@@ -132,6 +158,10 @@ function createViewer(photos) {
     const horizontalIntent = Math.abs(deltaX) > Math.abs(deltaY) * 1.2;
 
     if (!horizontalIntent || Math.abs(deltaX) < swipeDistance) {
+      if (event.touches.length === 0) {
+        resetTouch();
+      }
+
       return;
     }
 
@@ -140,13 +170,17 @@ function createViewer(photos) {
     } else {
       showPrevious();
     }
+
+    resetTouch();
   }
 
   previousButton.addEventListener("click", showPrevious);
   nextButton.addEventListener("click", showNext);
   closeButton.addEventListener("click", closeViewer);
   viewer.addEventListener("touchstart", handleTouchStart, { passive: true });
+  viewer.addEventListener("touchmove", handleTouchMove, { passive: true });
   viewer.addEventListener("touchend", handleTouchEnd, { passive: true });
+  viewer.addEventListener("touchcancel", resetTouch, { passive: true });
   viewer.addEventListener("click", (event) => {
     if (event.target === viewer) {
       closeViewer();
