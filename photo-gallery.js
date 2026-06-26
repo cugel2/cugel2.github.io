@@ -8,6 +8,7 @@ function createViewer(photos) {
   let touchStartX = 0;
   let touchStartY = 0;
   let touchStartedOnControl = false;
+  const preloadedPhotos = new Set();
 
   viewer.className = "photo-viewer";
   viewer.hidden = true;
@@ -33,6 +34,39 @@ function createViewer(photos) {
   closeButton.textContent = "Close";
   closeButton.setAttribute("aria-label", "Close photo viewer");
 
+  function getWrappedIndex(index) {
+    return (index + photos.length) % photos.length;
+  }
+
+  function preloadPhoto(index) {
+    const photo = photos[getWrappedIndex(index)];
+
+    if (!photo || !photo.src || preloadedPhotos.has(photo.src)) {
+      return;
+    }
+
+    preloadedPhotos.add(photo.src);
+
+    const preloadImage = new Image();
+    preloadImage.decoding = "async";
+    preloadImage.src = photo.src;
+
+    if (preloadImage.decode) {
+      preloadImage.decode().catch(() => {});
+    }
+  }
+
+  function preloadNearbyPhotos() {
+    if (photos.length < 2) {
+      return;
+    }
+
+    preloadPhoto(currentIndex - 2);
+    preloadPhoto(currentIndex - 1);
+    preloadPhoto(currentIndex + 1);
+    preloadPhoto(currentIndex + 2);
+  }
+
   function updateViewer() {
     const photo = photos[currentIndex];
 
@@ -40,6 +74,7 @@ function createViewer(photos) {
     image.alt = photo.alt || "";
     previousButton.disabled = photos.length < 2;
     nextButton.disabled = photos.length < 2;
+    preloadNearbyPhotos();
   }
 
   function openViewer(index) {
@@ -56,12 +91,12 @@ function createViewer(photos) {
   }
 
   function showPrevious() {
-    currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+    currentIndex = getWrappedIndex(currentIndex - 1);
     updateViewer();
   }
 
   function showNext() {
-    currentIndex = (currentIndex + 1) % photos.length;
+    currentIndex = getWrappedIndex(currentIndex + 1);
     updateViewer();
   }
 
