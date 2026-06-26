@@ -1,5 +1,7 @@
 function createViewer(photos) {
   const viewer = document.createElement("div");
+  const picture = document.createElement("picture");
+  const webpSource = document.createElement("source");
   const image = document.createElement("img");
   const previousButton = document.createElement("button");
   const nextButton = document.createElement("button");
@@ -31,8 +33,12 @@ function createViewer(photos) {
   viewer.setAttribute("aria-modal", "true");
   viewer.setAttribute("aria-label", "Photo viewer");
 
+  picture.className = "photo-viewer-picture";
+  webpSource.type = "image/webp";
+
   image.className = "photo-viewer-image";
   image.alt = "";
+  image.sizes = "(max-width: 760px) calc(100vw - 2.4rem), 80vw";
 
   previousButton.className = "photo-viewer-control photo-viewer-previous";
   previousButton.type = "button";
@@ -53,40 +59,78 @@ function createViewer(photos) {
     return (index + photos.length) % photos.length;
   }
 
-  function preloadPhoto(index) {
-    const photo = photos[getWrappedIndex(index)];
+  function firstSrcsetCandidate(srcset) {
+    if (!srcset) {
+      return "";
+    }
 
-    if (!photo || !photo.src || preloadedPhotos.has(photo.src)) {
+    return srcset.split(",")[0].trim().split(/\s+/)[0] || "";
+  }
+
+  function preloadSource(src) {
+    if (!src || preloadedPhotos.has(src)) {
       return;
     }
 
-    preloadedPhotos.add(photo.src);
+    preloadedPhotos.add(src);
 
     const preloadImage = new Image();
     preloadImage.decoding = "async";
-    preloadImage.src = photo.src;
+    preloadImage.src = src;
 
     if (preloadImage.decode) {
       preloadImage.decode().catch(() => {});
     }
   }
 
+  function preloadPhoto(index) {
+    const photo = photos[getWrappedIndex(index)];
+    const preloadSrc = photo
+      ? firstSrcsetCandidate(photo.srcWebpSrcset) ||
+        firstSrcsetCandidate(photo.srcSrcset) ||
+        photo.srcWebp ||
+        photo.src
+      : "";
+
+    preloadSource(preloadSrc);
+  }
+
   function preloadZoomPhoto(index) {
     const photo = photos[getWrappedIndex(index)];
+    const preloadSrc = photo
+      ? firstSrcsetCandidate(photo.zoomWebpSrcset) ||
+        firstSrcsetCandidate(photo.zoomSrcset) ||
+        photo.zoomWebp ||
+        photo.zoom
+      : "";
 
-    if (!photo || !photo.zoom || preloadedPhotos.has(photo.zoom)) {
-      return;
+    preloadSource(preloadSrc);
+  }
+
+  function setViewerImage(photo, mode = "view") {
+    const isZoomMode = mode === "zoom";
+    const fallbackSrc = isZoomMode && photo.zoom ? photo.zoom : photo.src;
+    const fallbackSrcset = isZoomMode && photo.zoomSrcset ? photo.zoomSrcset : photo.srcSrcset;
+    const webpSrc = isZoomMode && photo.zoomWebp ? photo.zoomWebp : photo.srcWebp;
+    const webpSrcset = isZoomMode && photo.zoomWebpSrcset ? photo.zoomWebpSrcset : photo.srcWebpSrcset;
+
+    image.sizes = isZoomMode
+      ? "(max-width: 760px) 240vw, 192vw"
+      : "(max-width: 760px) calc(100vw - 2.4rem), 80vw";
+
+    if (webpSrcset || webpSrc) {
+      webpSource.srcset = webpSrcset || webpSrc;
+    } else {
+      webpSource.removeAttribute("srcset");
     }
 
-    preloadedPhotos.add(photo.zoom);
-
-    const preloadImage = new Image();
-    preloadImage.decoding = "async";
-    preloadImage.src = photo.zoom;
-
-    if (preloadImage.decode) {
-      preloadImage.decode().catch(() => {});
+    if (fallbackSrcset) {
+      image.srcset = fallbackSrcset;
+    } else {
+      image.removeAttribute("srcset");
     }
+
+    image.src = fallbackSrc;
   }
 
   function preloadNearbyPhotos() {
@@ -138,8 +182,8 @@ function createViewer(photos) {
     viewer.classList.remove("photo-viewer-panning");
     applyZoom();
 
-    if (photo && photo.src && image.getAttribute("src") !== photo.src) {
-      image.src = photo.src;
+    if (photo) {
+      setViewerImage(photo);
     }
   }
 
@@ -149,8 +193,8 @@ function createViewer(photos) {
     const offsetX = clientX - (imageRect.left + imageRect.width / 2);
     const offsetY = clientY - (imageRect.top + imageRect.height / 2);
 
-    if (photo && photo.zoom && image.getAttribute("src") !== photo.zoom) {
-      image.src = photo.zoom;
+    if (photo) {
+      setViewerImage(photo, "zoom");
     }
 
     isZoomed = true;
@@ -171,12 +215,11 @@ function createViewer(photos) {
   function updateViewer() {
     const photo = photos[currentIndex];
 
-    image.src = photo.src;
+    setViewerImage(photo);
     image.alt = photo.alt || "";
     previousButton.disabled = photos.length < 2;
     nextButton.disabled = photos.length < 2;
     preloadNearbyPhotos();
-    preloadZoomPhoto(currentIndex);
   }
 
   function openViewer(index) {
@@ -216,6 +259,7 @@ function createViewer(photos) {
 
   function handleTouchStart(event) {
     if (event.touches.length > 1) {
+      event.preventDefault();
       touchWasMultiTouch = true;
       isPanning = false;
       return;
@@ -241,6 +285,7 @@ function createViewer(photos) {
 
   function handleTouchMove(event) {
     if (event.touches.length > 1) {
+      event.preventDefault();
       touchWasMultiTouch = true;
       isPanning = false;
       viewer.classList.remove("photo-viewer-panning");
@@ -318,6 +363,10 @@ function createViewer(photos) {
       toggleZoom(touch.clientX, touch.clientY);
       resetTouch();
       return;
+    }
+
+    if (tapGesture) {
+      preloadZoomPhoto(currentIndex);
     }
 
     if (isPanning && touchMoved) {
@@ -399,7 +448,7 @@ function createViewer(photos) {
   previousButton.addEventListener("click", showPrevious);
   nextButton.addEventListener("click", showNext);
   closeButton.addEventListener("click", closeViewer);
-  viewer.addEventListener("touchstart", handleTouchStart, { passive: true });
+  viewer.addEventListener("touchstart", handleTouchStart, { passive: false });
   viewer.addEventListener("touchmove", handleTouchMove, { passive: false });
   viewer.addEventListener("touchend", handleTouchEnd, { passive: false });
   viewer.addEventListener("touchcancel", resetTouch, { passive: true });
@@ -431,7 +480,8 @@ function createViewer(photos) {
     }
   });
 
-  viewer.append(closeButton, previousButton, image, nextButton);
+  picture.append(webpSource, image);
+  viewer.append(closeButton, previousButton, picture, nextButton);
   document.body.append(viewer);
 
   return openViewer;
@@ -468,19 +518,35 @@ async function loadPhotos() {
 
       const figure = document.createElement("figure");
       const button = document.createElement("button");
+      const picture = document.createElement("picture");
+      const webpSource = document.createElement("source");
       const image = document.createElement("img");
 
       figure.className = "photo-item";
       button.className = "photo-button";
       button.type = "button";
       button.setAttribute("aria-label", `Open photo ${index + 1}`);
+      webpSource.type = "image/webp";
+
+      if (photo.thumbWebpSrcset || photo.thumbWebp) {
+        webpSource.srcset = photo.thumbWebpSrcset || photo.thumbWebp;
+      }
+
       image.src = photo.thumb || photo.src;
+
+      if (photo.thumbSrcset) {
+        image.srcset = photo.thumbSrcset;
+      }
+
+      image.sizes = "(max-width: 760px) calc(100vw - 2.8rem), 180px";
       image.alt = photo.alt || "";
-      image.loading = index < 15 ? "eager" : "lazy";
+      image.loading = index < 4 ? "eager" : "lazy";
+      image.fetchPriority = index < 2 ? "high" : "auto";
       image.decoding = "async";
 
       button.addEventListener("click", () => openViewer(index));
-      button.append(image);
+      picture.append(webpSource, image);
+      button.append(picture);
       figure.append(button);
       fragment.append(figure);
     });

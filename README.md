@@ -44,7 +44,7 @@ node scripts/build-photo-zoom.mjs
 node scripts/build-photo-manifest.mjs
 ```
 
-The thumbnail script writes web-sized grid images to `images/thumbs/`. The large-image script writes viewer images to `images/large/`. The zoom-image script writes higher-resolution inspection images to `images/zoom/`. The manifest script updates `data/photos.json`.
+The thumbnail script writes responsive grid images to `images/thumbs/`. The large-image script writes responsive viewer images to `images/large/`. The zoom-image script writes higher-resolution inspection images to `images/zoom/`. If `cwebp` is installed, these scripts also write WebP copies beside the JPEG fallbacks. The manifest script updates `data/photos.json` with the available `srcset` data.
 
 The original files in `images/photos/` are source material and are ignored by git, so they do not get published to the site.
 

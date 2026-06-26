@@ -4,8 +4,10 @@ import path from "node:path";
 
 const sourceDirectory = path.join(process.cwd(), "images", "photos");
 const outputDirectory = path.join(process.cwd(), "images", "zoom");
+const smallOutputDirectory = path.join(outputDirectory, "small");
 const imageExtensions = new Set([".jpeg", ".jpg", ".png", ".webp"]);
 const maxDimension = 5000;
+const smallMaxDimension = 3000;
 
 function run(command, args) {
   return new Promise((resolve, reject) => {
@@ -28,7 +30,45 @@ function run(command, args) {
   });
 }
 
+async function canRun(command) {
+  try {
+    await run(command, ["-version"]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function writeJpeg(sourcePath, outputPath, maxSize, quality) {
+  await run("sips", [
+    "--resampleHeightWidthMax",
+    String(maxSize),
+    "--setProperty",
+    "format",
+    "jpeg",
+    "--setProperty",
+    "formatOptions",
+    String(quality),
+    sourcePath,
+    "--out",
+    outputPath
+  ]);
+}
+
+async function writeWebp(sourcePath, outputPath, quality) {
+  await run("cwebp", [
+    "-quiet",
+    "-q",
+    String(quality),
+    sourcePath,
+    "-o",
+    outputPath
+  ]);
+}
+
 await mkdir(outputDirectory, { recursive: true });
+await mkdir(smallOutputDirectory, { recursive: true });
+const shouldWriteWebp = await canRun("cwebp");
 
 const entries = await readdir(sourceDirectory, { withFileTypes: true });
 const sourceFiles = entries
@@ -39,22 +79,19 @@ const sourceFiles = entries
 
 for (const filename of sourceFiles) {
   const sourcePath = path.join(sourceDirectory, filename);
-  const outputName = `${path.basename(filename, path.extname(filename))}.jpg`;
+  const basename = path.basename(filename, path.extname(filename));
+  const outputName = `${basename}.jpg`;
+  const webpName = `${basename}.webp`;
   const outputPath = path.join(outputDirectory, outputName);
+  const smallOutputPath = path.join(smallOutputDirectory, outputName);
 
-  await run("sips", [
-    "--resampleHeightWidthMax",
-    String(maxDimension),
-    "--setProperty",
-    "format",
-    "jpeg",
-    "--setProperty",
-    "formatOptions",
-    "88",
-    sourcePath,
-    "--out",
-    outputPath
-  ]);
+  await writeJpeg(sourcePath, outputPath, maxDimension, 88);
+  await writeJpeg(sourcePath, smallOutputPath, smallMaxDimension, 86);
+
+  if (shouldWriteWebp) {
+    await writeWebp(outputPath, path.join(outputDirectory, webpName), 86);
+    await writeWebp(smallOutputPath, path.join(smallOutputDirectory, webpName), 84);
+  }
 
   console.log(`${filename} -> images/zoom/${outputName}`);
 }

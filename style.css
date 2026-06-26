@@ -116,9 +116,13 @@ a {
   outline-offset: 3px;
 }
 
+.photo-button picture,
 .photo-button img {
   display: block;
   width: 100%;
+}
+
+.photo-button img {
   aspect-ratio: 3 / 2;
   object-fit: cover;
 }
@@ -134,12 +138,16 @@ a {
   overflow: hidden;
   padding: 4rem 2rem;
   background: var(--panel);
-  touch-action: pan-y pinch-zoom;
+  touch-action: pan-y;
 }
 
+.photo-viewer-picture,
 .photo-viewer-image {
   display: block;
   width: 100%;
+}
+
+.photo-viewer-image {
   max-height: calc(100vh - 8rem);
   object-fit: contain;
   cursor: zoom-in;
@@ -281,8 +289,12 @@ a {
     padding: 4.5rem 1.2rem calc(2rem + env(safe-area-inset-bottom));
   }
 
+  .photo-viewer-picture,
   .photo-viewer-image {
     grid-column: 1 / -1;
+  }
+
+  .photo-viewer-image {
     max-height: calc(100vh - 10rem);
   }
 
