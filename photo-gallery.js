@@ -102,23 +102,8 @@ function createViewer(photos) {
     preloadSource(preloadSrc);
   }
 
-  function setViewerImage(photo, mode = "view") {
+  function setViewerImage(photo) {
     image.sizes = "(max-width: 760px) calc(100vw - 2.4rem), 80vw";
-
-    if (mode === "zoom") {
-      // Zoom reuses the viewer's own image at full resolution. Dropping the
-      // srcset forces the browser to load the largest available file so the
-      // close-up stays sharp, with no separate high-res tier to maintain.
-      if (photo.srcWebp) {
-        webpSource.srcset = photo.srcWebp;
-      } else {
-        webpSource.removeAttribute("srcset");
-      }
-
-      image.removeAttribute("srcset");
-      image.src = photo.src;
-      return;
-    }
 
     if (photo.srcWebpSrcset || photo.srcWebp) {
       webpSource.srcset = photo.srcWebpSrcset || photo.srcWebp;
@@ -133,6 +118,47 @@ function createViewer(photos) {
     }
 
     image.src = photo.src;
+  }
+
+  function upgradeToFullRes(photo) {
+    // The viewer's srcset usually loads a smaller candidate; zoom wants the
+    // full-resolution file so the close-up stays sharp. Decode it off-screen
+    // first, then swap it in. Because the current image keeps showing until the
+    // larger one is fully decoded, the upgrade is seamless with no blank flash.
+    const fullWebp = photo.srcWebp || "";
+    const fullJpeg = photo.src || "";
+    const primary = fullWebp || fullJpeg;
+
+    if (!primary) {
+      return;
+    }
+
+    const loader = new Image();
+    loader.decoding = "async";
+
+    const swap = () => {
+      // Bail if the user exited zoom or moved to another photo while decoding.
+      if (!isZoomed || photos[currentIndex] !== photo) {
+        return;
+      }
+
+      if (fullWebp) {
+        webpSource.srcset = fullWebp;
+      } else {
+        webpSource.removeAttribute("srcset");
+      }
+
+      image.removeAttribute("srcset");
+      image.src = fullJpeg;
+    };
+
+    loader.src = primary;
+
+    if (loader.decode) {
+      loader.decode().then(swap).catch(swap);
+    } else {
+      loader.onload = swap;
+    }
   }
 
   function preloadNearbyPhotos() {
@@ -174,8 +200,6 @@ function createViewer(photos) {
   }
 
   function resetZoom() {
-    const photo = photos[currentIndex];
-
     isZoomed = false;
     isPanning = false;
     isMousePanning = false;
@@ -183,10 +207,6 @@ function createViewer(photos) {
     panY = 0;
     viewer.classList.remove("photo-viewer-panning");
     applyZoom();
-
-    if (photo) {
-      setViewerImage(photo);
-    }
   }
 
   function zoomInAt(clientX, clientY) {
@@ -195,14 +215,14 @@ function createViewer(photos) {
     const offsetX = clientX - (imageRect.left + imageRect.width / 2);
     const offsetY = clientY - (imageRect.top + imageRect.height / 2);
 
-    if (photo) {
-      setViewerImage(photo, "zoom");
-    }
-
     isZoomed = true;
     panX = -offsetX * (zoomScale - 1);
     panY = -offsetY * (zoomScale - 1);
     applyZoom();
+
+    if (photo) {
+      upgradeToFullRes(photo);
+    }
   }
 
   function toggleZoom(clientX, clientY) {
