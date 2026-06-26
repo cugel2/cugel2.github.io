@@ -95,42 +95,44 @@ function createViewer(photos) {
     preloadSource(preloadSrc);
   }
 
-  function preloadZoomPhoto(index) {
+  function preloadFullPhoto(index) {
     const photo = photos[getWrappedIndex(index)];
-    const preloadSrc = photo
-      ? firstSrcsetCandidate(photo.zoomWebpSrcset) ||
-        firstSrcsetCandidate(photo.zoomSrcset) ||
-        photo.zoomWebp ||
-        photo.zoom
-      : "";
+    const preloadSrc = photo ? photo.srcWebp || photo.src : "";
 
     preloadSource(preloadSrc);
   }
 
   function setViewerImage(photo, mode = "view") {
-    const isZoomMode = mode === "zoom";
-    const fallbackSrc = isZoomMode && photo.zoom ? photo.zoom : photo.src;
-    const fallbackSrcset = isZoomMode && photo.zoomSrcset ? photo.zoomSrcset : photo.srcSrcset;
-    const webpSrc = isZoomMode && photo.zoomWebp ? photo.zoomWebp : photo.srcWebp;
-    const webpSrcset = isZoomMode && photo.zoomWebpSrcset ? photo.zoomWebpSrcset : photo.srcWebpSrcset;
+    image.sizes = "(max-width: 760px) calc(100vw - 2.4rem), 80vw";
 
-    image.sizes = isZoomMode
-      ? "(max-width: 760px) 240vw, 192vw"
-      : "(max-width: 760px) calc(100vw - 2.4rem), 80vw";
+    if (mode === "zoom") {
+      // Zoom reuses the viewer's own image at full resolution. Dropping the
+      // srcset forces the browser to load the largest available file so the
+      // close-up stays sharp, with no separate high-res tier to maintain.
+      if (photo.srcWebp) {
+        webpSource.srcset = photo.srcWebp;
+      } else {
+        webpSource.removeAttribute("srcset");
+      }
 
-    if (webpSrcset || webpSrc) {
-      webpSource.srcset = webpSrcset || webpSrc;
+      image.removeAttribute("srcset");
+      image.src = photo.src;
+      return;
+    }
+
+    if (photo.srcWebpSrcset || photo.srcWebp) {
+      webpSource.srcset = photo.srcWebpSrcset || photo.srcWebp;
     } else {
       webpSource.removeAttribute("srcset");
     }
 
-    if (fallbackSrcset) {
-      image.srcset = fallbackSrcset;
+    if (photo.srcSrcset) {
+      image.srcset = photo.srcSrcset;
     } else {
       image.removeAttribute("srcset");
     }
 
-    image.src = fallbackSrc;
+    image.src = photo.src;
   }
 
   function preloadNearbyPhotos() {
@@ -366,7 +368,7 @@ function createViewer(photos) {
     }
 
     if (tapGesture) {
-      preloadZoomPhoto(currentIndex);
+      preloadFullPhoto(currentIndex);
     }
 
     if (isPanning && touchMoved) {

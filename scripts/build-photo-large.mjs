@@ -6,8 +6,8 @@ const sourceDirectory = path.join(process.cwd(), "images", "photos");
 const outputDirectory = path.join(process.cwd(), "images", "large");
 const smallOutputDirectory = path.join(outputDirectory, "small");
 const imageExtensions = new Set([".jpeg", ".jpg", ".png", ".webp"]);
-const maxDimension = 2400;
-const smallMaxDimension = 1400;
+const maxDimension = 3000;
+const smallMaxDimension = 1600;
 
 function run(command, args) {
   return new Promise((resolve, reject) => {

@@ -6,8 +6,6 @@ const largeDirectory = path.join(process.cwd(), "images", "large");
 const largeSmallDirectory = path.join(largeDirectory, "small");
 const thumbDirectory = path.join(process.cwd(), "images", "thumbs");
 const thumbSmallDirectory = path.join(thumbDirectory, "small");
-const zoomDirectory = path.join(process.cwd(), "images", "zoom");
-const zoomSmallDirectory = path.join(zoomDirectory, "small");
 const manifestPath = path.join(process.cwd(), "data", "photos.json");
 const imageExtensions = new Set([".avif", ".gif", ".jpeg", ".jpg", ".png", ".webp"]);
 const numberedPhoto = /^photo-\d{5}$/i;
@@ -86,8 +84,6 @@ const largeImages = await imageSet(largeDirectory);
 const largeSmallImages = await imageSet(largeSmallDirectory);
 const thumbs = await imageSet(thumbDirectory);
 const thumbSmallImages = await imageSet(thumbSmallDirectory);
-const zoomImages = await imageSet(zoomDirectory);
-const zoomSmallImages = await imageSet(zoomSmallDirectory);
 
 const photos = entries
   .filter((entry) => entry.isFile())
@@ -98,16 +94,12 @@ const photos = entries
     const webName = `${path.basename(filename, path.extname(filename))}.jpg`;
     const webpName = webpNameFor(webName);
     const largeVariants = variantsFor([
-      variant("images/large/small", largeSmallImages, webName, 1400),
-      variant("images/large", largeImages, webName, 2400)
+      variant("images/large/small", largeSmallImages, webName, 1600),
+      variant("images/large", largeImages, webName, 3000)
     ]);
     const thumbVariants = variantsFor([
       variant("images/thumbs/small", thumbSmallImages, webName, 600),
       variant("images/thumbs", thumbs, webName, 900)
-    ]);
-    const zoomVariants = variantsFor([
-      variant("images/zoom/small", zoomSmallImages, webName, 3000),
-      variant("images/zoom", zoomImages, webName, 5000)
     ]);
     const photo = {
       src: largeImages.has(webName) ? `images/large/${webName}` : `images/photos/${filename}`,
@@ -128,16 +120,6 @@ const photos = entries
 
     if (hasWebp(thumbs, webName)) {
       photo.thumbWebp = `images/thumbs/${webpName}`;
-    }
-
-    if (zoomImages.has(webName)) {
-      photo.zoom = `images/zoom/${webName}`;
-    }
-
-    addResponsiveFields(photo, "zoom", zoomVariants);
-
-    if (hasWebp(zoomImages, webName)) {
-      photo.zoomWebp = `images/zoom/${webpName}`;
     }
 
     return photo;

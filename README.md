@@ -17,36 +17,36 @@ A quiet static photography and notes site for John Braybrooke.
 │   └── photos.json
 ├── images/
 │   ├── photos/   # Local source files, ignored by git
-│   ├── large/    # Generated viewer images
-│   ├── zoom/     # Generated zoom images
+│   ├── large/    # Generated viewer + zoom images
 │   └── thumbs/   # Generated grid images
 └── scripts/
-    ├── build-photo-manifest.mjs
-    ├── build-photo-large.mjs
+    ├── build.mjs               # One command: runs everything below
+    ├── rename-photos.mjs
     ├── build-photo-thumbnails.mjs
-    └── rename-photos.mjs
+    ├── build-photo-large.mjs
+    └── build-photo-manifest.mjs
 ```
 
-## Adding Photos
+## Adding and Removing Photos
 
-Put image files in `images/photos/`, then run:
+`images/photos/` is the source of truth. To add photos, drop the files in there. To remove photos, delete the files from there. Either way, then run one command:
 
 ```sh
-node scripts/rename-photos.mjs
+node scripts/build.mjs
 ```
 
-That renames new files to `photo-00001.jpg`, `photo-00002.jpg`, and so on. Then run:
+That does the whole pipeline:
 
-```sh
-node scripts/build-photo-thumbnails.mjs
-node scripts/build-photo-large.mjs
-node scripts/build-photo-zoom.mjs
-node scripts/build-photo-manifest.mjs
-```
+1. Renames any new files to `photo-00001.jpg`, `photo-00002.jpg`, and so on.
+2. Regenerates the grid thumbnails (`images/thumbs/`) and the large viewer images (`images/large/`). The large images double as the zoom source, so there is no separate zoom tier.
+3. Deletes generated images left behind by photos you removed.
+4. Rebuilds `data/photos.json` to match what is on disk.
 
-The thumbnail script writes responsive grid images to `images/thumbs/`. The large-image script writes responsive viewer images to `images/large/`. The zoom-image script writes higher-resolution inspection images to `images/zoom/`. If `cwebp` is installed, these scripts also write WebP copies beside the JPEG fallbacks. The manifest script updates `data/photos.json` with the available `srcset` data.
+If `cwebp` is installed, the build also writes WebP copies beside the JPEG fallbacks. The original files in `images/photos/` are ignored by git, so they are never published — only the generated images and the manifest are.
 
-The original files in `images/photos/` are source material and are ignored by git, so they do not get published to the site.
+Deleting a photo leaves a gap in the numbering (e.g. `photo-00003` missing). That is harmless: photos are ordered by filename and new photos always take the next unused number, so nothing is ever renumbered or reused.
+
+You can still run the individual `build-photo-*.mjs` and `rename-photos.mjs` scripts on their own, but `build.mjs` is the normal path.
 
 ## Local Development
 
