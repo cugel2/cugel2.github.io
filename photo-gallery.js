@@ -71,6 +71,24 @@ function createViewer(photos) {
     }
   }
 
+  function preloadZoomPhoto(index) {
+    const photo = photos[getWrappedIndex(index)];
+
+    if (!photo || !photo.zoom || preloadedPhotos.has(photo.zoom)) {
+      return;
+    }
+
+    preloadedPhotos.add(photo.zoom);
+
+    const preloadImage = new Image();
+    preloadImage.decoding = "async";
+    preloadImage.src = photo.zoom;
+
+    if (preloadImage.decode) {
+      preloadImage.decode().catch(() => {});
+    }
+  }
+
   function preloadNearbyPhotos() {
     if (photos.length < 2) {
       return;
@@ -110,6 +128,8 @@ function createViewer(photos) {
   }
 
   function resetZoom() {
+    const photo = photos[currentIndex];
+
     isZoomed = false;
     isPanning = false;
     isMousePanning = false;
@@ -117,12 +137,21 @@ function createViewer(photos) {
     panY = 0;
     viewer.classList.remove("photo-viewer-panning");
     applyZoom();
+
+    if (photo && photo.src && image.getAttribute("src") !== photo.src) {
+      image.src = photo.src;
+    }
   }
 
   function zoomInAt(clientX, clientY) {
+    const photo = photos[currentIndex];
     const imageRect = image.getBoundingClientRect();
     const offsetX = clientX - (imageRect.left + imageRect.width / 2);
     const offsetY = clientY - (imageRect.top + imageRect.height / 2);
+
+    if (photo && photo.zoom && image.getAttribute("src") !== photo.zoom) {
+      image.src = photo.zoom;
+    }
 
     isZoomed = true;
     panX = -offsetX * (zoomScale - 1);
@@ -147,6 +176,7 @@ function createViewer(photos) {
     previousButton.disabled = photos.length < 2;
     nextButton.disabled = photos.length < 2;
     preloadNearbyPhotos();
+    preloadZoomPhoto(currentIndex);
   }
 
   function openViewer(index) {

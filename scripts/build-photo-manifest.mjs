@@ -4,6 +4,7 @@ import path from "node:path";
 const photoDirectory = path.join(process.cwd(), "images", "photos");
 const largeDirectory = path.join(process.cwd(), "images", "large");
 const thumbDirectory = path.join(process.cwd(), "images", "thumbs");
+const zoomDirectory = path.join(process.cwd(), "images", "zoom");
 const manifestPath = path.join(process.cwd(), "data", "photos.json");
 const imageExtensions = new Set([".avif", ".gif", ".jpeg", ".jpg", ".png", ".webp"]);
 const numberedPhoto = /^photo-\d{5}$/i;
@@ -36,6 +37,13 @@ const thumbs = new Set(
     .map((entry) => entry.name)
 );
 
+const zoomEntries = await readdir(zoomDirectory, { withFileTypes: true }).catch(() => []);
+const zoomImages = new Set(
+  zoomEntries
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+);
+
 const photos = entries
   .filter((entry) => entry.isFile())
   .map((entry) => entry.name)
@@ -50,6 +58,10 @@ const photos = entries
 
     if (thumbs.has(webName)) {
       photo.thumb = `images/thumbs/${webName}`;
+    }
+
+    if (zoomImages.has(webName)) {
+      photo.zoom = `images/zoom/${webName}`;
     }
 
     return photo;

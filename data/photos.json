@@ -2,36 +2,43 @@
   {
     "src": "images/large/photo-00001.jpg",
     "alt": "",
-    "thumb": "images/thumbs/photo-00001.jpg"
+    "thumb": "images/thumbs/photo-00001.jpg",
+    "zoom": "images/zoom/photo-00001.jpg"
   },
   {
     "src": "images/large/photo-00002.jpg",
     "alt": "",
-    "thumb": "images/thumbs/photo-00002.jpg"
+    "thumb": "images/thumbs/photo-00002.jpg",
+    "zoom": "images/zoom/photo-00002.jpg"
   },
   {
     "src": "images/large/photo-00003.jpg",
     "alt": "",
-    "thumb": "images/thumbs/photo-00003.jpg"
+    "thumb": "images/thumbs/photo-00003.jpg",
+    "zoom": "images/zoom/photo-00003.jpg"
   },
   {
     "src": "images/large/photo-00004.jpg",
     "alt": "",
-    "thumb": "images/thumbs/photo-00004.jpg"
+    "thumb": "images/thumbs/photo-00004.jpg",
+    "zoom": "images/zoom/photo-00004.jpg"
   },
   {
     "src": "images/large/photo-00005.jpg",
     "alt": "",
-    "thumb": "images/thumbs/photo-00005.jpg"
+    "thumb": "images/thumbs/photo-00005.jpg",
+    "zoom": "images/zoom/photo-00005.jpg"
   },
   {
     "src": "images/large/photo-00006.jpg",
     "alt": "",
-    "thumb": "images/thumbs/photo-00006.jpg"
+    "thumb": "images/thumbs/photo-00006.jpg",
+    "zoom": "images/zoom/photo-00006.jpg"
   },
   {
     "src": "images/large/photo-00007.jpg",
     "alt": "",
-    "thumb": "images/thumbs/photo-00007.jpg"
+    "thumb": "images/thumbs/photo-00007.jpg",
+    "zoom": "images/zoom/photo-00007.jpg"
   }
 ]

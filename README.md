@@ -18,6 +18,7 @@ A quiet static photography and notes site for John Braybrooke.
 ├── images/
 │   ├── photos/   # Local source files, ignored by git
 │   ├── large/    # Generated viewer images
+│   ├── zoom/     # Generated zoom images
 │   └── thumbs/   # Generated grid images
 └── scripts/
     ├── build-photo-manifest.mjs
@@ -39,10 +40,11 @@ That renames new files to `photo-00001.jpg`, `photo-00002.jpg`, and so on. Then 
 ```sh
 node scripts/build-photo-thumbnails.mjs
 node scripts/build-photo-large.mjs
+node scripts/build-photo-zoom.mjs
 node scripts/build-photo-manifest.mjs
 ```
 
-The thumbnail script writes web-sized grid images to `images/thumbs/`. The large-image script writes viewer images to `images/large/`. The manifest script updates `data/photos.json`.
+The thumbnail script writes web-sized grid images to `images/thumbs/`. The large-image script writes viewer images to `images/large/`. The zoom-image script writes higher-resolution inspection images to `images/zoom/`. The manifest script updates `data/photos.json`.
 
 The original files in `images/photos/` are source material and are ignored by git, so they do not get published to the site.
 
