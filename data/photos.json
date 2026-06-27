@@ -75,5 +75,16 @@
     "thumbSrcset": "images/thumbs/small/photo-00007.jpg 600w, images/thumbs/photo-00007.jpg 900w",
     "thumbWebpSrcset": "images/thumbs/small/photo-00007.webp 600w, images/thumbs/photo-00007.webp 900w",
     "thumbWebp": "images/thumbs/photo-00007.webp"
+  },
+  {
+    "src": "images/large/photo-00008.jpg",
+    "alt": "",
+    "srcSrcset": "images/large/small/photo-00008.jpg 1600w, images/large/photo-00008.jpg 3000w",
+    "srcWebpSrcset": "images/large/small/photo-00008.webp 1600w, images/large/photo-00008.webp 3000w",
+    "srcWebp": "images/large/photo-00008.webp",
+    "thumb": "images/thumbs/photo-00008.jpg",
+    "thumbSrcset": "images/thumbs/small/photo-00008.jpg 600w, images/thumbs/photo-00008.jpg 900w",
+    "thumbWebpSrcset": "images/thumbs/small/photo-00008.webp 600w, images/thumbs/photo-00008.webp 900w",
+    "thumbWebp": "images/thumbs/photo-00008.webp"
   }
 ]
