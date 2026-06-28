@@ -123,6 +123,7 @@ a {
 }
 
 .photo-link img {
+  height: auto;
   aspect-ratio: 3 / 2;
   object-fit: cover;
 }
@@ -325,6 +326,7 @@ a {
 .photo-page-image {
   display: block;
   width: 100%;
+  height: auto;
   max-height: calc(100vh - 12rem);
   object-fit: contain;
   background: #f1eee7;

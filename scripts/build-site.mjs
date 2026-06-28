@@ -9,8 +9,8 @@ import { loadPhotos, displayTitle, SITE_URL } from "./lib/photos.mjs";
 // The JS overlay viewer is layered on top of this and is never required.
 
 const cwd = process.cwd();
-const STYLE_VERSION = 15;
-const GALLERY_VERSION = 15;
+const STYLE_VERSION = 16;
+const GALLERY_VERSION = 16;
 
 const escapeHtml = (value) =>
   String(value ?? "")
