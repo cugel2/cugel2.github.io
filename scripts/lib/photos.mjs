@@ -82,9 +82,12 @@ function variant(directory, images, filename, width) {
 
   const webpName = webpNameFor(filename);
 
+  // Root-relative ("/images/…") so the paths resolve correctly no matter what
+  // the current URL is — the overlay viewer changes the address to /photos/<id>/
+  // via pushState, and relative paths would otherwise resolve against that.
   return {
-    jpeg: `${directory}/${filename}`,
-    webp: images.has(webpName) ? `${directory}/${webpName}` : "",
+    jpeg: `/${directory}/${filename}`,
+    webp: images.has(webpName) ? `/${directory}/${webpName}` : "",
     width
   };
 }
@@ -170,7 +173,7 @@ export async function loadPhotos() {
       variant("images/thumbs", thumbs, webName, 900)
     ];
 
-    const src = largeImages.has(webName) ? `images/large/${webName}` : `images/photos/${id}.jpg`;
+    const src = largeImages.has(webName) ? `/images/large/${webName}` : `/images/photos/${id}.jpg`;
     const dimensions = largeImages.has(webName)
       ? imageDimensions(path.join(largeDirectory, webName))
       : { width: null, height: null };
@@ -189,21 +192,21 @@ export async function loadPhotos() {
       width: dimensions.width,
       height: dimensions.height,
       src,
-      imageUrl: `${SITE_URL}/${src}`,
+      imageUrl: `${SITE_URL}${src}`,
       srcSrcset: srcset(largeVariants, "jpeg"),
       srcWebpSrcset: srcset(largeVariants, "webp"),
-      srcWebp: largeImages.has(webpName) ? `images/large/${webpName}` : ""
+      srcWebp: largeImages.has(webpName) ? `/images/large/${webpName}` : ""
     };
 
     if (thumbs.has(webName)) {
-      photo.thumb = `images/thumbs/${webName}`;
+      photo.thumb = `/images/thumbs/${webName}`;
     }
 
     photo.thumbSrcset = srcset(thumbVariants, "jpeg");
     photo.thumbWebpSrcset = srcset(thumbVariants, "webp");
 
     if (thumbs.has(webpName)) {
-      photo.thumbWebp = `images/thumbs/${webpName}`;
+      photo.thumbWebp = `/images/thumbs/${webpName}`;
     }
 
     photos.push(photo);

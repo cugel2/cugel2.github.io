@@ -678,7 +678,7 @@ async function loadPhotos() {
   let photos = [];
 
   try {
-    const response = await fetch("data/photos.json", { cache: "no-store" });
+    const response = await fetch("/data/photos.json", { cache: "no-store" });
 
     if (response.ok) {
       photos = await response.json();

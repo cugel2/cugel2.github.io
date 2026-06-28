@@ -9,8 +9,8 @@ import { loadPhotos, displayTitle, SITE_URL } from "./lib/photos.mjs";
 // The JS overlay viewer is layered on top of this and is never required.
 
 const cwd = process.cwd();
-const STYLE_VERSION = 14;
-const GALLERY_VERSION = 14;
+const STYLE_VERSION = 15;
+const GALLERY_VERSION = 15;
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -20,8 +20,9 @@ const escapeHtml = (value) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 
-// Make a relative "images/..." path (or full srcset) absolute from the site root.
-const rootRel = (value) => String(value || "").replaceAll("images/", "/images/");
+// Image paths from the catalogue are already root-relative ("/images/…"); this
+// is just a string coercion so the template helpers stay tidy.
+const rootRel = (value) => String(value ?? "");
 
 const prettyDate = (iso) => {
   const date = new Date(`${iso}T12:00:00`);
