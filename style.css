@@ -308,10 +308,22 @@ a {
 }
 
 .about-page {
-  display: grid;
-  min-height: 46vh;
-  place-content: center;
-  text-align: center;
+  max-width: 60ch;
+}
+
+.about-prose {
+  margin-top: 1.4rem;
+}
+
+.about-prose p {
+  margin: 0 0 1.05rem;
+  color: var(--ink);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.about-prose p:last-child {
+  margin-bottom: 0;
 }
 
 .photo-page {
