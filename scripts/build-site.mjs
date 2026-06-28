@@ -115,7 +115,9 @@ function photoPage(photo, previous, next) {
   <meta name="twitter:title" content="${escapeHtml(label)}">
   <meta name="twitter:description" content="${escapeHtml(photo.description)}">
   <meta name="twitter:image" content="${escapeHtml(photo.imageUrl)}">
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/style.css?v=${STYLE_VERSION}">
   ${photoJsonLd(photo)}
 </head>
