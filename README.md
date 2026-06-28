@@ -6,30 +6,44 @@ A quiet static photography and notes site for John Braybrooke.
 
 ```
 .
-├── index.html    # Photos home
-├── photos.html   # Photos alias
-├── notes/        # Notes
-├── about/        # About
-├── notes.html    # Notes redirect
-├── about.html    # About redirect
-├── style.css     # Shared styles
+├── index.html         # Photos home (grid is generated into it)
+├── photos.html        # Redirect to /
+├── notes/             # Notes
+├── about/             # About
+├── notes.html         # Notes redirect
+├── about.html         # About redirect
+├── style.css          # Shared styles
+├── photo-gallery.js   # Enhances the grid into the overlay viewer
+├── content/
+│   └── photos/        # Canonical per-photo metadata (one .md per photo)
 ├── data/
-│   └── photos.json
+│   └── photos.json    # Generated public catalogue
+├── photos/            # Generated standalone page per photo (/photos/<id>/)
+├── sitemap.xml, image-sitemap.xml, robots.txt, llms.txt   # Generated
 ├── images/
-│   ├── photos/   # Local source files, ignored by git
-│   ├── large/    # Generated viewer + zoom images
-│   └── thumbs/   # Generated grid images
+│   ├── photos/        # Local source files, ignored by git
+│   ├── large/         # Generated viewer + zoom images
+│   └── thumbs/        # Generated grid images
 └── scripts/
-    ├── build.mjs               # One command: runs everything below
+    ├── build.mjs                  # One command: runs everything below
+    ├── lib/photos.mjs             # Shared: joins images + metadata, validates
     ├── rename-photos.mjs
     ├── build-photo-thumbnails.mjs
     ├── build-photo-large.mjs
-    └── build-photo-manifest.mjs
+    ├── scaffold-photos.mjs        # Creates a metadata stub for each new photo
+    ├── build-photo-manifest.mjs   # Writes data/photos.json
+    └── build-site.mjs             # Writes photo pages, grid, sitemaps, robots, llms
 ```
+
+There are two sources of truth: `images/photos/` (the original image files,
+ignored by git) and `content/photos/` (the metadata). Everything else under
+`images/`, plus `photos/`, `data/photos.json`, and the sitemap/robots/llms files,
+is generated and safe to delete — the build recreates it.
 
 ## Adding and Removing Photos
 
-`images/photos/` is the source of truth. To add photos, drop the files in there. To remove photos, delete the files from there. Either way, then run one command:
+To add photos, drop the files into `images/photos/`. To remove photos, delete
+them from there. Either way, then run one command:
 
 ```sh
 node scripts/build.mjs
@@ -38,15 +52,31 @@ node scripts/build.mjs
 That does the whole pipeline:
 
 1. Renames any new files to `photo-00001.jpg`, `photo-00002.jpg`, and so on.
-2. Regenerates the grid thumbnails (`images/thumbs/`) and the large viewer images (`images/large/`). The large images double as the zoom source, so there is no separate zoom tier.
-3. Deletes generated images left behind by photos you removed.
-4. Rebuilds `data/photos.json` to match what is on disk.
+2. Regenerates the grid thumbnails (`images/thumbs/`) and the large viewer images
+   (`images/large/`). The large images double as the zoom source, so there is no
+   separate zoom tier.
+3. Scaffolds a metadata stub at `content/photos/<id>.md` for each new photo,
+   prefilling the capture date from EXIF.
+4. Deletes generated images and pages left behind by photos you removed.
+5. Rebuilds `data/photos.json`, the standalone photo pages (`/photos/<id>/`), the
+   homepage grid, and `sitemap.xml` / `image-sitemap.xml` / `robots.txt` /
+   `llms.txt`.
 
-If `cwebp` is installed, the build also writes WebP copies beside the JPEG fallbacks. The original files in `images/photos/` are ignored by git, so they are never published — only the generated images and the manifest are.
+**A new photo won't build until its metadata is filled in.** Each
+`content/photos/<id>.md` needs a non-empty `alt` and `description` (and a `date`,
+which EXIF usually fills automatically). The build fails with a list of what's
+missing — this is deliberate, so no photo publishes without a description. A
+`title` is optional; blank just shows as "Untitled" and never affects the URL.
 
-Deleting a photo leaves a gap in the numbering (e.g. `photo-00003` missing). That is harmless: photos are ordered by filename and new photos always take the next unused number, so nothing is ever renumbered or reused.
+If `cwebp` is installed, the build also writes WebP copies beside the JPEG
+fallbacks. The original files in `images/photos/` are ignored by git, so they are
+never published — only the generated images, pages, and metadata are.
 
-You can still run the individual `build-photo-*.mjs` and `rename-photos.mjs` scripts on their own, but `build.mjs` is the normal path.
+Deleting a photo leaves a gap in the numbering (e.g. `photo-00003` missing). That
+is harmless: photos are ordered by filename and new photos always take the next
+unused number, so nothing is ever renumbered or reused. The deleted photo's
+`content/photos/<id>.md` is left in place (so its description survives if you
+re-add it); the generated page and images are pruned.
 
 ## Local Development
 

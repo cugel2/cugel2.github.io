@@ -1,0 +1,21 @@
+# John Braybrooke
+
+> Street and observational photography by John Braybrooke. Each photograph has a
+> standalone page with a literal description, capture date, and structured data.
+
+## Photographs
+
+- [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00001/): An empty powder-blue metal folding chair sits alone on a plaza paved with irregular flagstones and red brick. Behind it, a person in a blue dress walks a small cream-coloured dog on a leash. To the right, a plywood board mounted outdoors displays a historical town map and black-and-white archival photographs. Bright midday sun throws hard shadows across the stone.
+- [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00002/): A view through the glass front of a clinic. White and yellow vinyl lettering on the window reads 'ACUPUNCTURE', 'SHOCKWAVE' and 'ICBC PROVIDER'. Behind and reflected in the glass, a man with closely cropped hair is seen from behind in a dark patterned sweatshirt printed with a 'Blue Moose — Hope, British Columbia, Canada' logo. A white moulded chair stands in the foreground while reflections of the street layer over the interior.
+- [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00003/): A pale blue ceramic dog bowl, decorated with a black bone and a chevron band and filled with water, rests on a sunlit concrete sidewalk. Beside it stands a black A-frame sandwich board for The Parkside Brewery, illustrated with a yellow iced drink, a lemon slice and a red straw, above the words 'PURCHASE … FOR … BEER'. Strong angular shadows cross the pavement.
+- [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00004/): Photographed from the sidewalk through a shop window. A black-and-white 'OPEN' sign hangs from a beaded chain on a suction cup against the dark glass. Behind it, inside the shop, stands a mannequin of a Black man in a red mesh tank top, dramatically lit so he seems to gaze out through the glass toward the street.
+- [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00005/): Seen from outside through a window, a rounded white soft-toy figure in a pink polka-dot dress stands on an interior sill among other small objects. Green oak-leaf foliage fills the lower foreground, and the building's orange and yellow walls frame the glass.
+- [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00006/): Photographed from below, the corner of a billboard cuts diagonally across a blue sky streaked with thin cloud. A black floodlight reaches out on an arm to light the board, which shows a woman with wind-blown dark hair and white sunglasses, smiling, her image skewed by the steep upward angle.
+- [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00007/): A weathered advertising poster behind glass, washed by sunlight and crossed by reflections. It pictures a blonde woman in a white top, eyes closed and smiling, with hands resting on her shoulders. The print has abraded and peeled, and a crumpled scrap of paper sits over the centre of her face. A blue perforated panel runs down the right edge.
+- [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00008/): Two life-size cardboard cutouts of women's faces rise just above a dense green hedge, positioned in front of a building's large windows so they seem to peer over the foliage. The glass behind them reflects trees and a neighbouring building.
+
+## Machine-readable
+
+- Catalogue (JSON): https://johnbraybrooke.com/data/photos.json
+- Sitemap: https://johnbraybrooke.com/sitemap.xml
+- Image sitemap: https://johnbraybrooke.com/image-sitemap.xml

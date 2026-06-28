@@ -6,7 +6,16 @@ function createViewer(photos) {
   const previousButton = document.createElement("button");
   const nextButton = document.createElement("button");
   const closeButton = document.createElement("button");
+  const infoButton = document.createElement("button");
+  const infoPanel = document.createElement("div");
+  const infoTitle = document.createElement("h2");
+  const infoDescription = document.createElement("p");
+  const infoMeta = document.createElement("dl");
+  const infoDate = document.createElement("dd");
+  const infoCreator = document.createElement("dd");
+  const infoRights = document.createElement("dd");
   let currentIndex = 0;
+  let triggerElement = null;
   let touchStartX = 0;
   let touchStartY = 0;
   let touchStartedOnControl = false;
@@ -55,8 +64,52 @@ function createViewer(photos) {
   closeButton.textContent = "Close";
   closeButton.setAttribute("aria-label", "Close photo viewer");
 
+  infoButton.className = "photo-viewer-info-toggle";
+  infoButton.type = "button";
+  infoButton.textContent = "Info";
+  infoButton.setAttribute("aria-label", "Photo information");
+  infoButton.setAttribute("aria-expanded", "false");
+  infoButton.setAttribute("aria-controls", "photo-viewer-info");
+
+  infoPanel.className = "photo-viewer-info";
+  infoPanel.id = "photo-viewer-info";
+  infoPanel.hidden = true;
+  infoTitle.className = "photo-viewer-info-title";
+  infoTitle.hidden = true;
+  infoDescription.className = "photo-viewer-info-description";
+  infoMeta.className = "photo-viewer-info-meta";
+
+  const dateRow = document.createElement("div");
+  const creatorRow = document.createElement("div");
+  const rightsRow = document.createElement("div");
+  const dateTerm = document.createElement("dt");
+  const creatorTerm = document.createElement("dt");
+  const rightsTerm = document.createElement("dt");
+  dateTerm.textContent = "Date";
+  creatorTerm.textContent = "By";
+  rightsTerm.textContent = "Rights";
+  dateRow.append(dateTerm, infoDate);
+  creatorRow.append(creatorTerm, infoCreator);
+  rightsRow.append(rightsTerm, infoRights);
+  infoMeta.append(dateRow, creatorRow, rightsRow);
+  infoPanel.append(infoTitle, infoDescription, infoMeta);
+
   function getWrappedIndex(index) {
     return (index + photos.length) % photos.length;
+  }
+
+  function urlForPhoto(photo) {
+    return photo && photo.id ? `/photos/${photo.id}/` : window.location.href;
+  }
+
+  function formatDate(iso) {
+    const date = new Date(`${iso}T12:00:00`);
+
+    if (Number.isNaN(date.getTime())) {
+      return iso || "";
+    }
+
+    return date.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
   }
 
   function firstSrcsetCandidate(srcset) {
@@ -234,41 +287,141 @@ function createViewer(photos) {
     zoomInAt(clientX, clientY);
   }
 
+  function setInfoOpen(open) {
+    infoPanel.hidden = !open;
+    infoButton.setAttribute("aria-expanded", String(open));
+  }
+
+  function updateInfo(photo) {
+    if (photo.title) {
+      infoTitle.textContent = photo.title;
+      infoTitle.hidden = false;
+    } else {
+      infoTitle.hidden = true;
+    }
+
+    infoDescription.textContent = photo.description || "";
+    infoDate.textContent = formatDate(photo.date);
+    infoCreator.textContent = photo.creator || "John Braybrooke";
+    infoRights.textContent = photo.rights || "All rights reserved";
+  }
+
   function updateViewer() {
     const photo = photos[currentIndex];
 
     setViewerImage(photo);
     image.alt = photo.alt || "";
+    updateInfo(photo);
     previousButton.disabled = photos.length < 2;
     nextButton.disabled = photos.length < 2;
     preloadNearbyPhotos();
   }
 
-  function openViewer(index) {
-    currentIndex = index;
-    resetZoom();
-    updateViewer();
+  // --- history routing -------------------------------------------------------
+  // Opening the viewer pushes the photo's own URL so the address bar and back
+  // button work; stepping between photos replaces it (no history pile-up); the
+  // standalone page handles direct visits/refresh.
+
+  function syncUrl(mode) {
+    const photo = photos[currentIndex];
+
+    if (!photo) {
+      return;
+    }
+
+    const state = { photoViewer: true, id: photo.id };
+
+    if (mode === "push") {
+      window.history.pushState(state, "", urlForPhoto(photo));
+    } else if (mode === "replace") {
+      window.history.replaceState(state, "", urlForPhoto(photo));
+    }
+  }
+
+  function showViewer() {
     viewer.hidden = false;
     document.body.classList.add("viewer-open");
     closeButton.focus();
   }
 
-  function closeViewer() {
+  function hideViewer() {
     resetZoom();
+    setInfoOpen(false);
     viewer.hidden = true;
     document.body.classList.remove("viewer-open");
+
+    if (triggerElement && typeof triggerElement.focus === "function") {
+      triggerElement.focus();
+    }
+
+    triggerElement = null;
+  }
+
+  function openViewer(index, options = {}) {
+    const push = options.push !== false;
+
+    if (push) {
+      triggerElement = document.activeElement;
+    }
+
+    currentIndex = index;
+    resetZoom();
+    setInfoOpen(false);
+    updateViewer();
+    showViewer();
+
+    if (push) {
+      syncUrl("push");
+    }
+  }
+
+  function closeViewer() {
+    if (window.history.state && window.history.state.photoViewer) {
+      window.history.back();
+    } else {
+      hideViewer();
+    }
   }
 
   function showPrevious() {
     resetZoom();
     currentIndex = getWrappedIndex(currentIndex - 1);
     updateViewer();
+    syncUrl("replace");
   }
 
   function showNext() {
     resetZoom();
     currentIndex = getWrappedIndex(currentIndex + 1);
     updateViewer();
+    syncUrl("replace");
+  }
+
+  function handlePopState(event) {
+    const state = event.state;
+
+    if (state && state.photoViewer) {
+      const index = photos.findIndex((photo) => photo.id === state.id);
+
+      if (index < 0) {
+        return;
+      }
+
+      currentIndex = index;
+      resetZoom();
+      setInfoOpen(false);
+      updateViewer();
+
+      if (viewer.hidden) {
+        showViewer();
+      }
+
+      return;
+    }
+
+    if (!viewer.hidden) {
+      hideViewer();
+    }
   }
 
   function isViewerControl(element) {
@@ -467,6 +620,7 @@ function createViewer(photos) {
     viewer.classList.remove("photo-viewer-panning");
   }
 
+  infoButton.addEventListener("click", () => setInfoOpen(infoPanel.hidden));
   previousButton.addEventListener("click", showPrevious);
   nextButton.addEventListener("click", showNext);
   closeButton.addEventListener("click", closeViewer);
@@ -478,6 +632,7 @@ function createViewer(photos) {
   image.addEventListener("mousedown", beginMousePan);
   document.addEventListener("mousemove", moveMousePan);
   document.addEventListener("mouseup", endMousePan);
+  window.addEventListener("popstate", handlePopState);
   viewer.addEventListener("click", (event) => {
     if (event.target === viewer) {
       closeViewer();
@@ -503,86 +658,64 @@ function createViewer(photos) {
   });
 
   picture.append(webpSource, image);
-  viewer.append(closeButton, previousButton, picture, nextButton);
+  viewer.append(closeButton, infoButton, previousButton, picture, nextButton, infoPanel);
   document.body.append(viewer);
 
   return openViewer;
 }
 
 async function loadPhotos() {
-  const grid = document.querySelector("[data-photo-grid]");
-  const emptyState = document.querySelector("[data-empty-state]");
+  // The grid is real, crawlable HTML rendered at build time. Here we only
+  // *enhance* it: fetch the catalogue and wire each existing thumbnail link to
+  // open the overlay viewer. If the fetch fails, the links still navigate to the
+  // standalone photo pages, so the gallery keeps working.
+  const links = Array.from(document.querySelectorAll("[data-photo-link]"));
 
-  if (!grid || !emptyState) {
+  if (!links.length) {
     return;
   }
+
+  let photos = [];
 
   try {
     const response = await fetch("data/photos.json", { cache: "no-store" });
 
-    if (!response.ok) {
-      throw new Error(`Unable to load photos: ${response.status}`);
+    if (response.ok) {
+      photos = await response.json();
     }
-
-    const photos = await response.json();
-
-    if (!Array.isArray(photos) || photos.length === 0) {
-      return;
-    }
-
-    const fragment = document.createDocumentFragment();
-    const openViewer = createViewer(photos);
-
-    photos.forEach((photo, index) => {
-      if (!photo || !photo.src) {
-        return;
-      }
-
-      const figure = document.createElement("figure");
-      const button = document.createElement("button");
-      const picture = document.createElement("picture");
-      const webpSource = document.createElement("source");
-      const image = document.createElement("img");
-
-      figure.className = "photo-item";
-      button.className = "photo-button";
-      button.type = "button";
-      button.setAttribute("aria-label", `Open photo ${index + 1}`);
-      webpSource.type = "image/webp";
-
-      if (photo.thumbWebpSrcset || photo.thumbWebp) {
-        webpSource.srcset = photo.thumbWebpSrcset || photo.thumbWebp;
-      }
-
-      image.src = photo.thumb || photo.src;
-
-      if (photo.thumbSrcset) {
-        image.srcset = photo.thumbSrcset;
-      }
-
-      image.sizes = "(max-width: 760px) calc(100vw - 2.8rem), 180px";
-      image.alt = photo.alt || "";
-      image.loading = index < 4 ? "eager" : "lazy";
-      image.fetchPriority = index < 2 ? "high" : "auto";
-      image.decoding = "async";
-
-      button.addEventListener("click", () => openViewer(index));
-      picture.append(webpSource, image);
-      button.append(picture);
-      figure.append(button);
-      fragment.append(figure);
-    });
-
-    if (!fragment.childElementCount) {
-      return;
-    }
-
-    grid.append(fragment);
-    grid.hidden = false;
-    emptyState.hidden = true;
   } catch (error) {
     console.warn(error.message);
   }
+
+  if (!Array.isArray(photos) || photos.length === 0) {
+    return;
+  }
+
+  const openViewer = createViewer(photos);
+  const indexById = new Map(photos.map((photo, index) => [photo.id, index]));
+
+  links.forEach((link) => {
+    const id = link.getAttribute("data-photo-id");
+
+    if (!indexById.has(id)) {
+      return;
+    }
+
+    link.addEventListener("click", (event) => {
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return; // let the browser follow the link (open in new tab, etc.)
+      }
+
+      event.preventDefault();
+      openViewer(indexById.get(id), { push: true });
+    });
+  });
 }
 
 loadPhotos();

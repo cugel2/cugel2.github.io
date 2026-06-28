@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://johnbraybrooke.com/sitemap.xml
+Sitemap: https://johnbraybrooke.com/image-sitemap.xml
