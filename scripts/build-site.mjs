@@ -1,9 +1,11 @@
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { loadPhotos, displayTitle, SITE_URL } from "./lib/photos.mjs";
+import { loadNotes, displayNoteTitle } from "./lib/notes.mjs";
 
 // Generate the crawlable, no-JS layer of the site from the catalogue:
 //   - /photos/<id>/index.html   standalone page per photograph
+//   - /notes/<slug>/index.html  standalone page per note
 //   - index.html                real <a><img> grid + gallery JSON-LD (injected)
 //   - sitemap.xml, image-sitemap.xml, robots.txt, llms.txt
 // The JS overlay viewer is layered on top of this and is never required.
@@ -11,6 +13,8 @@ import { loadPhotos, displayTitle, SITE_URL } from "./lib/photos.mjs";
 const cwd = process.cwd();
 const STYLE_VERSION = 17;
 const GALLERY_VERSION = 16;
+const PERSON_ID = `${SITE_URL}/#person`;
+const BLOG_ID = `${SITE_URL}/notes/#blog`;
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -62,7 +66,7 @@ function pictureForViewer(photo) {
       </picture>`;
 }
 
-function photoJsonLd(photo) {
+function photoJsonLd(photo, relatedNotes = []) {
   const data = {
     "@context": "https://schema.org",
     "@type": "Photograph",
@@ -72,8 +76,8 @@ function photoJsonLd(photo) {
     description: photo.description,
     dateCreated: photo.date,
     creditText: photo.creator,
-    creator: { "@type": "Person", name: photo.creator, url: `${SITE_URL}/about/` },
-    copyrightHolder: { "@type": "Person", name: photo.creator },
+    creator: { "@id": PERSON_ID },
+    copyrightHolder: { "@id": PERSON_ID },
     copyrightNotice: photo.rights,
     image: {
       "@type": "ImageObject",
@@ -82,15 +86,48 @@ function photoJsonLd(photo) {
       caption: photo.alt,
       ...(photo.width ? { width: photo.width } : {}),
       ...(photo.height ? { height: photo.height } : {}),
-      creator: { "@type": "Person", name: photo.creator },
+      creator: { "@id": PERSON_ID },
       copyrightNotice: photo.rights
-    }
+    },
+    ...(relatedNotes.length
+      ? {
+          subjectOf: relatedNotes.map((note) => ({
+            "@type": "BlogPosting",
+            "@id": note.url,
+            url: note.url,
+            name: displayNoteTitle(note)
+          }))
+        }
+      : {})
   };
 
   return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
 }
 
-function photoPage(photo, previous, next) {
+function relatedNotesList(notes) {
+  if (!notes.length) {
+    return "";
+  }
+
+  const items = notes
+    .map(
+      (note) => `          <li>
+            <a href="${escapeHtml(note.path)}">${escapeHtml(displayNoteTitle(note))}</a>
+            <time datetime="${escapeHtml(note.date)}">${escapeHtml(note.dateLabel)}</time>
+          </li>`
+    )
+    .join("\n");
+
+  return `
+      <section class="related-notes" aria-labelledby="related-notes-title">
+        <h2 id="related-notes-title">Related notes</h2>
+        <ul>
+${items}
+        </ul>
+      </section>`;
+}
+
+function photoPage(photo, previous, next, relatedNotes = []) {
   const label = displayTitle(photo);
   const pageTitle = photo.title ? `${photo.title} — John Braybrooke` : "Photograph — John Braybrooke";
 
@@ -119,7 +156,7 @@ function photoPage(photo, previous, next) {
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/style.css?v=${STYLE_VERSION}">
-  ${photoJsonLd(photo)}
+  ${photoJsonLd(photo, relatedNotes)}
 </head>
 <body>
   <main class="site-shell">
@@ -146,7 +183,7 @@ function photoPage(photo, previous, next) {
             <div><dt>Rights</dt><dd>${escapeHtml(photo.rights)}</dd></div>
           </dl>
         </figcaption>
-      </figure>
+      </figure>${relatedNotesList(relatedNotes)}
       <nav class="photo-pager" aria-label="Photograph navigation">
         ${previous ? `<a class="photo-pager-prev" rel="prev" href="${escapeHtml(`/photos/${previous.id}/`)}">Previous</a>` : `<span class="photo-pager-prev" aria-hidden="true"></span>`}
         <a class="photo-pager-all" href="/">All photographs</a>
@@ -183,13 +220,218 @@ function gridItem(photo, index) {
       </figure>`;
 }
 
-function homepageJsonLd(photos) {
+function relatedPhotoThumb(photo) {
+  const webp = rootRel(photo.thumbWebpSrcset || photo.thumbWebp);
+  const jpeg = rootRel(photo.thumbSrcset || photo.thumb || photo.src);
+
+  return `          <figure class="related-photo">
+            <a href="${escapeHtml(`/photos/${photo.id}/`)}">
+              <picture>
+                ${webp ? `<source type="image/webp" srcset="${escapeHtml(webp)}">` : ""}
+                <img src="${escapeHtml(rootRel(photo.thumb || photo.src))}"${
+    jpeg ? ` srcset="${escapeHtml(jpeg)}"` : ""
+  } sizes="(max-width: 760px) 44vw, 140px" alt="${escapeHtml(photo.alt)}" width="900" height="600" loading="lazy" decoding="async">
+              </picture>
+            </a>
+          </figure>`;
+}
+
+function noteJsonLd(note, relatedPhotos) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": note.url,
+    url: note.url,
+    mainEntityOfPage: note.url,
+    headline: displayNoteTitle(note),
+    name: displayNoteTitle(note),
+    description: note.summary,
+    datePublished: note.date,
+    dateCreated: note.date,
+    author: { "@id": PERSON_ID },
+    creator: { "@id": PERSON_ID },
+    isPartOf: { "@id": BLOG_ID },
+    ...(relatedPhotos.length
+      ? {
+          mentions: relatedPhotos.map((photo) => ({
+            "@type": "Photograph",
+            "@id": photo.url,
+            url: photo.url,
+            name: displayTitle(photo)
+          }))
+        }
+      : {})
+  };
+
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
+}
+
+function notesIndexJsonLd(notes) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": ["CollectionPage", "Blog"],
+    "@id": BLOG_ID,
+    url: `${SITE_URL}/notes/`,
+    name: "John Braybrooke — Notes",
+    author: { "@id": PERSON_ID },
+    blogPost: notes.map((note) => ({
+      "@type": "BlogPosting",
+      "@id": note.url,
+      url: note.url,
+      headline: displayNoteTitle(note),
+      datePublished: note.date,
+      description: note.summary,
+      author: { "@id": PERSON_ID }
+    }))
+  };
+
+  return `<script type="application/ld+json">${JSON.stringify(data)}</script>`;
+}
+
+function notePage(note, relatedPhotos) {
+  const label = displayNoteTitle(note);
+  const related = relatedPhotos.length
+    ? `      <section class="related-photos" aria-labelledby="related-photos-title">
+        <h2 id="related-photos-title">Related photos</h2>
+        <div class="related-photo-grid">
+${relatedPhotos.map(relatedPhotoThumb).join("\n")}
+        </div>
+      </section>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(label)} — John Braybrooke</title>
+  <meta name="description" content="${escapeHtml(note.summary)}">
+  <link rel="canonical" href="${escapeHtml(note.url)}">
+  <meta property="og:site_name" content="John Braybrooke">
+  <meta property="og:title" content="${escapeHtml(label)}">
+  <meta property="og:description" content="${escapeHtml(note.summary)}">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="${escapeHtml(note.url)}">
+  <meta property="og:image" content="${SITE_URL}/images/social-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A photograph from John Braybrooke's photo site.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(label)}">
+  <meta name="twitter:description" content="${escapeHtml(note.summary)}">
+  <meta name="twitter:image" content="${SITE_URL}/images/social-card.jpg">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/style.css?v=${STYLE_VERSION}">
+  ${noteJsonLd(note, relatedPhotos)}
+</head>
+<body>
+  <main class="site-shell">
+    <header class="site-header">
+      <a class="site-name" href="/">John Braybrooke</a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="/">Photos</a>
+        <a class="active" href="/notes/" aria-current="page">Notes</a>
+        <a href="/about/">About</a>
+      </nav>
+    </header>
+
+    <article class="note-page">
+      <header class="note-header">
+        <p class="note-kicker"><time datetime="${escapeHtml(note.date)}">${escapeHtml(note.dateLabel)}</time></p>
+        <h1>${escapeHtml(label)}</h1>
+      </header>
+      <div class="note-prose">
+${note.bodyHtml
+  .split("\n")
+  .map((line) => `        ${line}`)
+  .join("\n")}
+      </div>
+      ${related}
+      <p class="note-back"><a href="/notes/">All notes</a></p>
+    </article>
+  </main>
+</body>
+</html>
+`;
+}
+
+function notesIndexPage(notes) {
+  const content = notes.length
+    ? `<section class="notes-page" aria-labelledby="notes-title">
+      <h1 class="visually-hidden" id="notes-title">Notes</h1>
+      <div class="notes-list">
+${notes
+  .map(
+    (note) => `        <article class="note-list-item">
+          <time datetime="${escapeHtml(note.date)}">${escapeHtml(note.dateLabel)}</time>
+          <h2><a href="${escapeHtml(note.path)}">${escapeHtml(displayNoteTitle(note))}</a></h2>
+          <p>${escapeHtml(note.summary)}</p>
+        </article>`
+  )
+  .join("\n")}
+      </div>
+    </section>`
+    : `<section class="empty-state empty-notes" aria-labelledby="notes-title">
+      <h1 id="notes-title">Notes</h1>
+      <p>No notes yet.</p>
+    </section>`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notes — John Braybrooke</title>
+  <meta name="description" content="Field notes and observations by John Braybrooke.">
+  <link rel="canonical" href="${SITE_URL}/notes/">
+  <meta property="og:site_name" content="John Braybrooke">
+  <meta property="og:title" content="Notes — John Braybrooke">
+  <meta property="og:description" content="Field notes and observations by John Braybrooke.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${SITE_URL}/notes/">
+  <meta property="og:image" content="${SITE_URL}/images/social-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A photograph from John Braybrooke's photo site.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Notes — John Braybrooke">
+  <meta name="twitter:description" content="Field notes and observations by John Braybrooke.">
+  <meta name="twitter:image" content="${SITE_URL}/images/social-card.jpg">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/style.css?v=${STYLE_VERSION}">
+  ${notesIndexJsonLd(notes)}
+</head>
+<body>
+  <main class="site-shell">
+    <header class="site-header">
+      <a class="site-name" href="/">John Braybrooke</a>
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="/">Photos</a>
+        <a class="active" href="/notes/" aria-current="page">Notes</a>
+        <a href="/about/">About</a>
+      </nav>
+    </header>
+
+    ${content}
+  </main>
+</body>
+</html>
+`;
+}
+
+function homepageJsonLd(photos, notes) {
   const data = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "Person",
-        "@id": `${SITE_URL}/#person`,
+        "@id": PERSON_ID,
         name: "John Braybrooke",
         url: `${SITE_URL}/`,
         sameAs: []
@@ -199,7 +441,7 @@ function homepageJsonLd(photos) {
         "@id": `${SITE_URL}/#gallery`,
         url: `${SITE_URL}/`,
         name: "John Braybrooke — Photographs",
-        author: { "@id": `${SITE_URL}/#person` },
+        author: { "@id": PERSON_ID },
         hasPart: photos.map((photo) => ({
           "@type": "ImageObject",
           "@id": photo.url,
@@ -211,6 +453,21 @@ function homepageJsonLd(photos) {
           dateCreated: photo.date,
           creditText: photo.creator
         }))
+      },
+      {
+        "@type": "Blog",
+        "@id": BLOG_ID,
+        url: `${SITE_URL}/notes/`,
+        name: "John Braybrooke — Notes",
+        author: { "@id": PERSON_ID },
+        blogPost: notes.map((note) => ({
+          "@type": "BlogPosting",
+          "@id": note.url,
+          url: note.url,
+          headline: displayNoteTitle(note),
+          datePublished: note.date,
+          description: note.summary
+        }))
       }
     ]
   };
@@ -218,12 +475,27 @@ function homepageJsonLd(photos) {
   return `<script type="application/ld+json">\n${JSON.stringify(data, null, 2)}\n</script>`;
 }
 
-function sitemap(photos) {
+function noteJson(note) {
+  return {
+    id: note.id,
+    url: note.url,
+    title: note.title,
+    displayTitle: displayNoteTitle(note),
+    date: note.date,
+    summary: note.summary,
+    body: note.body,
+    creator: note.creator,
+    related_photos: note.related_photos
+  };
+}
+
+function sitemap(photos, notes) {
   const urls = [
     { loc: `${SITE_URL}/` },
     { loc: `${SITE_URL}/about/` },
     { loc: `${SITE_URL}/notes/` },
-    ...photos.map((photo) => ({ loc: photo.url, lastmod: photo.date }))
+    ...photos.map((photo) => ({ loc: photo.url, lastmod: photo.date })),
+    ...notes.map((note) => ({ loc: note.url, lastmod: note.date }))
   ];
 
   const body = urls
@@ -262,23 +534,75 @@ Sitemap: ${SITE_URL}/sitemap.xml
 Sitemap: ${SITE_URL}/image-sitemap.xml
 `;
 
-function llms(photos) {
-  const lines = photos
+function notesByPhoto(notes) {
+  const map = new Map();
+
+  for (const note of notes) {
+    for (const photoId of note.related_photos) {
+      if (!map.has(photoId)) {
+        map.set(photoId, []);
+      }
+
+      map.get(photoId).push(note);
+    }
+  }
+
+  return map;
+}
+
+function photosById(photos) {
+  return new Map(photos.map((photo) => [photo.id, photo]));
+}
+
+async function pruneNotePages(notes) {
+  const liveIds = new Set(notes.map((note) => note.id));
+  const entries = await readdir(path.join(cwd, "notes"), { withFileTypes: true }).catch(() => []);
+  let removed = 0;
+
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !noteFilenameLike(entry.name)) {
+      continue;
+    }
+
+    if (!liveIds.has(entry.name)) {
+      await rm(path.join(cwd, "notes", entry.name), { recursive: true, force: true });
+      console.log(`removed orphan note page notes/${entry.name}/`);
+      removed += 1;
+    }
+  }
+
+  return removed;
+}
+
+function noteFilenameLike(value) {
+  return /^\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+}
+
+function llms(photos, notes) {
+  const photoLines = photos
     .map((photo) => `- [${displayTitle(photo)}](${photo.url}): ${photo.description}`)
     .join("\n");
+  const noteLines = notes.length
+    ? notes.map((note) => `- [${displayNoteTitle(note)}](${note.url}): ${note.summary}`).join("\n")
+    : "No public notes yet.";
 
   return `# John Braybrooke
 
-> Street and observational photography by John Braybrooke. Each photograph has a
-> standalone page with a literal description, capture date, and structured data.
+> Street and observational photography and field notes by John Braybrooke.
+> Each photograph and note has a standalone page with crawlable metadata.
 
 ## Photographs
 
-${lines}
+${photoLines}
+
+## Notes
+
+${noteLines}
 
 ## Machine-readable
 
 - Catalogue (JSON): ${SITE_URL}/data/photos.json
+- Notes catalogue (JSON): ${SITE_URL}/data/notes.json
 - Sitemap: ${SITE_URL}/sitemap.xml
 - Image sitemap: ${SITE_URL}/image-sitemap.xml
 `;
@@ -287,36 +611,60 @@ ${lines}
 // --- run ---------------------------------------------------------------------
 
 const photos = await loadPhotos();
+const notes = await loadNotes(photos);
+const noteMap = notesByPhoto(notes);
+const photoMap = photosById(photos);
 
 // Standalone photo pages.
 for (let index = 0; index < photos.length; index += 1) {
   const photo = photos[index];
   const previous = index > 0 ? photos[index - 1] : null;
   const next = index < photos.length - 1 ? photos[index + 1] : null;
+  const relatedNotes = noteMap.get(photo.id) || [];
   const directory = path.join(cwd, "photos", photo.id);
 
   await mkdir(directory, { recursive: true });
-  await writeFile(path.join(directory, "index.html"), photoPage(photo, previous, next));
+  await writeFile(path.join(directory, "index.html"), photoPage(photo, previous, next, relatedNotes));
 }
+
+// Notes index and standalone note pages.
+await mkdir(path.join(cwd, "notes"), { recursive: true });
+await writeFile(path.join(cwd, "notes", "index.html"), notesIndexPage(notes));
+
+for (const note of notes) {
+  const relatedPhotos = note.related_photos.map((photoId) => photoMap.get(photoId)).filter(Boolean);
+  const directory = path.join(cwd, "notes", note.id);
+
+  await mkdir(directory, { recursive: true });
+  await writeFile(path.join(directory, "index.html"), notePage(note, relatedPhotos));
+}
+
+const prunedNotes = await pruneNotePages(notes);
 
 // Homepage: inject the real grid and the gallery JSON-LD between markers.
 const indexPath = path.join(cwd, "index.html");
 let indexHtml = await readFile(indexPath, "utf8");
 const grid = photos.map((photo, index) => gridItem(photo, index)).join("\n");
 indexHtml = replaceBetween(indexHtml, "photos", grid);
-indexHtml = replaceBetween(indexHtml, "jsonld", `  ${homepageJsonLd(photos)}`);
+indexHtml = replaceBetween(indexHtml, "jsonld", `  ${homepageJsonLd(photos, notes)}`);
 indexHtml = indexHtml.replace(/photo-gallery\.js\?v=\d+/g, `photo-gallery.js?v=${GALLERY_VERSION}`);
 indexHtml = indexHtml.replace(/style\.css\?v=\d+/g, `style.css?v=${STYLE_VERSION}`);
 await writeFile(indexPath, indexHtml);
 
 // Crawl artifacts.
-await writeFile(path.join(cwd, "sitemap.xml"), sitemap(photos));
+await mkdir(path.join(cwd, "data"), { recursive: true });
+await writeFile(path.join(cwd, "data", "notes.json"), `${JSON.stringify(notes.map(noteJson), null, 2)}\n`);
+await writeFile(path.join(cwd, "sitemap.xml"), sitemap(photos, notes));
 await writeFile(path.join(cwd, "image-sitemap.xml"), imageSitemap(photos));
 await writeFile(path.join(cwd, "robots.txt"), robots);
-await writeFile(path.join(cwd, "llms.txt"), llms(photos));
+await writeFile(path.join(cwd, "llms.txt"), llms(photos, notes));
 
 console.log(
   `Generated ${photos.length} photo page${
     photos.length === 1 ? "" : "s"
-  }, homepage grid, sitemap.xml, image-sitemap.xml, robots.txt, llms.txt.`
+  }, ${notes.length} note page${notes.length === 1 ? "" : "s"}, homepage grid, sitemap.xml, image-sitemap.xml, robots.txt, llms.txt.`
 );
+
+if (prunedNotes) {
+  console.log(`Pruned ${prunedNotes} orphaned note page${prunedNotes === 1 ? "" : "s"}.`);
+}

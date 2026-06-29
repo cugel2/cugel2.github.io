@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { parseFrontmatter } from "./content.mjs";
 
 // Shared content + image model. The build's source of truth is two things:
 //   - images/photos/*  (the canonical originals, gitignored)
@@ -23,46 +24,6 @@ const REQUIRED_FIELDS = ["alt", "description", "date", "creator"];
 
 export function contentPathFor(id) {
   return path.join(contentDirectory, `${id}.md`);
-}
-
-// Minimal frontmatter reader for our controlled `key: "value"` files. Values are
-// single-line and double-quoted; arrays are written as `[]`. Good enough without
-// pulling in a YAML dependency. (Avoid raw double-quotes inside a value.)
-export function parseFrontmatter(text) {
-  const match = text.match(/^---\n([\s\S]*?)\n---/);
-  const data = {};
-
-  if (!match) {
-    return { data, body: text.trim() };
-  }
-
-  for (const rawLine of match[1].split("\n")) {
-    const line = rawLine.trim();
-
-    if (!line || line.startsWith("#")) {
-      continue;
-    }
-
-    const separator = line.indexOf(":");
-
-    if (separator === -1) {
-      continue;
-    }
-
-    const key = line.slice(0, separator).trim();
-    const rest = line.slice(separator + 1).trim();
-
-    if (rest === "[]") {
-      data[key] = [];
-    } else if (rest.startsWith('"')) {
-      data[key] = rest.slice(1, rest.lastIndexOf('"'));
-    } else {
-      data[key] = rest;
-    }
-  }
-
-  const body = text.slice(match[0].length).trim();
-  return { data, body };
 }
 
 async function imageSet(directory) {

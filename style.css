@@ -326,6 +326,128 @@ a {
   margin-bottom: 0;
 }
 
+.notes-page,
+.note-page {
+  max-width: 66ch;
+}
+
+.notes-list {
+  display: grid;
+  gap: 2rem;
+}
+
+.note-list-item {
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.note-list-item:last-child {
+  border-bottom: 0;
+}
+
+.note-list-item time,
+.note-kicker,
+.related-notes time {
+  display: block;
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.note-list-item h2,
+.note-header h1,
+.related-photos h2,
+.related-notes h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.note-list-item h2 a,
+.note-back a,
+.related-notes a {
+  transition: color 160ms ease;
+}
+
+.note-list-item h2 a:hover,
+.note-back a:hover,
+.related-notes a:hover {
+  color: var(--accent);
+}
+
+.note-list-item p,
+.note-prose p {
+  margin: 0.7rem 0 0;
+  color: var(--ink);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.note-prose a {
+  color: var(--accent);
+}
+
+.note-prose p:first-child {
+  margin-top: 1.4rem;
+}
+
+.related-photos,
+.related-notes {
+  margin-top: 2.2rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--line);
+}
+
+.related-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.related-photo {
+  margin: 0;
+  background: #f1eee7;
+}
+
+.related-photo a,
+.related-photo picture,
+.related-photo img {
+  display: block;
+}
+
+.related-photo img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+
+.related-notes ul {
+  display: grid;
+  gap: 0.85rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.related-notes li {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.related-notes time {
+  margin: 0;
+}
+
+.note-back {
+  margin: 2rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .photo-page {
   display: grid;
   gap: 1.6rem;

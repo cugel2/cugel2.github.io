@@ -1,7 +1,7 @@
 # John Braybrooke
 
-> Street and observational photography by John Braybrooke. Each photograph has a
-> standalone page with a literal description, capture date, and structured data.
+> Street and observational photography and field notes by John Braybrooke.
+> Each photograph and note has a standalone page with crawlable metadata.
 
 ## Photographs
 
@@ -14,8 +14,13 @@
 - [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00007/): A weathered advertising poster behind glass, washed by sunlight and crossed by reflections. It pictures a blonde woman in a white top, eyes closed and smiling, with hands resting on her shoulders. The print has abraded and peeled, and a crumpled scrap of paper sits over the centre of her face. A blue perforated panel runs down the right edge.
 - [Photograph by John Braybrooke](https://johnbraybrooke.com/photos/photo-00008/): Two life-size cardboard cutouts of women's faces rise just above a dense green hedge, positioned in front of a building's large windows so they seem to peer over the foliage. The glass behind them reflects trees and a neighbouring building.
 
+## Notes
+
+- [Strawberry Ice Cream](https://johnbraybrooke.com/notes/2026-06-29-strawberry-ice-cream/): At a crowded ice cream shop, a staff member held up a pink cone. "Who would like a strawberry ice cream? We made too much." After a pause, several hands went up. One man...
+
 ## Machine-readable
 
 - Catalogue (JSON): https://johnbraybrooke.com/data/photos.json
+- Notes catalogue (JSON): https://johnbraybrooke.com/data/notes.json
 - Sitemap: https://johnbraybrooke.com/sitemap.xml
 - Image sitemap: https://johnbraybrooke.com/image-sitemap.xml

@@ -8,17 +8,19 @@ A quiet static photography and notes site for John Braybrooke.
 .
 ├── index.html         # Photos home (grid is generated into it)
 ├── photos.html        # Redirect to /
-├── notes/             # Notes
 ├── about/             # About
 ├── notes.html         # Notes redirect
 ├── about.html         # About redirect
 ├── style.css          # Shared styles
 ├── photo-gallery.js   # Enhances the grid into the overlay viewer
 ├── content/
-│   └── photos/        # Canonical per-photo metadata (one .md per photo)
+│   ├── photos/        # Canonical per-photo metadata (one .md per photo)
+│   └── notes/         # Canonical field notes (one .md per note)
 ├── data/
-│   └── photos.json    # Generated public catalogue
+│   ├── photos.json    # Generated public photo catalogue
+│   └── notes.json     # Generated public notes catalogue
 ├── photos/            # Generated standalone page per photo (/photos/<id>/)
+├── notes/             # Generated notes index and standalone note pages
 ├── sitemap.xml, image-sitemap.xml, robots.txt, llms.txt   # Generated
 ├── images/
 │   ├── photos/        # Local source files, ignored by git
@@ -32,13 +34,14 @@ A quiet static photography and notes site for John Braybrooke.
     ├── build-photo-large.mjs
     ├── scaffold-photos.mjs        # Creates a metadata stub for each new photo
     ├── build-photo-manifest.mjs   # Writes data/photos.json
-    └── build-site.mjs             # Writes photo pages, grid, sitemaps, robots, llms
+    └── build-site.mjs             # Writes generated pages, sitemaps, robots, llms
 ```
 
-There are two sources of truth: `images/photos/` (the original image files,
-ignored by git) and `content/photos/` (the metadata). Everything else under
-`images/`, plus `photos/`, `data/photos.json`, and the sitemap/robots/llms files,
-is generated and safe to delete — the build recreates it.
+The main sources of truth are `images/photos/` (the original image files, ignored
+by git), `content/photos/` (photo metadata), and `content/notes/` (field notes).
+Everything else under `images/`, plus `photos/`, generated pages under `notes/`,
+`data/*.json`, and the sitemap/robots/llms files, is generated and safe to
+delete — the build recreates it.
 
 ## Adding and Removing Photos
 
@@ -77,6 +80,50 @@ is harmless: photos are ordered by filename and new photos always take the next
 unused number, so nothing is ever renumbered or reused. The deleted photo's
 `content/photos/<id>.md` is left in place (so its description survives if you
 re-add it); the generated page and images are pruned.
+
+## Adding Notes
+
+Notes live in `content/notes/`. Create one Markdown file per note with a stable
+dated slug:
+
+```txt
+content/notes/2026-06-24-emotional-support-socks.md
+```
+
+The filename becomes the URL:
+
+```txt
+/notes/2026-06-24-emotional-support-socks/
+```
+
+Use this frontmatter:
+
+```md
+---
+date: "2026-06-24"
+title: ""
+summary: ""
+related_photos: []
+---
+
+Your note goes here.
+```
+
+`date` and the note body are required. `title`, `summary`, and
+`related_photos` are optional. If `summary` is blank, the build derives one from
+the body. If `related_photos` is present, every ID must match an existing photo,
+for example:
+
+```md
+related_photos: ["photo-00004", "photo-00007"]
+```
+
+The relationship has one source of truth: notes point to photos. The build uses
+that to generate both the related photo thumbnails on note pages and the related
+note links on photo pages.
+
+Note bodies support a small Markdown subset: paragraphs, `[links](https://...)`
+or `[links](/notes/)`, `**bold**`, and `*italic*`. Raw HTML is escaped.
 
 ## Local Development
 
