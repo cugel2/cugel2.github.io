@@ -11,7 +11,7 @@ import { loadNotes, displayNoteTitle } from "./lib/notes.mjs";
 // The JS overlay viewer is layered on top of this and is never required.
 
 const cwd = process.cwd();
-const STYLE_VERSION = 17;
+const STYLE_VERSION = 19;
 const GALLERY_VERSION = 16;
 const PERSON_ID = `${SITE_URL}/#person`;
 const BLOG_ID = `${SITE_URL}/notes/#blog`;

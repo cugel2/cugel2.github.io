@@ -384,7 +384,7 @@ a {
 }
 
 .note-header {
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
 
 .note-header h1 {
@@ -392,10 +392,10 @@ a {
 }
 
 .note-prose p {
-  margin: 0 0 0.95rem;
+  margin: 0 0 0.58rem;
   color: var(--ink);
   font-size: 0.98rem;
-  line-height: 1.6;
+  line-height: 1.58;
 }
 
 .note-prose a {
