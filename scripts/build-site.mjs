@@ -291,7 +291,8 @@ function notesIndexJsonLd(notes) {
 function notePage(note, relatedPhotos) {
   const label = displayNoteTitle(note);
   const related = relatedPhotos.length
-    ? `      <section class="related-photos" aria-labelledby="related-photos-title">
+    ? `
+      <section class="related-photos" aria-labelledby="related-photos-title">
         <h2 id="related-photos-title">Related photos</h2>
         <div class="related-photo-grid">
 ${relatedPhotos.map(relatedPhotoThumb).join("\n")}
@@ -346,11 +347,9 @@ ${relatedPhotos.map(relatedPhotoThumb).join("\n")}
       <div class="note-prose">
 ${note.bodyHtml
   .split("\n")
-  .map((line) => `        ${line}`)
-  .join("\n")}
-      </div>
-      ${related}
-      <p class="note-back"><a href="/notes/">All notes</a></p>
+      .map((line) => `        ${line}`)
+      .join("\n")}
+      </div>${related}
     </article>
   </main>
 </body>

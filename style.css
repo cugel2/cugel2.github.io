@@ -328,16 +328,16 @@ a {
 
 .notes-page,
 .note-page {
-  max-width: 66ch;
+  max-width: 60ch;
 }
 
 .notes-list {
   display: grid;
-  gap: 2rem;
+  gap: 1.15rem;
 }
 
 .note-list-item {
-  padding-bottom: 2rem;
+  padding-bottom: 1.15rem;
   border-bottom: 1px solid var(--line);
 }
 
@@ -349,9 +349,10 @@ a {
 .note-kicker,
 .related-notes time {
   display: block;
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.35rem;
   color: var(--muted);
   font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .note-list-item h2,
@@ -360,26 +361,38 @@ a {
 .related-notes h2 {
   margin: 0;
   color: var(--ink);
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 500;
   letter-spacing: 0;
 }
 
 .note-list-item h2 a,
-.note-back a,
 .related-notes a {
   transition: color 160ms ease;
 }
 
 .note-list-item h2 a:hover,
-.note-back a:hover,
 .related-notes a:hover {
   color: var(--accent);
 }
 
-.note-list-item p,
+.note-list-item p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.note-header {
+  margin-bottom: 1rem;
+}
+
+.note-header h1 {
+  max-width: 42ch;
+}
+
 .note-prose p {
-  margin: 0.7rem 0 0;
+  margin: 0 0 0.95rem;
   color: var(--ink);
   font-size: 0.98rem;
   line-height: 1.6;
@@ -389,8 +402,8 @@ a {
   color: var(--accent);
 }
 
-.note-prose p:first-child {
-  margin-top: 1.4rem;
+.note-prose p:last-child {
+  margin-bottom: 0;
 }
 
 .related-photos,
@@ -440,12 +453,6 @@ a {
 
 .related-notes time {
   margin: 0;
-}
-
-.note-back {
-  margin: 2rem 0 0;
-  color: var(--muted);
-  font-size: 0.9rem;
 }
 
 .photo-page {
