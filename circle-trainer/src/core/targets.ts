@@ -73,6 +73,20 @@ function randomCenter(random: RandomSource, viewport: ViewportSize, margin: numb
   };
 }
 
+function practicalSizeMm(
+  random: RandomSource,
+  bands: ReadonlyArray<{ weight: number; minimumMm: number; maximumMm: number }>,
+): number {
+  const roll = random();
+  let cumulative = 0;
+  for (const band of bands) {
+    cumulative += band.weight;
+    if (roll <= cumulative) return randomBetween(random, band.minimumMm, band.maximumMm);
+  }
+  const last = bands.at(-1)!;
+  return randomBetween(random, last.minimumMm, last.maximumMm);
+}
+
 function candidateTarget(type: ExerciseType, viewport: ViewportSize, cssPxPerMm: number, random: RandomSource, margin: number): TargetDefinition {
   const drawableWidth = viewport.width - margin * 2;
   const drawableHeight = viewport.height - margin * 2;
@@ -98,23 +112,35 @@ function candidateTarget(type: ExerciseType, viewport: ViewportSize, cssPxPerMm:
     return { kind: "ARC", centerCss, radiusMm: radiusCss / cssPxPerMm, startAngleRad: theta, sweepRad };
   }
   if (type === "CIRCLE") {
-    const radiusCss = randomBetween(random, shortSide * 0.19, shortSide * 0.39);
-    return { kind: "CIRCLE", centerCss, radiusMm: radiusCss / cssPxPerMm, landmarkPhaseRad: theta };
+    const diameterMm = practicalSizeMm(random, [
+      { weight: 0.35, minimumMm: 18, maximumMm: 28 },
+      { weight: 0.45, minimumMm: 28, maximumMm: 42 },
+      { weight: 0.2, minimumMm: 42, maximumMm: 58 },
+    ]);
+    return { kind: "CIRCLE", centerCss, radiusMm: diameterMm / 2, landmarkPhaseRad: theta };
   }
   if (type === "ELLIPSE") {
-    const aCss = randomBetween(random, shortSide * 0.21, shortSide * 0.39);
+    const majorDiameterMm = practicalSizeMm(random, [
+      { weight: 0.3, minimumMm: 24, maximumMm: 36 },
+      { weight: 0.5, minimumMm: 36, maximumMm: 50 },
+      { weight: 0.2, minimumMm: 50, maximumMm: 64 },
+    ]);
     const ratio = randomBetween(random, 0.4, 0.78);
-    return { kind: "ELLIPSE", centerCss, aMm: aCss / cssPxPerMm, bMm: aCss * ratio / cssPxPerMm, thetaRad: theta };
+    return { kind: "ELLIPSE", centerCss, aMm: majorDiameterMm / 2, bMm: majorDiameterMm * ratio / 2, thetaRad: theta };
   }
-  const lengthCss = randomBetween(random, shortSide * 0.65, longSide * 0.88);
-  const baseAmplitudeCss = randomBetween(random, lengthCss * 0.15, lengthCss * 0.26);
+  const lengthMm = practicalSizeMm(random, [
+    { weight: 0.3, minimumMm: 30, maximumMm: 42 },
+    { weight: 0.5, minimumMm: 42, maximumMm: 55 },
+    { weight: 0.2, minimumMm: 55, maximumMm: 70 },
+  ]);
+  const baseAmplitudeMm = randomBetween(random, lengthMm * 0.16, lengthMm * 0.24);
   const balance = randomBetween(random, 0.78, 1.22);
   return {
     kind: "S_CURVE",
     centerCss,
-    lengthMm: lengthCss / cssPxPerMm,
-    amplitudeStartMm: baseAmplitudeCss / cssPxPerMm,
-    amplitudeEndMm: baseAmplitudeCss * balance / cssPxPerMm,
+    lengthMm,
+    amplitudeStartMm: baseAmplitudeMm,
+    amplitudeEndMm: baseAmplitudeMm * balance,
     thetaRad: theta,
   };
 }
@@ -124,9 +150,13 @@ function fallbackTarget(type: ExerciseType, viewport: ViewportSize, cssPxPerMm: 
   const span = Math.min(viewport.width, viewport.height) * 0.62;
   if (type === "LINE") return { kind: "LINE", aCss: { x: centerCss.x - span / 2, y: centerCss.y }, bCss: { x: centerCss.x + span / 2, y: centerCss.y }, lengthMm: span / cssPxPerMm };
   if (type === "ARC") return { kind: "ARC", centerCss: { x: centerCss.x, y: centerCss.y + span * 0.2 }, radiusMm: span * 0.42 / cssPxPerMm, startAngleRad: Math.PI * 1.15, sweepRad: Math.PI * 0.7 };
-  if (type === "CIRCLE") return { kind: "CIRCLE", centerCss, radiusMm: span * 0.5 / cssPxPerMm, landmarkPhaseRad: 0 };
-  if (type === "ELLIPSE") return { kind: "ELLIPSE", centerCss, aMm: span * 0.5 / cssPxPerMm, bMm: span * 0.28 / cssPxPerMm, thetaRad: 0 };
-  return { kind: "S_CURVE", centerCss, lengthMm: span / cssPxPerMm, amplitudeStartMm: span * 0.18 / cssPxPerMm, amplitudeEndMm: span * 0.18 / cssPxPerMm, thetaRad: 0 };
+  if (type === "CIRCLE") return { kind: "CIRCLE", centerCss, radiusMm: Math.min(17, span / cssPxPerMm / 2), landmarkPhaseRad: 0 };
+  if (type === "ELLIPSE") {
+    const majorDiameterMm = Math.min(42, span / cssPxPerMm);
+    return { kind: "ELLIPSE", centerCss, aMm: majorDiameterMm / 2, bMm: majorDiameterMm * 0.29, thetaRad: 0 };
+  }
+  const lengthMm = Math.min(50, span / cssPxPerMm);
+  return { kind: "S_CURVE", centerCss, lengthMm, amplitudeStartMm: lengthMm * 0.19, amplitudeEndMm: lengthMm * 0.19, thetaRad: 0 };
 }
 
 export function generateTarget(

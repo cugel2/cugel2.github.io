@@ -21,7 +21,7 @@ The app is self-contained under `/circle-trainer/`. It does not add analytics, c
 - **Ellipses:** four major/minor-axis checkpoints
 - **S curves:** start, two opposing shoulders, and end
 
-All targets vary in physical size, orientation, and position while remaining inside the calibrated drawing area. Either drawing direction is accepted. Circles and ellipses are single-loop exercises in this version.
+All targets vary in physical size, orientation, and position while remaining inside the calibrated drawing area. Circles are 18–58 mm across, ellipse major axes are 24–64 mm, and S curves are 30–70 mm long; each range is weighted toward its practical middle rather than page-filling extremes. Either drawing direction is accepted. Circles and ellipses are single-loop exercises in this version.
 
 ## Practice modes
 

@@ -23,7 +23,7 @@ const VERSIONS: Record<ExerciseType, { metric: string; scoring: string }> = {
   ARC: { metric: "arc-2", scoring: "arc-1" },
   CIRCLE: { metric: "circle-1", scoring: "circle-1" },
   ELLIPSE: { metric: "ellipse-1", scoring: "ellipse-1" },
-  S_CURVE: { metric: "s-curve-1", scoring: "s-curve-1" },
+  S_CURVE: { metric: "s-curve-2", scoring: "s-curve-1" },
 };
 
 export function versionsForExercise(type: ExerciseType): { metric: string; scoring: string } {
@@ -314,7 +314,7 @@ function analyseSCurve(stroke: RawStroke, target: SCurveTarget, cssPxPerMm: numb
   const failure = baseFailure(stroke, pathLengthMm, expectedLength)
     ?? (progression < 0.72 ? "Incomplete S curve — pass through all four points" : undefined)
     ?? (transitions < 1 ? "Wrong curve — make two opposing lobes" : undefined)
-    ?? (backtrackingFraction > 0.14 || pathLengthRatio > 1.42 || transitions > 8 ? "Too corrective — commit to the next one" : undefined);
+    ?? (backtrackingFraction > 0.14 || pathLengthRatio > 1.42 ? "Too corrective — commit to the next one" : undefined);
   return failure ? { metrics, executionPassed: false, executionReason: failure } : { metrics, executionPassed: true, accuracyScore: score(normalizedError, 0.055) };
 }
 

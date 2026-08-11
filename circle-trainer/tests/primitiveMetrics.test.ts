@@ -123,6 +123,17 @@ describe("open primitive metrics", () => {
     });
     expect(analyseTargetStroke(strokeFromPoints(cCurve), sCurve, 1).executionPassed).toBe(false);
   });
+
+  it("does not mistake small progressive S-curve wobble for correction", () => {
+    const wobbly = sampleTargetPathCss(sCurve, 1, 260).map((point, index) => ({
+      x: point.x + Math.sin(index * 0.72) * 0.55,
+      y: point.y + Math.cos(index * 0.67) * 0.55,
+    }));
+    const result = analyseTargetStroke(strokeFromPoints(wobbly), sCurve, 1);
+    expect(result.metrics).toHaveProperty("curvatureSignTransitions");
+    expect("curvatureSignTransitions" in result.metrics ? result.metrics.curvatureSignTransitions : 0).toBeGreaterThan(8);
+    expect(result.executionPassed).toBe(true);
+  });
 });
 
 describe("error monotonicity and correction gates", () => {

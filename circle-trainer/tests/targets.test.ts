@@ -27,20 +27,32 @@ describe("target generation", () => {
     }
   });
 
-  it("includes medium-small and large circle and ellipse targets", () => {
+  it("uses practical physical sizes for common drawing movements", () => {
     const viewport = { width: 810, height: 804 };
-    const shortSide = Math.min(viewport.width, viewport.height);
-    for (const type of ["CIRCLE", "ELLIPSE"] as const) {
-      const diameterFractions = Array.from({ length: 160 }, (_, index) => {
+    const sizes = {
+      CIRCLE: [] as number[],
+      ELLIPSE: [] as number[],
+      S_CURVE: [] as number[],
+    };
+    for (const type of ["CIRCLE", "ELLIPSE", "S_CURVE"] as const) {
+      for (let index = 0; index < 400; index += 1) {
         const target = generateTarget(type, viewport, 5.23, "size-range-seed", index);
-        const diameterCss = target.kind === "CIRCLE"
-          ? target.radiusMm * 5.23 * 2
-          : target.kind === "ELLIPSE" ? target.aMm * 5.23 * 2 : 0;
-        return diameterCss / shortSide;
-      });
-      expect(Math.min(...diameterFractions)).toBeLessThan(0.48);
-      expect(Math.max(...diameterFractions)).toBeGreaterThan(0.62);
-      expect(Math.min(...diameterFractions)).toBeGreaterThan(0.3);
+        if (target.kind === "CIRCLE") sizes.CIRCLE.push(target.radiusMm * 2);
+        if (target.kind === "ELLIPSE") sizes.ELLIPSE.push(target.aMm * 2);
+        if (target.kind === "S_CURVE") sizes.S_CURVE.push(target.lengthMm);
+      }
     }
+    expect(Math.min(...sizes.CIRCLE)).toBeGreaterThanOrEqual(18);
+    expect(Math.max(...sizes.CIRCLE)).toBeLessThanOrEqual(58);
+    expect(sizes.CIRCLE.sort((a, b) => a - b)[200]).toBeGreaterThan(28);
+    expect(sizes.CIRCLE[200]).toBeLessThan(42);
+    expect(Math.min(...sizes.ELLIPSE)).toBeGreaterThanOrEqual(24);
+    expect(Math.max(...sizes.ELLIPSE)).toBeLessThanOrEqual(64);
+    expect(sizes.ELLIPSE.sort((a, b) => a - b)[200]).toBeGreaterThan(36);
+    expect(sizes.ELLIPSE[200]).toBeLessThan(50);
+    expect(Math.min(...sizes.S_CURVE)).toBeGreaterThanOrEqual(30);
+    expect(Math.max(...sizes.S_CURVE)).toBeLessThanOrEqual(70);
+    expect(sizes.S_CURVE.sort((a, b) => a - b)[200]).toBeGreaterThan(42);
+    expect(sizes.S_CURVE[200]).toBeLessThan(55);
   });
 });
