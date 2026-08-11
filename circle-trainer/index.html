@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#f2f0e9" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Circle Trainer" />
+    <meta name="description" content="A private, local-first Apple Pencil input trainer." />
+    <title>Circle Trainer</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+    <script type="module" crossorigin src="./assets/app.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/app.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <h1>Circle Trainer</h1>
+          <p id="statusText" aria-live="polite">Ready for Apple Pencil</p>
+        </div>
+        <nav class="toolbar" aria-label="App controls">
+          <button type="button" class="text-button" id="clearCanvasButton">Clear</button>
+          <button type="button" class="text-button" id="calibrateButton">Calibrate</button>
+          <button type="button" class="text-button" id="diagnosticsButton">Diagnostics</button>
+          <button type="button" class="primary-button" id="dataButton">Data</button>
+        </nav>
+      </header>
+
+      <section class="drawing-stage" aria-label="Apple Pencil drawing surface">
+        <canvas id="drawingCanvas"></canvas>
+        <div class="empty-state" id="emptyState">
+          <p class="eyebrow">Input test</p>
+          <p>Make a few large, quick marks with Apple Pencil.</p>
+          <span>Your strokes are drawn exactly as Safari reports them. Finger touches are ignored.</span>
+        </div>
+        <div class="corner-note" id="scaleStatus">Scale not calibrated</div>
+      </section>
+
+      <footer class="hud" aria-label="Current session information">
+        <div><span>Strokes</span><strong id="strokeCount">0</strong></div>
+        <div><span>Last samples</span><strong id="sampleCount">—</strong></div>
+        <div><span>Sample rate</span><strong id="sampleRate">—</strong></div>
+        <div><span>Pointer</span><strong id="pointerType">—</strong></div>
+      </footer>
+    </main>
+
+    <dialog id="calibrationDialog" class="sheet calibration-sheet">
+      <form method="dialog">
+        <div class="sheet-header">
+          <div>
+            <p class="eyebrow">Physical scale</p>
+            <h2>Ruler calibration</h2>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="Close calibration">×</button>
+        </div>
+        <p class="sheet-intro">Place a physical ruler against the screen. Adjust the line until it measures exactly 100 mm.</p>
+        <div class="ruler-workspace">
+          <div class="ruler-line" id="rulerLine" aria-hidden="true"><i></i><i></i></div>
+          <strong>100 mm</strong>
+        </div>
+        <label class="range-label" for="rulerSlider">
+          <span>Line length</span>
+          <output id="rulerOutput">— px</output>
+        </label>
+        <input type="range" id="rulerSlider" min="180" max="900" step="1" />
+        <div class="sheet-actions">
+          <button type="button" class="secondary-button" id="resetCalibrationButton">Reset</button>
+          <button type="button" class="primary-button" id="saveCalibrationButton">Save calibration</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="diagnosticsDialog" class="sheet diagnostics-sheet">
+      <form method="dialog">
+        <div class="sheet-header">
+          <div>
+            <p class="eyebrow">Runtime report</p>
+            <h2>Diagnostics</h2>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="Close diagnostics">×</button>
+        </div>
+        <p class="sheet-intro">These values show what this browser actually reports. They are included in exported data.</p>
+        <dl class="diagnostic-grid" id="diagnosticGrid"></dl>
+        <div class="sheet-actions">
+          <button type="button" class="secondary-button" id="copyDiagnosticsButton">Copy report</button>
+          <button type="button" class="primary-button" id="exportDiagnosticsButton">Export diagnostics</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="dataDialog" class="sheet data-sheet">
+      <form method="dialog">
+        <div class="sheet-header">
+          <div>
+            <p class="eyebrow">Stored on this device</p>
+            <h2>Practice data</h2>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="Close practice data">×</button>
+        </div>
+        <p class="sheet-intro" id="dataSummary">No strokes saved yet.</p>
+        <div class="privacy-note">
+          <strong>Local only</strong>
+          <span>Nothing is uploaded. Export a JSON copy before clearing Safari website data.</span>
+        </div>
+        <div class="sheet-actions split-actions">
+          <button type="button" class="danger-button" id="deleteDataButton">Delete all data</button>
+          <button type="button" class="primary-button" id="exportDataButton">Export JSON</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
