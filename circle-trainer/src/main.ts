@@ -1,18 +1,34 @@
 import "./styles.css";
 
+import { rawSampleIdentity } from "./core/input";
+import { analyseLineStroke, METRIC_VERSION, SCORING_VERSION, type LineAnalysis } from "./core/lineMetrics";
 import type {
   DeviceSnapshot,
   ExportBundle,
+  LineTarget,
+  LineTrialRecord,
   PhysicalCalibration,
   RawSample,
   RawStroke,
   StrokeEventType,
 } from "./core/types";
-import { clearStrokes, getCalibration, getStrokes, saveCalibration, saveStroke } from "./storage";
+import {
+  clearStrokes,
+  clearTrials,
+  getCalibration,
+  getStrokes,
+  getTrials,
+  saveCalibration,
+  saveStroke,
+  saveTrial,
+} from "./storage";
 
-const APP_VERSION = "0.1.0";
+const APP_VERSION = "0.2.0";
 const SCHEMA_VERSION = "1" as const;
+const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
+
+type TrialState = "PREPARING" | "READY" | "DRAWING" | "PROCESSING" | "FEEDBACK";
 
 function requiredElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -30,17 +46,20 @@ const context = (() => {
 const statusText = requiredElement<HTMLElement>("#statusText");
 const emptyState = requiredElement<HTMLElement>("#emptyState");
 const scaleStatus = requiredElement<HTMLElement>("#scaleStatus");
-const strokeCount = requiredElement<HTMLElement>("#strokeCount");
-const sampleCount = requiredElement<HTMLElement>("#sampleCount");
-const sampleRate = requiredElement<HTMLElement>("#sampleRate");
-const pointerType = requiredElement<HTMLElement>("#pointerType");
+const repCount = requiredElement<HTMLElement>("#repCount");
+const streakCount = requiredElement<HTMLElement>("#streakCount");
+const lastScore = requiredElement<HTMLElement>("#lastScore");
+const bestScore = requiredElement<HTMLElement>("#bestScore");
+const feedbackCard = requiredElement<HTMLElement>("#feedbackCard");
+const feedbackResult = requiredElement<HTMLElement>("#feedbackResult");
+const feedbackScore = requiredElement<HTMLElement>("#feedbackScore");
+const feedbackDetail = requiredElement<HTMLElement>("#feedbackDetail");
 const toast = requiredElement<HTMLElement>("#toast");
 
 const calibrationDialog = requiredElement<HTMLDialogElement>("#calibrationDialog");
 const rulerLine = requiredElement<HTMLElement>("#rulerLine");
 const rulerSlider = requiredElement<HTMLInputElement>("#rulerSlider");
 const rulerOutput = requiredElement<HTMLOutputElement>("#rulerOutput");
-
 const diagnosticsDialog = requiredElement<HTMLDialogElement>("#diagnosticsDialog");
 const diagnosticGrid = requiredElement<HTMLElement>("#diagnosticGrid");
 const dataDialog = requiredElement<HTMLDialogElement>("#dataDialog");
@@ -49,30 +68,39 @@ const dataSummary = requiredElement<HTMLElement>("#dataSummary");
 interface RuntimeDiagnostics {
   pointerEventCount: number;
   rawSampleCount: number;
-  exactDuplicateCount: number;
+  duplicateSampleCount: number;
+  reorderedSampleCount: number;
   ignoredTouchCount: number;
   pressureObserved: boolean;
   tiltObserved: boolean;
-  lastStroke: RawStroke | null;
 }
 
 const runtime: RuntimeDiagnostics = {
   pointerEventCount: 0,
   rawSampleCount: 0,
-  exactDuplicateCount: 0,
+  duplicateSampleCount: 0,
+  reorderedSampleCount: 0,
   ignoredTouchCount: 0,
   pressureObserved: false,
   tiltObserved: false,
-  lastStroke: null,
 };
 
 let calibration: PhysicalCalibration | null = null;
+let trialState: TrialState = "PREPARING";
+let target: LineTarget | null = null;
 let activePointerId: number | null = null;
 let activeStroke: RawStroke | null = null;
-let displayedStrokes: RawStroke[] = [];
+let activeSampleKeys = new Set<string>();
+let completedStroke: RawStroke | null = null;
+let lastAnalysis: LineAnalysis | null = null;
+let sessionReps = 0;
+let sessionStreak = 0;
+let lifetimeBest: number | null = null;
 let savedStrokeCount = 0;
+let savedTrialCount = 0;
 let toastTimer: number | undefined;
 let touchNoticeShown = false;
+let hasPractisedBefore = false;
 
 function createId(): string {
   return typeof crypto.randomUUID === "function"
@@ -104,13 +132,15 @@ function setStatus(message: string): void {
   statusText.textContent = message;
 }
 
+function cssPxPerMm(): number {
+  return calibration?.cssPxPerMm ?? DEFAULT_CSS_PX_PER_MM;
+}
+
 function configureContext(): void {
-  context.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+  const dpr = window.devicePixelRatio || 1;
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
   context.lineCap = "round";
   context.lineJoin = "round";
-  context.lineWidth = 2.2;
-  context.strokeStyle = "#171817";
-  context.fillStyle = "#171817";
 }
 
 function resizeCanvas(): void {
@@ -123,32 +153,114 @@ function resizeCanvas(): void {
   configureRuler();
 }
 
-function drawDot(sample: RawSample): void {
+function drawLandmark(point: { x: number; y: number }): void {
   context.beginPath();
-  context.arc(sample.xCss, sample.yCss, context.lineWidth / 2, 0, Math.PI * 2);
+  context.arc(point.x, point.y, 6, 0, Math.PI * 2);
+  context.fillStyle = "#fffefa";
   context.fill();
-}
-
-function drawSegment(start: RawSample, end: RawSample): void {
-  context.beginPath();
-  context.moveTo(start.xCss, start.yCss);
-  context.lineTo(end.xCss, end.yCss);
+  context.lineWidth = 2;
+  context.strokeStyle = "#171717";
   context.stroke();
 }
 
-function drawStroke(stroke: RawStroke): void {
+function drawRawStroke(stroke: RawStroke): void {
   if (stroke.samples.length === 0) return;
-  drawDot(stroke.samples[0]);
+  context.strokeStyle = "#171717";
+  context.fillStyle = "#171717";
+  context.lineWidth = 2.2;
+  context.setLineDash([]);
+  context.beginPath();
+  context.arc(stroke.samples[0].xCss, stroke.samples[0].yCss, context.lineWidth / 2, 0, Math.PI * 2);
+  context.fill();
+  if (stroke.samples.length < 2) return;
+  context.beginPath();
+  context.moveTo(stroke.samples[0].xCss, stroke.samples[0].yCss);
   for (let index = 1; index < stroke.samples.length; index += 1) {
-    drawSegment(stroke.samples[index - 1], stroke.samples[index]);
+    context.lineTo(stroke.samples[index].xCss, stroke.samples[index].yCss);
   }
+  context.stroke();
+}
+
+function drawIdealLine(lineTarget: LineTarget): void {
+  context.save();
+  context.beginPath();
+  context.moveTo(lineTarget.aCss.x, lineTarget.aCss.y);
+  context.lineTo(lineTarget.bCss.x, lineTarget.bCss.y);
+  context.strokeStyle = "#1557c0";
+  context.lineWidth = 2;
+  context.setLineDash([8, 6]);
+  context.stroke();
+  context.restore();
 }
 
 function redrawAll(): void {
   const bounds = canvas.getBoundingClientRect();
   context.clearRect(0, 0, bounds.width, bounds.height);
-  displayedStrokes.forEach(drawStroke);
-  if (activeStroke) drawStroke(activeStroke);
+  if (!target) return;
+  if (activeStroke) drawRawStroke(activeStroke);
+  else if (completedStroke) drawRawStroke(completedStroke);
+  if (trialState === "FEEDBACK") drawIdealLine(target);
+  drawLandmark(target.aCss);
+  drawLandmark(target.bCss);
+}
+
+function randomBetween(minimum: number, maximum: number): number {
+  return minimum + Math.random() * (maximum - minimum);
+}
+
+function targetFits(candidate: LineTarget, width: number, height: number, margin: number): boolean {
+  return [candidate.aCss, candidate.bCss].every((point) => (
+    point.x >= margin && point.x <= width - margin && point.y >= margin && point.y <= height - margin
+  ));
+}
+
+function generateLineTarget(): LineTarget {
+  const bounds = canvas.getBoundingClientRect();
+  const margin = Math.min(72, Math.max(34, Math.min(bounds.width, bounds.height) * 0.09));
+  const scale = cssPxPerMm();
+  const availableLongSideMm = Math.max(bounds.width, bounds.height) / scale;
+  const maximumMm = Math.max(55, Math.min(180, availableLongSideMm * 0.72));
+  const minimumMm = Math.min(80, maximumMm * 0.72);
+
+  for (let attempt = 0; attempt < 160; attempt += 1) {
+    const lengthMm = randomBetween(minimumMm, maximumMm);
+    const lengthCss = lengthMm * scale;
+    const angle = randomBetween(0, Math.PI * 2);
+    const center = {
+      x: randomBetween(margin, bounds.width - margin),
+      y: randomBetween(margin, bounds.height - margin),
+    };
+    const halfX = Math.cos(angle) * lengthCss / 2;
+    const halfY = Math.sin(angle) * lengthCss / 2;
+    const candidate: LineTarget = {
+      kind: "LINE",
+      aCss: { x: center.x - halfX, y: center.y - halfY },
+      bCss: { x: center.x + halfX, y: center.y + halfY },
+      lengthMm,
+    };
+    if (targetFits(candidate, bounds.width, bounds.height, margin)) return candidate;
+  }
+
+  const y = bounds.height / 2;
+  const aCss = { x: margin, y };
+  const bCss = { x: bounds.width - margin, y };
+  return { kind: "LINE", aCss, bCss, lengthMm: (bCss.x - aCss.x) / scale };
+}
+
+function beginNewTrial(): void {
+  trialState = "PREPARING";
+  activePointerId = null;
+  activeStroke = null;
+  activeSampleKeys = new Set<string>();
+  completedStroke = null;
+  lastAnalysis = null;
+  feedbackCard.hidden = true;
+  feedbackCard.classList.remove("failed");
+  target = generateLineTarget();
+  trialState = "READY";
+  setStatus("Draw one committed line between the points");
+  emptyState.classList.toggle("hidden", hasPractisedBefore || sessionReps > 0);
+  redrawAll();
 }
 
 function sourceEvents(event: PointerEvent): PointerEvent[] {
@@ -177,26 +289,29 @@ function eventToSample(event: PointerEvent, sourceEventType: StrokeEventType): R
 function appendPointerSamples(event: PointerEvent, sourceEventType: StrokeEventType): void {
   if (!activeStroke) return;
   runtime.pointerEventCount += 1;
+  let requiresSort = false;
 
   for (const sourceEvent of sourceEvents(event)) {
     const sample = eventToSample(sourceEvent, sourceEventType);
-    const previous = activeStroke.samples.at(-1);
-    if (previous
-      && previous.xCss === sample.xCss
-      && previous.yCss === sample.yCss
-      && previous.tMs === sample.tMs) {
-      runtime.exactDuplicateCount += 1;
+    const identity = rawSampleIdentity(sample);
+    if (activeSampleKeys.has(identity)) {
+      runtime.duplicateSampleCount += 1;
       continue;
     }
-
+    activeSampleKeys.add(identity);
+    const previous = activeStroke.samples.at(-1);
+    if (previous && sample.tMs < previous.tMs) requiresSort = true;
     activeStroke.samples.push(sample);
     runtime.rawSampleCount += 1;
     runtime.pressureObserved ||= (sample.pressure ?? 0) > 0;
     runtime.tiltObserved ||= (sample.tiltX ?? 0) !== 0 || (sample.tiltY ?? 0) !== 0;
-
-    if (previous) drawSegment(previous, sample);
-    else drawDot(sample);
   }
+
+  if (requiresSort) {
+    activeStroke.samples.sort((a, b) => a.tMs - b.tMs);
+    runtime.reorderedSampleCount += 1;
+  }
+  redrawAll();
 }
 
 function acceptsDrawingPointer(event: PointerEvent): boolean {
@@ -212,10 +327,11 @@ function handlePointerDown(event: PointerEvent): void {
     }
     return;
   }
-  if (activePointerId !== null) return;
+  if (trialState !== "READY" || activePointerId !== null) return;
 
   event.preventDefault();
   activePointerId = event.pointerId;
+  activeSampleKeys = new Set<string>();
   activeStroke = {
     id: createId(),
     pointerType: event.pointerType,
@@ -223,71 +339,112 @@ function handlePointerDown(event: PointerEvent): void {
     cancelled: false,
     samples: [],
   };
+  trialState = "DRAWING";
   try {
     canvas.setPointerCapture(event.pointerId);
   } catch {
-    // Capture can fail if the pointer ended between dispatch and this handler.
+    // The pointer may already have ended.
   }
-
   emptyState.classList.add("hidden");
-  pointerType.textContent = event.pointerType === "pen" ? "Pencil" : "Mouse";
-  setStatus("Capturing raw stroke");
+  setStatus("Drawing — commit to the movement");
   appendPointerSamples(event, "pointerdown");
 }
 
 function handlePointerMove(event: PointerEvent): void {
-  if (event.pointerId !== activePointerId) return;
+  if (event.pointerId !== activePointerId || trialState !== "DRAWING") return;
   event.preventDefault();
   appendPointerSamples(event, "pointermove");
 }
 
+function updatePracticeHud(analysis: LineAnalysis): void {
+  sessionReps += 1;
+  repCount.textContent = sessionReps.toLocaleString();
+  if (analysis.executionPassed) {
+    sessionStreak += 1;
+    const score = analysis.accuracyScore ?? 0;
+    lastScore.textContent = String(score);
+    lifetimeBest = lifetimeBest === null ? score : Math.max(lifetimeBest, score);
+    bestScore.textContent = String(lifetimeBest);
+  } else {
+    sessionStreak = 0;
+    lastScore.textContent = "—";
+  }
+  streakCount.textContent = String(sessionStreak);
+}
+
+function showFeedback(analysis: LineAnalysis): void {
+  feedbackCard.hidden = false;
+  if (analysis.executionPassed) {
+    feedbackResult.textContent = "Committed stroke ✓";
+    feedbackScore.textContent = `Accuracy ${analysis.accuracyScore ?? 0}`;
+    feedbackDetail.textContent = `RMS error ${analysis.metrics.rmsOrthogonalDeviationMm.toFixed(1)} mm · endpoints ${analysis.metrics.endpointMeanErrorMm.toFixed(1)} mm`;
+    setStatus("Feedback shown — ideal line in blue");
+  } else {
+    feedbackCard.classList.add("failed");
+    feedbackResult.textContent = "Execution not scored";
+    feedbackScore.textContent = analysis.executionReason ?? "Try another line";
+    feedbackDetail.textContent = "Accuracy is hidden when the movement is too corrective.";
+    setStatus("No accuracy score — commit to the next one");
+  }
+}
+
 async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<void> {
-  if (event.pointerId !== activePointerId || !activeStroke) return;
+  if (event.pointerId !== activePointerId || !activeStroke || !target) return;
   event.preventDefault();
   if (!cancelled) appendPointerSamples(event, "pointerup");
+  trialState = "PROCESSING";
 
-  const completed = activeStroke;
-  completed.cancelled = cancelled;
-  completed.completedAtEpochMs = Date.now();
-  runtime.lastStroke = completed;
-  displayedStrokes.push(completed);
+  const stroke = activeStroke;
+  stroke.cancelled = cancelled;
+  stroke.completedAtEpochMs = Date.now();
+  completedStroke = stroke;
   activeStroke = null;
   activePointerId = null;
 
-  updateLastStrokeHud(completed);
-  setStatus(cancelled ? "Stroke interrupted — ready again" : "Raw stroke saved — ready again");
-
-  try {
-    await saveStroke(completed);
-    savedStrokeCount += 1;
-    strokeCount.textContent = savedStrokeCount.toLocaleString();
-  } catch {
-    showToast("This stroke could not be saved locally");
-  }
-}
-
-function updateLastStrokeHud(stroke: RawStroke): void {
-  const samples = stroke.samples;
-  sampleCount.textContent = samples.length.toLocaleString();
-  pointerType.textContent = stroke.pointerType === "pen" ? "Pencil" : stroke.pointerType;
-  if (samples.length < 2) {
-    sampleRate.textContent = "—";
+  if (cancelled) {
+    setStatus("Stroke interrupted — new line ready");
+    try {
+      await saveStroke(stroke);
+      savedStrokeCount += 1;
+    } catch {
+      showToast("Interrupted stroke could not be saved");
+    }
+    beginNewTrial();
     return;
   }
-  const duration = samples.at(-1)!.tMs - samples[0].tMs;
-  sampleRate.textContent = duration > 0
-    ? `${Math.round(((samples.length - 1) * 1000) / duration)} Hz`
-    : "—";
-}
 
-function clearCanvas(): void {
-  displayedStrokes = [];
-  activeStroke = null;
-  activePointerId = null;
-  emptyState.classList.remove("hidden");
-  configureContext();
-  redrawAll();
-  setStatus("Canvas cleared — saved data kept");
+  try {
+    const analysis = analyseLineStroke(stroke, target, cssPxPerMm());
+    lastAnalysis = analysis;
+    const trial: LineTrialRecord = {
+      id: createId(),
+      appVersion: APP_VERSION,
+      metricVersion: METRIC_VERSION,
+      scoringVersion: SCORING_VERSION,
+      createdAtEpochMs: Date.now(),
+      target,
+      rawStroke: stroke,
+      calibrationId: calibration?.id ?? null,
+      derived: analysis,
+    };
+    await Promise.all([saveStroke(stroke), saveTrial(trial)]);
+    savedStrokeCount += 1;
+    savedTrialCount += 1;
+    hasPractisedBefore = true;
+    updatePracticeHud(analysis);
+    trialState = "FEEDBACK";
+    showFeedback(analysis);
+    redrawAll();
+  } catch {
+    trialState = "FEEDBACK";
+    feedbackCard.hidden = false;
+    feedbackCard.classList.add("failed");
+    feedbackResult.textContent = "Couldn’t evaluate this stroke";
+    feedbackScore.textContent = "Try another line";
+    feedbackDetail.textContent = "The raw stroke was kept for diagnostics.";
+    setStatus("Evaluation failed — raw stroke preserved");
+    redrawAll();
+  }
 }
 
 function configureRuler(): void {
@@ -318,17 +475,16 @@ async function persistCalibration(): Promise<void> {
     updateScaleStatus();
     calibrationDialog.close();
     showToast("100 mm calibration saved");
+    beginNewTrial();
   } catch {
     showToast("Calibration could not be saved");
   }
 }
 
 function updateScaleStatus(): void {
-  if (!calibration) {
-    scaleStatus.textContent = "Scale not calibrated";
-    return;
-  }
-  scaleStatus.textContent = `Calibrated · ${calibration.cssPxPerMm.toFixed(2)} px/mm`;
+  scaleStatus.textContent = calibration
+    ? `Calibrated · ${calibration.cssPxPerMm.toFixed(2)} px/mm`
+    : "Scale provisional · calibrate with a ruler";
 }
 
 function timestampHistogram(stroke: RawStroke | null): string {
@@ -347,16 +503,12 @@ function timestampHistogram(stroke: RawStroke | null): string {
 
 function buildDiagnosticReport(): Record<string, string | number | boolean> {
   const device = getDeviceSnapshot();
-  const last = runtime.lastStroke;
-  const duration = last && last.samples.length > 1
-    ? last.samples.at(-1)!.tMs - last.samples[0].tMs
-    : 0;
-  const rate = duration > 0 && last
-    ? Math.round(((last.samples.length - 1) * 1000) / duration)
-    : 0;
-
+  const stroke = completedStroke;
+  const duration = stroke && stroke.samples.length > 1 ? stroke.samples.at(-1)!.tMs - stroke.samples[0].tMs : 0;
+  const rate = duration > 0 && stroke ? Math.round(((stroke.samples.length - 1) * 1000) / duration) : 0;
   return {
     "App version": APP_VERSION,
+    "Metric version": METRIC_VERSION,
     "User agent": device.userAgent,
     "Viewport (CSS px)": `${device.viewportWidthCssPx} × ${device.viewportHeightCssPx}`,
     "Device pixel ratio": device.devicePixelRatio,
@@ -364,15 +516,17 @@ function buildDiagnosticReport(): Record<string, string | number | boolean> {
     "Coalesced events API": device.coalescedEvents,
     "Pressure observed": runtime.pressureObserved,
     "Tilt observed": runtime.tiltObserved,
-    "Active pointer": activeStroke?.pointerType ?? last?.pointerType ?? "None",
-    "Last stroke samples": last?.samples.length ?? 0,
-    "Last raw sample rate": rate ? `${rate} Hz` : "No stroke captured",
-    "Last stroke duration": duration ? `${Math.round(duration)} ms` : "No stroke captured",
-    "Timestamp delta histogram (ms)": timestampHistogram(last),
-    "Exact duplicate samples skipped": runtime.exactDuplicateCount,
+    "Last pointer": stroke?.pointerType ?? "None",
+    "Last unique samples": stroke?.samples.length ?? 0,
+    "Last unique sample rate": rate ? `${rate} Hz` : "No stroke captured",
+    "Timestamp delta histogram (ms)": timestampHistogram(stroke),
+    "Overlapping samples removed": runtime.duplicateSampleCount,
+    "Out-of-order batches repaired": runtime.reorderedSampleCount,
     "Finger touches ignored": runtime.ignoredTouchCount,
     "Calibration": calibration ? `${calibration.cssPxPerMm.toFixed(4)} CSS px/mm` : "Not calibrated",
-    "Saved strokes": savedStrokeCount,
+    "Last RMS error": lastAnalysis ? `${lastAnalysis.metrics.rmsOrthogonalDeviationMm.toFixed(3)} mm` : "No scored trial",
+    "Saved input strokes": savedStrokeCount,
+    "Saved line trials": savedTrialCount,
   };
 }
 
@@ -403,13 +557,15 @@ function dateStamp(): string {
 
 async function exportAllData(): Promise<void> {
   try {
+    const [strokes, trials] = await Promise.all([getStrokes(), getTrials()]);
     const bundle: ExportBundle = {
       schemaVersion: SCHEMA_VERSION,
       appVersion: APP_VERSION,
       exportedAt: Date.now(),
       calibration,
       device: getDeviceSnapshot(),
-      strokes: await getStrokes(),
+      strokes,
+      trials,
     };
     downloadJson(`circle-trainer-${dateStamp()}.json`, bundle);
     showToast("JSON export created");
@@ -420,12 +576,13 @@ async function exportAllData(): Promise<void> {
 
 async function showDataDialog(): Promise<void> {
   try {
-    const strokes = await getStrokes();
+    const [strokes, trials] = await Promise.all([getStrokes(), getTrials()]);
     savedStrokeCount = strokes.length;
+    savedTrialCount = trials.length;
     const samples = strokes.reduce((total, stroke) => total + stroke.samples.length, 0);
-    dataSummary.textContent = strokes.length === 0
-      ? "No strokes saved yet."
-      : `${strokes.length.toLocaleString()} strokes and ${samples.toLocaleString()} raw samples are saved in this browser.`;
+    dataSummary.textContent = trials.length === 0
+      ? `${strokes.length.toLocaleString()} input-test strokes are saved. No line trials yet.`
+      : `${trials.length.toLocaleString()} line trials and ${samples.toLocaleString()} raw samples are saved in this browser.`;
   } catch {
     dataSummary.textContent = "Saved data could not be read in this browser.";
   }
@@ -433,18 +590,24 @@ async function showDataDialog(): Promise<void> {
 }
 
 async function deleteAllData(): Promise<void> {
-  const confirmed = window.confirm("Delete every saved stroke from this browser? This cannot be undone.");
+  const confirmed = window.confirm("Delete every saved stroke and trial from this browser? This cannot be undone.");
   if (!confirmed) return;
   try {
-    await clearStrokes();
+    await Promise.all([clearStrokes(), clearTrials()]);
     savedStrokeCount = 0;
-    strokeCount.textContent = "0";
-    displayedStrokes = [];
-    redrawAll();
-    emptyState.classList.remove("hidden");
-    dataSummary.textContent = "No strokes saved yet.";
+    savedTrialCount = 0;
+    sessionReps = 0;
+    sessionStreak = 0;
+    lifetimeBest = null;
+    hasPractisedBefore = false;
+    repCount.textContent = "0";
+    streakCount.textContent = "0";
+    lastScore.textContent = "—";
+    bestScore.textContent = "—";
+    dataSummary.textContent = "No practice trials saved yet.";
     dataDialog.close();
-    showToast("All stroke data deleted");
+    beginNewTrial();
+    showToast("All practice data deleted");
   } catch {
     showToast("Saved data could not be deleted");
   }
@@ -460,7 +623,8 @@ async function copyDiagnostics(): Promise<void> {
 }
 
 function wireControls(): void {
-  requiredElement<HTMLButtonElement>("#clearCanvasButton").addEventListener("click", clearCanvas);
+  requiredElement<HTMLButtonElement>("#newTrialButton").addEventListener("click", beginNewTrial);
+  requiredElement<HTMLButtonElement>("#nextTrialButton").addEventListener("click", beginNewTrial);
   requiredElement<HTMLButtonElement>("#calibrateButton").addEventListener("click", () => {
     configureRuler();
     calibrationDialog.showModal();
@@ -488,23 +652,30 @@ function wireControls(): void {
   canvas.addEventListener("pointerup", (event) => void finishStroke(event, false));
   canvas.addEventListener("pointercancel", (event) => void finishStroke(event, true));
   canvas.addEventListener("contextmenu", (event) => event.preventDefault());
-  window.addEventListener("resize", resizeCanvas);
+  window.addEventListener("resize", () => {
+    resizeCanvas();
+    if (trialState !== "DRAWING") beginNewTrial();
+  });
 }
 
 async function initialize(): Promise<void> {
   wireControls();
   resizeCanvas();
   try {
-    [calibration, savedStrokeCount] = await Promise.all([
-      getCalibration(),
-      getStrokes().then((strokes) => strokes.length),
-    ]);
+    const [storedCalibration, strokes, trials] = await Promise.all([getCalibration(), getStrokes(), getTrials()]);
+    calibration = storedCalibration;
+    savedStrokeCount = strokes.length;
+    savedTrialCount = trials.length;
+    hasPractisedBefore = trials.length > 0;
+    const scores = trials.flatMap((trial) => trial.derived.accuracyScore ?? []);
+    lifetimeBest = scores.length > 0 ? Math.max(...scores) : null;
+    bestScore.textContent = lifetimeBest === null ? "—" : String(lifetimeBest);
   } catch {
     showToast("Local storage is unavailable; drawing still works");
   }
   updateScaleStatus();
-  strokeCount.textContent = savedStrokeCount.toLocaleString();
   configureRuler();
+  beginNewTrial();
 
   if (new URLSearchParams(window.location.search).has("diagnostics") || window.location.hash === "#diagnostics") {
     renderDiagnostics();

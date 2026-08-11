@@ -26,6 +26,18 @@ export function cumulativeArcLength(points: readonly Point2[]): number[] {
   return lengths;
 }
 
+export function polylineLength(points: readonly Point2[]): number {
+  const lengths = cumulativeArcLength(points);
+  return lengths.at(-1) ?? 0;
+}
+
+export function wrapAngleRad(angle: number): number {
+  let wrapped = angle;
+  while (wrapped <= -Math.PI) wrapped += Math.PI * 2;
+  while (wrapped > Math.PI) wrapped -= Math.PI * 2;
+  return wrapped;
+}
+
 export function resampleByArcLength(points: readonly Point2[], count: number): Point2[] {
   if (!Number.isInteger(count) || count < 1) {
     throw new RangeError("count must be a positive integer");

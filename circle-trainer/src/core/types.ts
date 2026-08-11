@@ -28,6 +28,44 @@ export interface RawStroke {
   samples: RawSample[];
 }
 
+export interface LineTarget {
+  kind: "LINE";
+  aCss: Point2;
+  bCss: Point2;
+  lengthMm: number;
+}
+
+export interface LineMetrics {
+  endpointStartErrorMm: number;
+  endpointEndErrorMm: number;
+  endpointMeanErrorMm: number;
+  rmsOrthogonalDeviationMm: number;
+  maxOrthogonalDeviationMm: number;
+  pathLengthMm: number;
+  pathEfficiency: number;
+  totalTurningRad: number;
+  durationMs: number;
+  meanSpeedMmS: number;
+  normalizedError: number;
+}
+
+export interface LineTrialRecord {
+  id: string;
+  appVersion: string;
+  metricVersion: string;
+  scoringVersion: string;
+  createdAtEpochMs: number;
+  target: LineTarget;
+  rawStroke: RawStroke;
+  calibrationId: string | null;
+  derived: {
+    metrics: LineMetrics;
+    executionPassed: boolean;
+    executionReason?: string;
+    accuracyScore?: number;
+  };
+}
+
 export interface PhysicalCalibration {
   id: string;
   cssPxPerMm: number;
@@ -53,4 +91,5 @@ export interface ExportBundle {
   calibration: PhysicalCalibration | null;
   device: DeviceSnapshot;
   strokes: RawStroke[];
+  trials: LineTrialRecord[];
 }

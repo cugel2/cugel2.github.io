@@ -327,8 +327,65 @@ a {
 }
 
 .notes-page,
-.note-page {
+.note-page,
+.tools-page {
   max-width: 60ch;
+}
+
+.tools-intro {
+  margin-bottom: 2.4rem;
+}
+
+.tools-intro h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.tools-intro p {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.tools-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.tool-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.5rem;
+  align-items: start;
+  padding: 1.35rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.tool-item h2 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 500;
+}
+
+.tool-item p {
+  margin: 0.42rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.tool-item-link {
+  color: var(--accent);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.tool-item-link:hover,
+.tool-item-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .notes-list {

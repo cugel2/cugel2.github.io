@@ -1,7 +1,7 @@
 {
   "name": "Circle Trainer",
   "short_name": "Circles",
-  "description": "A local-first Apple Pencil motor practice tool.",
+  "description": "Apple Pencil exercises for practising large, committed drawing movements.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

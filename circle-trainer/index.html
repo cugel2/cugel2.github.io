@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Circle Trainer" />
-    <meta name="description" content="A private, local-first Apple Pencil input trainer." />
+    <meta name="description" content="Apple Pencil exercises for practising large, committed drawing movements." />
     <title>Circle Trainer</title>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
@@ -18,11 +18,12 @@
     <main class="app-shell">
       <header class="topbar">
         <div class="brand-block">
+          <p class="app-kicker"><a href="/tools/">John Braybrooke / Tools</a></p>
           <h1>Circle Trainer</h1>
-          <p id="statusText" aria-live="polite">Ready for Apple Pencil</p>
+          <p id="statusText" aria-live="polite">Preparing a line</p>
         </div>
         <nav class="toolbar" aria-label="App controls">
-          <button type="button" class="text-button" id="clearCanvasButton">Clear</button>
+          <button type="button" class="text-button" id="newTrialButton">New line</button>
           <button type="button" class="text-button" id="calibrateButton">Calibrate</button>
           <button type="button" class="text-button" id="diagnosticsButton">Diagnostics</button>
           <button type="button" class="primary-button" id="dataButton">Data</button>
@@ -32,18 +33,24 @@
       <section class="drawing-stage" aria-label="Apple Pencil drawing surface">
         <canvas id="drawingCanvas"></canvas>
         <div class="empty-state" id="emptyState">
-          <p class="eyebrow">Input test</p>
-          <p>Make a few large, quick marks with Apple Pencil.</p>
-          <span>Your strokes are drawn exactly as Safari reports them. Finger touches are ignored.</span>
+          <p class="eyebrow">Line practice</p>
+          <p>Draw one committed stroke between the two points.</p>
+          <span>The ideal line appears only after you lift the Pencil.</span>
         </div>
+        <aside class="feedback-card" id="feedbackCard" aria-live="polite" hidden>
+          <p class="feedback-result" id="feedbackResult">Committed stroke</p>
+          <strong id="feedbackScore">Accuracy —</strong>
+          <span id="feedbackDetail">—</span>
+          <button type="button" class="primary-button" id="nextTrialButton">Next line</button>
+        </aside>
         <div class="corner-note" id="scaleStatus">Scale not calibrated</div>
       </section>
 
       <footer class="hud" aria-label="Current session information">
-        <div><span>Strokes</span><strong id="strokeCount">0</strong></div>
-        <div><span>Last samples</span><strong id="sampleCount">—</strong></div>
-        <div><span>Sample rate</span><strong id="sampleRate">—</strong></div>
-        <div><span>Pointer</span><strong id="pointerType">—</strong></div>
+        <div><span>Reps</span><strong id="repCount">0</strong></div>
+        <div><span>Streak</span><strong id="streakCount">0</strong></div>
+        <div><span>Last</span><strong id="lastScore">—</strong></div>
+        <div><span>Best</span><strong id="bestScore">—</strong></div>
       </footer>
     </main>
 
@@ -82,7 +89,7 @@
           </div>
           <button class="icon-button" value="cancel" aria-label="Close diagnostics">×</button>
         </div>
-        <p class="sheet-intro">These values show what this browser actually reports. They are included in exported data.</p>
+        <p class="sheet-intro">These values show what this browser actually reports. Detailed line metrics are included in exported data.</p>
         <dl class="diagnostic-grid" id="diagnosticGrid"></dl>
         <div class="sheet-actions">
           <button type="button" class="secondary-button" id="copyDiagnosticsButton">Copy report</button>
@@ -100,7 +107,7 @@
           </div>
           <button class="icon-button" value="cancel" aria-label="Close practice data">×</button>
         </div>
-        <p class="sheet-intro" id="dataSummary">No strokes saved yet.</p>
+        <p class="sheet-intro" id="dataSummary">No practice trials saved yet.</p>
         <div class="privacy-note">
           <strong>Local only</strong>
           <span>Nothing is uploaded. Export a JSON copy before clearing Safari website data.</span>

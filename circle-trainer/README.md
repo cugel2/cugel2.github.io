@@ -1,35 +1,53 @@
 # Circle Trainer
 
-Circle Trainer is a small, local-first Apple Pencil input test for iPad Safari. It is the first implementation phase of a geometric motor-practice tool: before adding targets or scores, it verifies that the browser captures Pencil movement faithfully on the actual device.
+Circle Trainer is a small, local-first Apple Pencil motor-practice tool for iPad Safari. It trains large, committed drawing movements without showing a path that can be traced.
 
-The deployed app is completely self-contained under `/circle-trainer/`. It does not share code or styles with the main website, does not add navigation to the main site, and does not send data over the network.
+The app is self-contained under `/circle-trainer/`. It does not share code with the main website, add analytics, create accounts, or upload Pencil data.
 
-## What this version does
+## Current exercise
 
-- captures `pointerdown`, `pointermove`, `pointerup`, and `pointercancel`
-- accepts Apple Pencil (`pointerType === "pen"`) and mouse input for desktop testing
-- ignores finger input on the drawing surface
-- reads coalesced Pointer Events when Safari supplies them
-- draws the captured coordinates as an unmodified piecewise-linear path
-- renders the canvas at the device pixel ratio while retaining coordinates in CSS pixels
-- calibrates CSS pixels to physical millimetres with a 100 mm ruler line
-- reports browser, input, timing, pressure, and tilt diagnostics
-- stores completed and cancelled raw strokes in IndexedDB
-- exports all saved strokes and device metadata as JSON
-- caches the app shell for offline use after the first successful visit
+The first scored exercise is straight-line practice:
 
-This version deliberately does **not** recognize shapes, smooth lines, reveal targets, or calculate scores. Those features depend on validating Pencil capture on the target iPad first.
+1. Two randomized endpoints appear.
+2. The user draws one committed Pencil stroke between them. The target path is not visible while drawing.
+3. On `pointerup`, the raw stroke freezes and the ideal line appears.
+4. A deliberately loose execution gate checks for obvious crawling, backtracking, or an incomplete movement.
+5. Committed strokes receive a 0–100 accuracy score. Rejected strokes receive no geometric score.
+6. The target, raw samples, metrics, gate result, and score are stored locally.
+
+Circle and ellipse exercises come after the line metrics have been checked against real iPad strokes.
+
+## Input capture
+
+- Apple Pencil is accepted as `pointerType === "pen"`; mouse input is also accepted for desktop development.
+- Finger input on the drawing surface is ignored.
+- Safari coalesced Pointer Events are read when available.
+- Overlapping coalesced-event windows are deduplicated by exact coordinate and timestamp identity.
+- Raw samples retain CSS coordinates, timestamp, pressure, tilt, twist, contact size, and source event type.
+- The displayed stroke is an unmodified piecewise-linear path. There is no smoothing, prediction, simplification, or beautification.
+- The high-DPI canvas uses CSS pixels as its canonical coordinate system.
+
+## Line metrics
+
+The current metric version records:
+
+- start and end error
+- RMS and maximum orthogonal deviation
+- path length and path efficiency
+- total spatial turning
+- duration and mean speed
+- normalized geometric error
+
+The execution gate runs before accuracy scoring. Thresholds are intentionally generous and centralized in `src/core/lineMetrics.ts`; they should be tuned only after inspecting real strokes.
 
 ## Local development
-
-From this directory:
 
 ```sh
 npm install
 npm run dev
 ```
 
-Vite serves the source from `src/`. Mouse input is enabled so the capture path can be checked on a desktop browser.
+Vite serves the source from `src/`.
 
 ## Tests and production build
 
@@ -38,120 +56,101 @@ npm test
 npm run build
 ```
 
-The build keeps source files in place and writes the deployable `index.html`, hashed assets, manifest, service worker, and diagnostics route into this directory. Because this repository is served directly by GitHub Pages, committing those generated files makes the app available at:
+The build writes the deployable page, fixed-name assets, manifest, service worker, and diagnostics route into this directory. Committing those generated files publishes the app through the repository's existing GitHub Pages setup:
 
 ```text
 https://johnbraybrooke.com/circle-trainer/
 ```
 
-No change to the website homepage or navigation is required.
+The unlinked tools index is:
 
-## Input path
+```text
+https://johnbraybrooke.com/tools/
+```
 
-1. A Pencil `pointerdown` claims the pointer and begins a raw stroke.
-2. Every source event is expanded with `getCoalescedEvents()` when available.
-3. Each sample retains its CSS coordinates, original event timestamp, pressure, tilt, twist, contact size, and source event type.
-4. Only exact duplicates with identical coordinates and timestamps are skipped.
-5. Each adjacent pair of raw points is drawn directly to Canvas 2D. No smoothing, simplification, prediction, or shape replacement occurs.
-6. On `pointerup` or `pointercancel`, the stroke is saved to IndexedDB.
+## Physical calibration
 
-The canvas backing store uses the device pixel ratio for crisp rendering, but raw coordinates remain in CSS pixels. The stored ruler calibration provides `cssPxPerMm` for later physical-scale analysis.
+The ruler screen maps CSS pixels to physical millimetres. The user adjusts a horizontal line against a physical ruler until it measures exactly 100 mm. The resulting `cssPxPerMm` value is stored with viewport and device information and referenced by each trial.
 
-## Runtime capability report
+CSS absolute `mm` units are not trusted as physical measurements.
+
+## Diagnostics
 
 The Diagnostics panel reports:
 
-- browser user agent
-- viewport size in CSS pixels
-- device pixel ratio
-- Pointer Events support
-- `getCoalescedEvents()` availability
-- pressure and tilt observed during this session
-- active or most recent pointer type
-- raw sample count and approximate sample rate
-- stroke duration and timestamp-delta histogram
-- exact duplicate count
-- ignored finger-touch count
-- physical calibration value
-- saved stroke count
+- browser and viewport information
+- Pointer Events and coalesced-event support
+- unique sample count and approximate sample rate
+- overlapping samples removed
+- timestamp batches repaired
+- pressure and tilt availability
+- physical calibration
+- the last line's RMS error
+- saved stroke and trial counts
 
-The same panel is available directly at `/circle-trainer/diagnostics/`.
+It is also available at `/circle-trainer/diagnostics/`.
 
-## Manual iPad checklist
+## Storage and export
 
-Test both a normal Safari tab and an app added with **Share → Add to Home Screen**.
-
-1. Open the app in portrait and landscape.
-2. Tap **Calibrate**, place a physical ruler against the display, and save an exact 100 mm line.
-3. Draw ten large, fast Pencil strokes and ten slower curves.
-4. Confirm that the page does not scroll and the visible line stays under the Pencil.
-5. Touch and drag the drawing surface with a finger; confirm that it does not draw.
-6. Open Diagnostics and record the coalesced-event, sample-rate, pressure, tilt, and timestamp results.
-7. Rotate the device and draw again.
-8. Background and reopen the app, then confirm the saved-stroke count remains.
-9. Add the app to the Home Screen, disconnect from the network after one successful launch, and reopen it.
-10. Export the JSON file and inspect or share it before any browser data is cleared.
-
-## Known Safari/iPad limitations
-
-- Browser input sampling and coalesced-event behavior vary by iPad model, Pencil, Safari version, device load, and whether the app is in a tab or Home Screen mode.
-- Safari does not guarantee `pointerrawupdate`; this app does not depend on it.
-- Event gaps can reflect browser scheduling, so they should not be treated as human pauses without later analysis.
-- Pencil hover is model-dependent and is not used.
-- Browser storage can be removed by the user or operating system; export important sessions.
-- Web haptics and reliable Pencil-specific gesture suppression are not assumed.
-- The app cannot prevent iPadOS system edge gestures.
-
-## Export structure
+IndexedDB contains separate stores for settings, calibrations, raw input strokes, and scored trials. An export contains:
 
 ```json
 {
   "schemaVersion": "1",
-  "appVersion": "0.1.0",
-  "exportedAt": 1786377600000,
-  "calibration": {
-    "id": "…",
-    "cssPxPerMm": 4.82,
-    "calibratedAt": 1786377600000,
-    "viewportWidthCssPx": 1194,
-    "viewportHeightCssPx": 834,
-    "devicePixelRatio": 2
-  },
-  "device": {
-    "userAgent": "…",
-    "viewportWidthCssPx": 1194,
-    "viewportHeightCssPx": 834,
-    "devicePixelRatio": 2,
-    "pointerEvents": true,
-    "coalescedEvents": true
-  },
-  "strokes": [
+  "appVersion": "0.2.0",
+  "exportedAt": 1786413600000,
+  "calibration": {},
+  "device": {},
+  "strokes": [],
+  "trials": [
     {
       "id": "…",
-      "pointerType": "pen",
-      "startedAtEpochMs": 1786377600000,
-      "completedAtEpochMs": 1786377600450,
-      "cancelled": false,
-      "samples": [
-        {
-          "xCss": 184.25,
-          "yCss": 336.5,
-          "tMs": 12345.67,
-          "pressure": 0.42,
-          "tiltX": -18,
-          "tiltY": 27,
-          "twist": 0,
-          "tangentialPressure": 0,
-          "width": 2.1,
-          "height": 2.1,
-          "sourceEventType": "pointermove"
-        }
-      ]
+      "appVersion": "0.2.0",
+      "metricVersion": "line-1",
+      "scoringVersion": "line-1",
+      "createdAtEpochMs": 1786413600000,
+      "target": {
+        "kind": "LINE",
+        "aCss": { "x": 140, "y": 180 },
+        "bCss": { "x": 670, "y": 590 },
+        "lengthMm": 128.4
+      },
+      "rawStroke": { "samples": [] },
+      "calibrationId": "…",
+      "derived": {
+        "metrics": {},
+        "executionPassed": true,
+        "accuracyScore": 87
+      }
     }
   ]
 }
 ```
 
+Pre-0.2 input-test strokes remain untouched in the `strokes` store. Their overlapping Safari samples are preserved as originally captured rather than silently rewriting historical data.
+
+## Manual iPad checklist
+
+1. Open the app in both a Safari tab and Home Screen mode.
+2. Confirm the existing 100 mm calibration is still present.
+3. Draw lines in both directions and at varied angles.
+4. Confirm only endpoints are visible until the Pencil lifts.
+5. Confirm the raw black stroke stays visible and the ideal blue line appears afterward.
+6. Deliberately crawl through one line and make another with obvious backtracking; verify that accuracy is withheld.
+7. Draw several fast but imperfect lines; verify they pass the execution gate and receive appropriately lower scores.
+8. Confirm finger movement does not draw or scroll the canvas.
+9. Open Diagnostics and confirm the unique sample rate is near the previously observed 240 Hz.
+10. Export JSON and inspect the saved targets, raw samples, metrics, and scores.
+
+## Safari/iPad limitations
+
+- Input behavior varies by iPad, Pencil, Safari version, load, orientation, and Home Screen mode.
+- `pointerrawupdate` is not assumed.
+- Browser scheduling can create event gaps, so raw event gaps are not treated as human pauses.
+- Pencil hover is model-dependent and unused.
+- Safari or iPadOS may remove browser storage; important sessions should be exported.
+- The app cannot prevent iPadOS system edge gestures.
+
 ## Privacy
 
-There are no accounts, analytics, network APIs, or cloud sync. Raw Pencil trajectories remain in the browser's IndexedDB unless the user explicitly exports or deletes them.
+There are no accounts, analytics, network APIs, or cloud sync. Raw Pencil trajectories stay in the browser unless the user explicitly exports or deletes them.

@@ -1,8 +1,9 @@
-import type { PhysicalCalibration, RawStroke } from "./core/types";
+import type { LineTrialRecord, PhysicalCalibration, RawStroke } from "./core/types";
 
 const DB_NAME = "circle-trainer";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STROKES = "strokes";
+const TRIALS = "trials";
 const SETTINGS = "settings";
 const CALIBRATION_KEY = "physical-calibration";
 
@@ -16,6 +17,9 @@ function openDatabase(): Promise<IDBDatabase> {
       }
       if (!database.objectStoreNames.contains(SETTINGS)) {
         database.createObjectStore(SETTINGS);
+      }
+      if (!database.objectStoreNames.contains(TRIALS)) {
+        database.createObjectStore(TRIALS, { keyPath: "id" });
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -55,6 +59,33 @@ export async function clearStrokes(): Promise<void> {
   const database = await openDatabase();
   const transaction = database.transaction(STROKES, "readwrite");
   transaction.objectStore(STROKES).clear();
+  await waitForTransaction(transaction);
+  database.close();
+}
+
+export async function saveTrial(trial: LineTrialRecord): Promise<void> {
+  const database = await openDatabase();
+  const transaction = database.transaction(TRIALS, "readwrite");
+  transaction.objectStore(TRIALS).put(trial);
+  await waitForTransaction(transaction);
+  database.close();
+}
+
+export async function getTrials(): Promise<LineTrialRecord[]> {
+  const database = await openDatabase();
+  const request = database.transaction(TRIALS, "readonly").objectStore(TRIALS).getAll();
+  const trials = await new Promise<LineTrialRecord[]>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result as LineTrialRecord[]);
+    request.onerror = () => reject(request.error ?? new Error("Could not read saved trials"));
+  });
+  database.close();
+  return trials.sort((a, b) => a.createdAtEpochMs - b.createdAtEpochMs);
+}
+
+export async function clearTrials(): Promise<void> {
+  const database = await openDatabase();
+  const transaction = database.transaction(TRIALS, "readwrite");
+  transaction.objectStore(TRIALS).clear();
   await waitForTransaction(transaction);
   database.close();
 }
