@@ -20,7 +20,7 @@ import type {
 
 const VERSIONS: Record<ExerciseType, { metric: string; scoring: string }> = {
   LINE: { metric: LINE_METRIC_VERSION, scoring: LINE_SCORING_VERSION },
-  ARC: { metric: "arc-1", scoring: "arc-1" },
+  ARC: { metric: "arc-2", scoring: "arc-1" },
   CIRCLE: { metric: "circle-1", scoring: "circle-1" },
   ELLIPSE: { metric: "ellipse-1", scoring: "ellipse-1" },
   S_CURVE: { metric: "s-curve-1", scoring: "s-curve-1" },
@@ -234,6 +234,8 @@ function analyseArc(stroke: RawStroke, target: ArcTarget, cssPxPerMm: number): A
   const coverageError = Math.abs(coverage - expectedSweep) / expectedSweep;
   const normalizedError = Math.hypot(distances.combinedRms / expectedLength, endpointError * 0.6 / expectedLength, coverageError * 0.16);
   const transitions = curvatureSignTransitions(path);
+  const gatePath = resampleByArcLength(points, Math.min(64, Math.max(12, points.length)));
+  const gatePhases = gatePath.map((point) => Math.atan2(point.y - center.y, point.x - center.x));
   const metrics: ArcMetrics = {
     durationMs,
     pathLengthMm,
@@ -250,8 +252,7 @@ function analyseArc(stroke: RawStroke, target: ArcTarget, cssPxPerMm: number): A
   };
   const failure = baseFailure(stroke, pathLengthMm, expectedLength)
     ?? (coverage < expectedSweep * 0.62 || coverage > expectedSweep * 1.55 ? "Incomplete arc — pass through all three points" : undefined)
-    ?? (angularVariation(phases) - coverage > expectedSweep * 0.35 ? "Too corrective — commit to the next one" : undefined)
-    ?? (transitions > 7 ? "Too corrective — commit to the next one" : undefined);
+    ?? (angularVariation(gatePhases) - unwrapCoverage(gatePhases) > expectedSweep * 0.45 ? "Too corrective — commit to the next one" : undefined);
   return failure ? { metrics, executionPassed: false, executionReason: failure } : { metrics, executionPassed: true, accuracyScore: score(normalizedError, 0.06) };
 }
 

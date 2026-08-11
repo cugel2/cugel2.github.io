@@ -26,4 +26,21 @@ describe("target generation", () => {
       expect(targetCheckpointsCss(target, 5.23)).toHaveLength(expected[type]);
     }
   });
+
+  it("includes medium-small and large circle and ellipse targets", () => {
+    const viewport = { width: 810, height: 804 };
+    const shortSide = Math.min(viewport.width, viewport.height);
+    for (const type of ["CIRCLE", "ELLIPSE"] as const) {
+      const diameterFractions = Array.from({ length: 160 }, (_, index) => {
+        const target = generateTarget(type, viewport, 5.23, "size-range-seed", index);
+        const diameterCss = target.kind === "CIRCLE"
+          ? target.radiusMm * 5.23 * 2
+          : target.kind === "ELLIPSE" ? target.aMm * 5.23 * 2 : 0;
+        return diameterCss / shortSide;
+      });
+      expect(Math.min(...diameterFractions)).toBeLessThan(0.48);
+      expect(Math.max(...diameterFractions)).toBeGreaterThan(0.62);
+      expect(Math.min(...diameterFractions)).toBeGreaterThan(0.3);
+    }
+  });
 });

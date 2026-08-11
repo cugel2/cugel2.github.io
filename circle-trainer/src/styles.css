@@ -57,6 +57,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .brand-block h1,
 .brand-block p { margin: 0; }
 
+.brand-block,
+.toolbar { min-width: 0; }
+
 .brand-block h1 {
   font-size: 20px;
   font-weight: 500;
@@ -85,11 +88,8 @@ button { -webkit-tap-highlight-color: transparent; }
   align-items: center;
   gap: 6px;
   max-width: 100%;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: hidden;
 }
-
-.toolbar::-webkit-scrollbar { display: none; }
 
 .mode-select {
   min-width: 142px;
@@ -334,21 +334,30 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .toast.visible { opacity: 1; transform: translate(-50%, 0); }
 
-@media (max-width: 720px) {
+@media (max-width: 1040px) {
   :root { --bar-height: 126px; --hud-height: 52px; }
   .topbar { align-items: flex-start; flex-direction: column; gap: 9px; padding: 11px 14px; }
   .brand-block { width: 100%; display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 0 12px; }
   .brand-block .app-kicker { grid-column: 1 / -1; }
   .brand-block h1 { font-size: 20px; }
   .brand-block p { margin: 0; }
-  .toolbar { width: 100%; justify-content: space-between; }
-  .mode-select { min-width: 128px; min-height: 38px; font-size: 12px; }
+  .brand-block #statusText { max-width: 62vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toolbar { display: grid; grid-template-columns: minmax(140px, 1fr) repeat(4, max-content); width: 100%; overflow: visible; }
+  .mode-select { width: 100%; min-width: 0; min-height: 38px; font-size: 12px; }
   .toolbar button { min-height: 38px; padding-right: 10px; padding-left: 10px; font-size: 12px; }
   .hud div { padding: 0 9px; }
   .hud span { display: none; }
   .hud strong { margin: auto; font-size: 11px; }
   .sheet form { padding: 22px; }
   .feedback-card { top: 12px; right: 12px; }
+}
+
+@media (max-width: 560px) {
+  :root { --bar-height: 172px; }
+  .toolbar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mode-select { grid-column: 1 / -1; }
+  .toolbar button { width: 100%; padding-right: 5px; padding-left: 5px; }
+  .brand-block #statusText { max-width: 50vw; }
 }
 
 @media (prefers-reduced-motion: reduce) {

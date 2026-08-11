@@ -98,12 +98,12 @@ function candidateTarget(type: ExerciseType, viewport: ViewportSize, cssPxPerMm:
     return { kind: "ARC", centerCss, radiusMm: radiusCss / cssPxPerMm, startAngleRad: theta, sweepRad };
   }
   if (type === "CIRCLE") {
-    const radiusCss = randomBetween(random, shortSide * 0.275, shortSide * 0.425);
+    const radiusCss = randomBetween(random, shortSide * 0.19, shortSide * 0.39);
     return { kind: "CIRCLE", centerCss, radiusMm: radiusCss / cssPxPerMm, landmarkPhaseRad: theta };
   }
   if (type === "ELLIPSE") {
-    const aCss = randomBetween(random, shortSide * 0.3, shortSide * 0.45);
-    const ratio = randomBetween(random, 0.35, 0.78);
+    const aCss = randomBetween(random, shortSide * 0.21, shortSide * 0.39);
+    const ratio = randomBetween(random, 0.4, 0.78);
     return { kind: "ELLIPSE", centerCss, aMm: aCss / cssPxPerMm, bMm: aCss * ratio / cssPxPerMm, thetaRad: theta };
   }
   const lengthCss = randomBetween(random, shortSide * 0.65, longSide * 0.88);

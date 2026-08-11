@@ -31,7 +31,7 @@ import {
   saveTrial,
 } from "./storage";
 
-const APP_VERSION = "0.3.0";
+const APP_VERSION = "0.3.1";
 const SCHEMA_VERSION = "2" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
