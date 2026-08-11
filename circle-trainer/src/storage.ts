@@ -1,4 +1,4 @@
-import type { LineTrialRecord, PhysicalCalibration, RawStroke } from "./core/types";
+import type { LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
 
 const DB_NAME = "circle-trainer";
 const DB_VERSION = 2;
@@ -6,6 +6,7 @@ const STROKES = "strokes";
 const TRIALS = "trials";
 const SETTINGS = "settings";
 const CALIBRATION_KEY = "physical-calibration";
+const PRACTICE_MODE_KEY = "practice-mode";
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -63,7 +64,7 @@ export async function clearStrokes(): Promise<void> {
   database.close();
 }
 
-export async function saveTrial(trial: LineTrialRecord): Promise<void> {
+export async function saveTrial(trial: TrialRecord): Promise<void> {
   const database = await openDatabase();
   const transaction = database.transaction(TRIALS, "readwrite");
   transaction.objectStore(TRIALS).put(trial);
@@ -71,15 +72,30 @@ export async function saveTrial(trial: LineTrialRecord): Promise<void> {
   database.close();
 }
 
-export async function getTrials(): Promise<LineTrialRecord[]> {
+export function normalizeStoredTrial(trial: TrialRecord | LegacyLineTrialRecord, index: number): TrialRecord {
+  if ("exerciseType" in trial) return trial;
+  return {
+    ...trial,
+    exerciseType: "LINE",
+    practiceMode: "LINE",
+    schedule: {
+      mode: "LINE",
+      sessionSeed: "legacy-line-session",
+      sequenceIndex: index,
+      cycleIndex: 0,
+    },
+  };
+}
+
+export async function getTrials(): Promise<TrialRecord[]> {
   const database = await openDatabase();
   const request = database.transaction(TRIALS, "readonly").objectStore(TRIALS).getAll();
-  const trials = await new Promise<LineTrialRecord[]>((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result as LineTrialRecord[]);
+  const trials = await new Promise<Array<TrialRecord | LegacyLineTrialRecord>>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result as Array<TrialRecord | LegacyLineTrialRecord>);
     request.onerror = () => reject(request.error ?? new Error("Could not read saved trials"));
   });
   database.close();
-  return trials.sort((a, b) => a.createdAtEpochMs - b.createdAtEpochMs);
+  return trials.sort((a, b) => a.createdAtEpochMs - b.createdAtEpochMs).map(normalizeStoredTrial);
 }
 
 export async function clearTrials(): Promise<void> {
@@ -108,4 +124,23 @@ export async function getCalibration(): Promise<PhysicalCalibration | null> {
   });
   database.close();
   return calibration;
+}
+
+export async function savePracticeMode(mode: PracticeMode): Promise<void> {
+  const database = await openDatabase();
+  const transaction = database.transaction(SETTINGS, "readwrite");
+  transaction.objectStore(SETTINGS).put(mode, PRACTICE_MODE_KEY);
+  await waitForTransaction(transaction);
+  database.close();
+}
+
+export async function getPracticeMode(): Promise<PracticeMode | null> {
+  const database = await openDatabase();
+  const request = database.transaction(SETTINGS, "readonly").objectStore(SETTINGS).get(PRACTICE_MODE_KEY);
+  const mode = await new Promise<PracticeMode | null>((resolve, reject) => {
+    request.onsuccess = () => resolve((request.result as PracticeMode | undefined) ?? null);
+    request.onerror = () => reject(request.error ?? new Error("Could not read practice mode"));
+  });
+  database.close();
+  return mode;
 }

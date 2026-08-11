@@ -84,7 +84,25 @@ button { -webkit-tap-highlight-color: transparent; }
   display: flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+
+.toolbar::-webkit-scrollbar { display: none; }
+
+.mode-select {
+  min-width: 142px;
+  min-height: 42px;
+  padding: 0 34px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.mode-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .text-button,
 .primary-button,
@@ -324,6 +342,7 @@ button { -webkit-tap-highlight-color: transparent; }
   .brand-block h1 { font-size: 20px; }
   .brand-block p { margin: 0; }
   .toolbar { width: 100%; justify-content: space-between; }
+  .mode-select { min-width: 128px; min-height: 38px; font-size: 12px; }
   .toolbar button { min-height: 38px; padding-right: 10px; padding-left: 10px; font-size: 12px; }
   .hud div { padding: 0 9px; }
   .hud span { display: none; }

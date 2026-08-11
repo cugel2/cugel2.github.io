@@ -1,44 +1,58 @@
 # Circle Trainer
 
-Circle Trainer is a small, local-first Apple Pencil motor-practice tool for iPad Safari. It trains large, committed drawing movements without showing a path that can be traced.
+Circle Trainer is a local-first Apple Pencil motor-practice tool for iPad Safari. It trains large, committed lines, arcs, circles, ellipses, and S curves without showing a path that can be traced.
 
-The app is self-contained under `/circle-trainer/`. It does not share code with the main website, add analytics, create accounts, or upload Pencil data.
+The app is self-contained under `/circle-trainer/`. It does not add analytics, create accounts, or upload Pencil data.
 
-## Current exercise
+## Practice loop
 
-The first scored exercise is straight-line practice:
+1. Small hollow checkpoints specify the movement.
+2. The user draws one committed Pencil stroke while the ideal path remains hidden.
+3. On `pointerup`, the raw stroke freezes and the ideal path appears in dashed blue.
+4. A deliberately loose execution gate rejects incomplete, excessively slow, or obviously corrective movements.
+5. Passing strokes receive a versioned 0–100 accuracy score.
+6. The target, raw samples, schedule context, metrics, gate result, and score are saved locally.
 
-1. Two randomized endpoints appear.
-2. The user draws one committed Pencil stroke between them. The target path is not visible while drawing.
-3. On `pointerup`, the raw stroke freezes and the ideal line appears.
-4. A deliberately loose execution gate checks for obvious crawling, backtracking, or an incomplete movement.
-5. Committed strokes receive a 0–100 accuracy score. Rejected strokes receive no geometric score.
-6. The target, raw samples, metrics, gate result, and score are stored locally.
+## Exercise cues
 
-Circle and ellipse exercises come after the line metrics have been checked against real iPad strokes.
+- **Lines:** two endpoints
+- **Arcs:** start, midpoint/apex, and end
+- **Circles:** four perimeter checkpoints
+- **Ellipses:** four major/minor-axis checkpoints
+- **S curves:** start, two opposing shoulders, and end
+
+All targets vary in physical size, orientation, and position while remaining inside the calibrated drawing area. Either drawing direction is accepted. Circles and ellipses are single-loop exercises in this version.
+
+## Practice modes
+
+The mode selector provides five single-exercise modes plus:
+
+- **Mixed — Blocked:** all five exercise types appear as randomized blocks of ten. Each 50-trial cycle contains exactly one block of every type.
+- **Mixed — Random:** each randomized five-trial bag contains one of every exercise type.
+
+Neither scheduler repeats the same type at a cycle boundary. Execution failures count as attempts; skips and cancelled pointers do not. The selected mode persists, while a reload begins a fresh seeded sequence.
 
 ## Input capture
 
-- Apple Pencil is accepted as `pointerType === "pen"`; mouse input is also accepted for desktop development.
+- Apple Pencil is accepted as `pointerType === "pen"`; mouse input is accepted for desktop development.
 - Finger input on the drawing surface is ignored.
 - Safari coalesced Pointer Events are read when available.
-- Overlapping coalesced-event windows are deduplicated by exact coordinate and timestamp identity.
-- Raw samples retain CSS coordinates, timestamp, pressure, tilt, twist, contact size, and source event type.
-- The displayed stroke is an unmodified piecewise-linear path. There is no smoothing, prediction, simplification, or beautification.
-- The high-DPI canvas uses CSS pixels as its canonical coordinate system.
+- Overlapping Safari event windows are deduplicated by exact coordinate and timestamp identity.
+- Raw samples retain coordinates, timestamp, pressure, tilt, twist, contact size, and source event type.
+- The displayed stroke is an unmodified piecewise-linear path with no smoothing or beautification.
+- The high-DPI canvas keeps CSS pixels as its canonical coordinate system.
 
-## Line metrics
+## Scoring
 
-The current metric version records:
+Line scoring remains `line-1`. Every additional primitive has an independent first-version metric and scoring identifier.
 
-- start and end error
-- RMS and maximum orthogonal deviation
-- path length and path efficiency
-- total spatial turning
-- duration and mean speed
-- normalized geometric error
+- Lines use endpoint and orthogonal deviation, efficiency, and turning.
+- Arcs use path/endpoint error, angular coverage, overshoot, and curvature consistency.
+- Circles use radial error, closure, angular coverage, and curvature consistency.
+- Ellipses use dense path distance, canonical phase coverage, closure, and reverse coverage.
+- S curves use dense path distance, endpoints, progression, backtracking, and curvature transitions.
 
-The execution gate runs before accuracy scoring. Thresholds are intentionally generous and centralized in `src/core/lineMetrics.ts`; they should be tuned only after inspecting real strokes.
+The execution gate always runs before accuracy. Historical scores are never recomputed or overwritten.
 
 ## Local development
 
@@ -47,8 +61,6 @@ npm install
 npm run dev
 ```
 
-Vite serves the source from `src/`.
-
 ## Tests and production build
 
 ```sh
@@ -56,100 +68,34 @@ npm test
 npm run build
 ```
 
-The build writes the deployable page, fixed-name assets, manifest, service worker, and diagnostics route into this directory. Committing those generated files publishes the app through the repository's existing GitHub Pages setup:
+The build writes the deployable page, assets, manifest, service worker, and diagnostics route into this directory. GitHub Pages serves it at:
 
 ```text
 https://johnbraybrooke.com/circle-trainer/
 ```
 
-The unlinked tools index is:
-
-```text
-https://johnbraybrooke.com/tools/
-```
-
 ## Physical calibration
 
-The ruler screen maps CSS pixels to physical millimetres. The user adjusts a horizontal line against a physical ruler until it measures exactly 100 mm. The resulting `cssPxPerMm` value is stored with viewport and device information and referenced by each trial.
+The ruler screen maps CSS pixels to physical millimetres. The user adjusts a horizontal line against a physical ruler until it measures exactly 100 mm. CSS absolute `mm` units are not trusted.
 
-CSS absolute `mm` units are not trusted as physical measurements.
+## Storage and compatibility
 
-## Diagnostics
+IndexedDB stores calibration, settings, raw strokes, and trial records. Export schema 2 adds the selected practice mode, target union, and schedule context.
 
-The Diagnostics panel reports:
-
-- browser and viewport information
-- Pointer Events and coalesced-event support
-- unique sample count and approximate sample rate
-- overlapping samples removed
-- timestamp batches repaired
-- pressure and tilt availability
-- physical calibration
-- the last line's RMS error
-- saved stroke and trial counts
-
-It is also available at `/circle-trainer/diagnostics/`.
-
-## Storage and export
-
-IndexedDB contains separate stores for settings, calibrations, raw input strokes, and scored trials. An export contains:
-
-```json
-{
-  "schemaVersion": "1",
-  "appVersion": "0.2.0",
-  "exportedAt": 1786413600000,
-  "calibration": {},
-  "device": {},
-  "strokes": [],
-  "trials": [
-    {
-      "id": "…",
-      "appVersion": "0.2.0",
-      "metricVersion": "line-1",
-      "scoringVersion": "line-1",
-      "createdAtEpochMs": 1786413600000,
-      "target": {
-        "kind": "LINE",
-        "aCss": { "x": 140, "y": 180 },
-        "bCss": { "x": 670, "y": 590 },
-        "lengthMm": 128.4
-      },
-      "rawStroke": { "samples": [] },
-      "calibrationId": "…",
-      "derived": {
-        "metrics": {},
-        "executionPassed": true,
-        "accuracyScore": 87
-      }
-    }
-  ]
-}
-```
-
-Pre-0.2 input-test strokes remain untouched in the `strokes` store. Their overlapping Safari samples are preserved as originally captured rather than silently rewriting historical data.
+Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw data, `line-1` scores, and stored records are not rewritten.
 
 ## Manual iPad checklist
 
-1. Open the app in both a Safari tab and Home Screen mode.
-2. Confirm the existing 100 mm calibration is still present.
-3. Draw lines in both directions and at varied angles.
-4. Confirm only endpoints are visible until the Pencil lifts.
-5. Confirm the raw black stroke stays visible and the ideal blue line appears afterward.
-6. Deliberately crawl through one line and make another with obvious backtracking; verify that accuracy is withheld.
-7. Draw several fast but imperfect lines; verify they pass the execution gate and receive appropriately lower scores.
-8. Confirm finger movement does not draw or scroll the canvas.
-9. Open Diagnostics and confirm the unique sample rate is near the previously observed 240 Hz.
-10. Export JSON and inspect the saved targets, raw samples, metrics, and scores.
-
-## Safari/iPad limitations
-
-- Input behavior varies by iPad, Pencil, Safari version, load, orientation, and Home Screen mode.
-- `pointerrawupdate` is not assumed.
-- Browser scheduling can create event gaps, so raw event gaps are not treated as human pauses.
-- Pencil hover is model-dependent and unused.
-- Safari or iPadOS may remove browser storage; important sessions should be exported.
-- The app cannot prevent iPadOS system edge gestures.
+1. Confirm the existing calibration and historical line best are preserved.
+2. Draw each primitive in both directions and at varied orientations.
+3. Confirm only hollow checkpoints are visible before Pencil lift.
+4. Confirm the raw black stroke stays visible and the ideal blue path appears afterward.
+5. Deliberately make partial and backtracked strokes; verify that accuracy is withheld.
+6. Complete at least 50 Mixed — Blocked trials and verify ten-trial block transitions.
+7. Complete at least 25 Mixed — Random trials and verify balanced variation.
+8. Rotate or background the app, resume, and confirm drawing remains stable.
+9. Confirm finger movement does not draw or scroll the canvas.
+10. Export JSON and inspect the saved target, mode, schedule, metrics, and raw samples.
 
 ## Privacy
 

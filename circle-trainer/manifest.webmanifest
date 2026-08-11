@@ -1,13 +1,13 @@
 {
   "name": "Circle Trainer",
-  "short_name": "Circles",
-  "description": "Apple Pencil exercises for practising large, committed drawing movements.",
+  "short_name": "Circle Trainer",
+  "description": "Apple Pencil exercises for practising lines, arcs, circles, ellipses, and S curves.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f2f0e9",
-  "theme_color": "#f2f0e9",
+  "background_color": "#fffefa",
+  "theme_color": "#fffefa",
   "icons": [
     {
       "src": "../apple-touch-icon.png",

@@ -1,15 +1,10 @@
 import { pointCssPxToMm, polylineLength, resampleByArcLength, wrapAngleRad } from "./geometry";
-import type { LineMetrics, LineTarget, Point2, RawStroke } from "./types";
+import type { AnalysisResult, LineMetrics, LineTarget, Point2, RawStroke } from "./types";
 
 export const METRIC_VERSION = "line-1";
 export const SCORING_VERSION = "line-1";
 
-export interface LineAnalysis {
-  metrics: LineMetrics;
-  executionPassed: boolean;
-  executionReason?: string;
-  accuracyScore?: number;
-}
+export type LineAnalysis = AnalysisResult<LineMetrics>;
 
 function distance(a: Point2, b: Point2): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
