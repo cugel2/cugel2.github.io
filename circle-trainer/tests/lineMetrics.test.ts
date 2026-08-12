@@ -54,4 +54,15 @@ describe("line analysis", () => {
     expect(result.accuracyScore).toBeUndefined();
     expect(result.executionReason).toContain("Too slow");
   });
+
+  it("can score a corrective line when correction rejection is off", () => {
+    const corrective = Array.from({ length: 21 }, (_, index) => ({
+      x: index * 5,
+      y: index === 0 || index === 20 ? 0 : index % 2 === 0 ? 10 : -10,
+    }));
+    expect(analyseLineStroke(stroke(corrective), target, 1).executionReason).toContain("Too corrective");
+    const result = analyseLineStroke(stroke(corrective), target, 1, false);
+    expect(result.executionPassed).toBe(true);
+    expect(result.accuracyScore).toBeTypeOf("number");
+  });
 });

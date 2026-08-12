@@ -124,6 +124,8 @@ button { -webkit-tap-highlight-color: transparent; }
 .text-button:hover,
 .text-button:focus-visible { border-color: var(--line); background: rgba(255, 255, 255, 0.5); }
 
+.toggle-button[aria-pressed="true"] { border-color: var(--line); background: rgba(255, 255, 255, 0.65); }
+
 .primary-button,
 .secondary-button,
 .danger-button {
@@ -342,7 +344,7 @@ button { -webkit-tap-highlight-color: transparent; }
   .brand-block h1 { font-size: 20px; }
   .brand-block p { margin: 0; }
   .brand-block #statusText { max-width: 62vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .toolbar { display: grid; grid-template-columns: minmax(140px, 1fr) repeat(4, max-content); width: 100%; overflow: visible; }
+  .toolbar { display: grid; grid-template-columns: minmax(140px, 1fr) repeat(5, max-content); width: 100%; overflow: visible; }
   .mode-select { width: 100%; min-width: 0; min-height: 38px; font-size: 12px; }
   .toolbar button { min-height: 38px; padding-right: 10px; padding-left: 10px; font-size: 12px; }
   .hud div { padding: 0 9px; }
@@ -354,9 +356,9 @@ button { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 560px) {
   :root { --bar-height: 172px; }
-  .toolbar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .toolbar { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .mode-select { grid-column: 1 / -1; }
-  .toolbar button { width: 100%; padding-right: 5px; padding-left: 5px; }
+  .toolbar button { width: 100%; padding-right: 3px; padding-left: 3px; font-size: 10px; }
   .brand-block #statusText { max-width: 50vw; }
 }
 

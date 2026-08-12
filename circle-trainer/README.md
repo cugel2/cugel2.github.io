@@ -9,7 +9,7 @@ The app is self-contained under `/circle-trainer/`. It does not add analytics, c
 1. Small hollow checkpoints specify the movement.
 2. The user draws one committed Pencil stroke while the ideal path remains hidden.
 3. On `pointerup`, the raw stroke freezes and the ideal path appears in dashed blue.
-4. A deliberately loose execution gate rejects incomplete, excessively slow, or obviously corrective movements.
+4. The execution gate rejects incomplete or implausible movements. Optional correction rejection can also reject substantial backtracking; it defaults off.
 5. Passing strokes receive a versioned 0–100 accuracy score.
 6. The target, raw samples, schedule context, metrics, gate result, and score are saved locally.
 
@@ -27,8 +27,10 @@ All targets vary in physical size, orientation, and position while remaining ins
 
 The mode selector provides five single-exercise modes plus:
 
-- **Mixed — Blocked:** all five exercise types appear as randomized blocks of ten. Each 50-trial cycle contains exactly one block of every type.
-- **Mixed — Random:** each randomized five-trial bag contains one of every exercise type.
+- **Mixed — Blocked:** lines, arcs, circles, and ellipses appear as randomized blocks of ten. Each 40-trial cycle contains exactly one block of every included type.
+- **Mixed — Random:** each randomized four-trial bag contains one line, arc, circle, and ellipse.
+
+S curves remain available as a dedicated practice mode but are excluded from both mixed modes.
 
 Neither scheduler repeats the same type at a cycle boundary. Execution failures count as attempts; skips and cancelled pointers do not. The selected mode persists, while a reload begins a fresh seeded sequence.
 
@@ -52,7 +54,7 @@ Line scoring remains `line-1`. Every additional primitive has an independent fir
 - Ellipses use dense path distance, canonical phase coverage, closure, and reverse coverage.
 - S curves use dense path distance, endpoints, progression, backtracking, and curvature transitions.
 
-The execution gate always runs before accuracy. Historical scores are never recomputed or overwritten.
+The execution gate always runs before accuracy. Correction rejection is a persistent device-local toggle and defaults off; incomplete coverage and implausible strokes are still withheld when it is off. Historical scores are never recomputed or overwritten.
 
 ## Local development
 
@@ -91,8 +93,8 @@ Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw da
 3. Confirm only hollow checkpoints are visible before Pencil lift.
 4. Confirm the raw black stroke stays visible and the ideal blue path appears afterward.
 5. Deliberately make partial and backtracked strokes; verify that accuracy is withheld.
-6. Complete at least 50 Mixed — Blocked trials and verify ten-trial block transitions.
-7. Complete at least 25 Mixed — Random trials and verify balanced variation.
+6. Complete at least 40 Mixed — Blocked trials and verify ten-trial block transitions without S curves.
+7. Complete at least 20 Mixed — Random trials and verify balanced four-item bags without S curves.
 8. Rotate or background the app, resume, and confirm drawing remains stable.
 9. Confirm finger movement does not draw or scroll the canvas.
 10. Export JSON and inspect the saved target, mode, schedule, metrics, and raw samples.

@@ -22,16 +22,18 @@ import {
   clearStrokes,
   clearTrials,
   getCalibration,
+  getCorrectionGateEnabled,
   getPracticeMode,
   getStrokes,
   getTrials,
   saveCalibration,
+  saveCorrectionGateEnabled,
   savePracticeMode,
   saveStroke,
   saveTrial,
 } from "./storage";
 
-const APP_VERSION = "0.3.2";
+const APP_VERSION = "0.3.3";
 const SCHEMA_VERSION = "2" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -74,6 +76,7 @@ const feedbackResult = requiredElement<HTMLElement>("#feedbackResult");
 const feedbackScore = requiredElement<HTMLElement>("#feedbackScore");
 const feedbackDetail = requiredElement<HTMLElement>("#feedbackDetail");
 const modeSelect = requiredElement<HTMLSelectElement>("#practiceModeSelect");
+const correctionGateButton = requiredElement<HTMLButtonElement>("#correctionGateButton");
 const nextTrialButton = requiredElement<HTMLButtonElement>("#nextTrialButton");
 const toast = requiredElement<HTMLElement>("#toast");
 
@@ -97,6 +100,7 @@ const runtime = {
 };
 
 let calibration: PhysicalCalibration | null = null;
+let correctionGateEnabled = false;
 let selectedMode: PracticeMode = "LINE";
 let scheduler = new PracticeScheduler("LINE", createId());
 let targetGenerationIndex = 0;
@@ -224,6 +228,11 @@ function statusForCurrentTrial(): string {
 function updateBestHud(): void {
   const best = bestByExercise[activeExercise];
   bestScore.textContent = best === undefined ? "—" : String(best);
+}
+
+function updateCorrectionGateButton(): void {
+  correctionGateButton.textContent = `Corrections: ${correctionGateEnabled ? "On" : "Off"}`;
+  correctionGateButton.setAttribute("aria-pressed", String(correctionGateEnabled));
 }
 
 function beginNewTrial(): void {
@@ -392,7 +401,9 @@ function showFeedback(analysis: AnalysisResult): void {
     feedbackCard.classList.add("failed");
     feedbackResult.textContent = "Execution not scored";
     feedbackScore.textContent = analysis.executionReason ?? "Try another one";
-    feedbackDetail.textContent = "Accuracy is hidden when the movement is incomplete or too corrective.";
+    feedbackDetail.textContent = correctionGateEnabled
+      ? "Accuracy is hidden when the movement is incomplete or too corrective."
+      : "Accuracy is hidden when the movement is incomplete or implausible.";
     statusText.textContent = "No accuracy score — commit to the next one";
   }
 }
@@ -416,7 +427,7 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
   }
 
   try {
-    const analysis = analyseTargetStroke(stroke, target, cssPxPerMm());
+    const analysis = analyseTargetStroke(stroke, target, cssPxPerMm(), correctionGateEnabled);
     lastAnalysis = analysis;
     const versions = versionsForExercise(activeExercise);
     const schedule = { ...scheduler.context(), generationIndex: targetGenerationIndex - 1 };
@@ -428,6 +439,7 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
       createdAtEpochMs: Date.now(),
       exerciseType: activeExercise,
       practiceMode: selectedMode,
+      correctionGateEnabled,
       schedule,
       target,
       rawStroke: stroke,
@@ -511,6 +523,7 @@ function buildDiagnosticReport(): Record<string, string | number | boolean> {
     "App version": APP_VERSION,
     "Current mode": MODE_LABELS[selectedMode],
     "Current exercise": EXERCISE_LABELS[activeExercise],
+    "Correction gate": correctionGateEnabled ? "On" : "Off",
     "Metric version": versionsForExercise(activeExercise).metric,
     "User agent": device.userAgent,
     "Viewport (CSS px)": `${device.viewportWidthCssPx} × ${device.viewportHeightCssPx}`,
@@ -562,7 +575,7 @@ async function exportAllData(): Promise<void> {
     const [strokes, trials] = await Promise.all([getStrokes(), getTrials()]);
     const bundle: ExportBundle = {
       schemaVersion: SCHEMA_VERSION, appVersion: APP_VERSION, exportedAt: Date.now(), calibration,
-      selectedMode, device: getDeviceSnapshot(), strokes, trials,
+      selectedMode, correctionGateEnabled, device: getDeviceSnapshot(), strokes, trials,
     };
     downloadJson(`circle-trainer-${dateStamp()}.json`, bundle);
     showToast("JSON export created");
@@ -605,6 +618,12 @@ async function copyDiagnostics(): Promise<void> {
 
 function wireControls(): void {
   requiredElement<HTMLButtonElement>("#newTrialButton").addEventListener("click", beginNewTrial);
+  correctionGateButton.addEventListener("click", () => {
+    correctionGateEnabled = !correctionGateEnabled;
+    updateCorrectionGateButton();
+    showToast(`Correction rejection ${correctionGateEnabled ? "on" : "off"}`);
+    void saveCorrectionGateEnabled(correctionGateEnabled).catch(() => showToast("Correction setting could not be saved"));
+  });
   nextTrialButton.addEventListener("click", beginNewTrial);
   modeSelect.addEventListener("change", () => {
     const mode = modeSelect.value as PracticeMode;
@@ -641,8 +660,11 @@ async function initialize(): Promise<void> {
   wireControls();
   resizeCanvas();
   try {
-    const [storedCalibration, storedMode, strokes, trials] = await Promise.all([getCalibration(), getPracticeMode(), getStrokes(), getTrials()]);
+    const [storedCalibration, storedMode, storedCorrectionGate, strokes, trials] = await Promise.all([
+      getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getStrokes(), getTrials(),
+    ]);
     calibration = storedCalibration;
+    correctionGateEnabled = storedCorrectionGate ?? false;
     selectedMode = storedMode && VALID_MODES.includes(storedMode) ? storedMode : "LINE";
     savedStrokeCount = strokes.length;
     savedTrialCount = trials.length;
@@ -653,6 +675,7 @@ async function initialize(): Promise<void> {
     }
   } catch { showToast("Local storage is unavailable; drawing still works"); }
   updateScaleStatus();
+  updateCorrectionGateButton();
   configureRuler();
   resetSession(selectedMode);
   if (new URLSearchParams(window.location.search).has("diagnostics") || window.location.hash === "#diagnostics") {

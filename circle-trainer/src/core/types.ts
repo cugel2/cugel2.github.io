@@ -156,6 +156,7 @@ export interface TrialRecord {
   createdAtEpochMs: number;
   exerciseType: ExerciseType;
   practiceMode: PracticeMode;
+  correctionGateEnabled: boolean;
   schedule: ScheduleContext;
   target: TargetDefinition;
   rawStroke: RawStroke;
@@ -199,6 +200,7 @@ export interface ExportBundle {
   exportedAt: number;
   calibration: PhysicalCalibration | null;
   selectedMode: PracticeMode;
+  correctionGateEnabled: boolean;
   device: DeviceSnapshot;
   strokes: RawStroke[];
   trials: TrialRecord[];

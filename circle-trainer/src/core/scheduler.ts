@@ -2,6 +2,7 @@ import { seededRandom, shuffle } from "./random";
 import type { ExerciseType, PracticeMode, ScheduleContext } from "./types";
 
 export const EXERCISE_TYPES: readonly ExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE"];
+export const MIXED_EXERCISE_TYPES: readonly ExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE"];
 
 export const EXERCISE_LABELS: Record<ExerciseType, string> = {
   LINE: "Lines",
@@ -22,7 +23,7 @@ function isExerciseType(mode: PracticeMode): mode is ExerciseType {
 }
 
 function orderedCycle(seed: string, cycleIndex: number, previous: ExerciseType | null): ExerciseType[] {
-  const order = shuffle(EXERCISE_TYPES, seededRandom(`${seed}:schedule:${cycleIndex}`));
+  const order = shuffle(MIXED_EXERCISE_TYPES, seededRandom(`${seed}:schedule:${cycleIndex}`));
   if (previous && order[0] === previous) {
     const swapIndex = order.findIndex((value) => value !== previous);
     [order[0], order[swapIndex]] = [order[swapIndex], order[0]];
@@ -75,7 +76,7 @@ export class PracticeScheduler {
       if (this.positionInBlock < 10) return;
       this.positionInBlock = 0;
       this.blockIndex += 1;
-      if (this.blockIndex < EXERCISE_TYPES.length) return;
+      if (this.blockIndex < MIXED_EXERCISE_TYPES.length) return;
       const previous = this.order.at(-1) ?? null;
       this.cycleIndex += 1;
       this.blockIndex = 0;
@@ -84,7 +85,7 @@ export class PracticeScheduler {
     }
 
     this.positionInBlock += 1;
-    if (this.positionInBlock < EXERCISE_TYPES.length) return;
+    if (this.positionInBlock < MIXED_EXERCISE_TYPES.length) return;
     const previous = this.order.at(-1) ?? null;
     this.cycleIndex += 1;
     this.positionInBlock = 0;

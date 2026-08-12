@@ -7,6 +7,7 @@ const TRIALS = "trials";
 const SETTINGS = "settings";
 const CALIBRATION_KEY = "physical-calibration";
 const PRACTICE_MODE_KEY = "practice-mode";
+const CORRECTION_GATE_KEY = "correction-gate-enabled";
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -73,11 +74,12 @@ export async function saveTrial(trial: TrialRecord): Promise<void> {
 }
 
 export function normalizeStoredTrial(trial: TrialRecord | LegacyLineTrialRecord, index: number): TrialRecord {
-  if ("exerciseType" in trial) return trial;
+  if ("exerciseType" in trial) return { ...trial, correctionGateEnabled: trial.correctionGateEnabled ?? true };
   return {
     ...trial,
     exerciseType: "LINE",
     practiceMode: "LINE",
+    correctionGateEnabled: true,
     schedule: {
       mode: "LINE",
       sessionSeed: "legacy-line-session",
@@ -143,4 +145,23 @@ export async function getPracticeMode(): Promise<PracticeMode | null> {
   });
   database.close();
   return mode;
+}
+
+export async function saveCorrectionGateEnabled(enabled: boolean): Promise<void> {
+  const database = await openDatabase();
+  const transaction = database.transaction(SETTINGS, "readwrite");
+  transaction.objectStore(SETTINGS).put(enabled, CORRECTION_GATE_KEY);
+  await waitForTransaction(transaction);
+  database.close();
+}
+
+export async function getCorrectionGateEnabled(): Promise<boolean | null> {
+  const database = await openDatabase();
+  const request = database.transaction(SETTINGS, "readonly").objectStore(SETTINGS).get(CORRECTION_GATE_KEY);
+  const enabled = await new Promise<boolean | null>((resolve, reject) => {
+    request.onsuccess = () => resolve(typeof request.result === "boolean" ? request.result : null);
+    request.onerror = () => reject(request.error ?? new Error("Could not read correction gate setting"));
+  });
+  database.close();
+  return enabled;
 }

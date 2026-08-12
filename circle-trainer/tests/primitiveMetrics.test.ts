@@ -161,4 +161,14 @@ describe("error monotonicity and correction gates", () => {
       expect(result.accuracyScore).toBeUndefined();
     }
   });
+
+  it("can score corrective strokes when correction rejection is off", () => {
+    for (const target of targets) {
+      const source = sampleTargetPathCss(target, 1, 260);
+      const corrective = [...source.slice(0, 130), ...source.slice(65, 130).reverse(), ...source.slice(65)];
+      const result = analyseTargetStroke(strokeFromPoints(corrective, 1600), target, 1, false);
+      expect(result.executionPassed, `${target.kind}: ${result.executionReason}`).toBe(true);
+      expect(result.accuracyScore).toBeTypeOf("number");
+    }
+  });
 });

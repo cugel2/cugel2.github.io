@@ -33,12 +33,19 @@ function totalTurning(points: readonly Point2[]): number {
   return turning;
 }
 
-function executionFailure(metrics: LineMetrics, sampleCount: number, targetLengthMm: number): string | undefined {
+function executionFailure(
+  metrics: LineMetrics,
+  sampleCount: number,
+  targetLengthMm: number,
+  correctionGateEnabled: boolean,
+): string | undefined {
   if (sampleCount < 8) return "Stroke too short — try again";
   if (metrics.pathLengthMm < Math.max(20, targetLengthMm * 0.45)) return "Stroke too short — reach the other point";
   if (metrics.durationMs <= 0) return "Couldn’t evaluate the stroke timing";
   if (metrics.durationMs / Math.max(metrics.pathLengthMm, 1) > 35) return "Too slow — make one committed movement";
-  if (metrics.pathEfficiency < 0.5 || metrics.totalTurningRad > 3.2) return "Too corrective — commit to the next one";
+  if (correctionGateEnabled && (metrics.pathEfficiency < 0.5 || metrics.totalTurningRad > 3.2)) {
+    return "Too corrective — commit to the next one";
+  }
   return undefined;
 }
 
@@ -46,6 +53,7 @@ export function analyseLineStroke(
   stroke: RawStroke,
   target: LineTarget,
   cssPxPerMm: number,
+  correctionGateEnabled = true,
 ): LineAnalysis {
   if (stroke.samples.length === 0) throw new Error("Cannot analyse an empty stroke");
 
@@ -86,7 +94,7 @@ export function analyseLineStroke(
     normalizedError,
   };
 
-  const failure = executionFailure(metrics, stroke.samples.length, targetLengthMm);
+  const failure = executionFailure(metrics, stroke.samples.length, targetLengthMm, correctionGateEnabled);
   if (failure) return { metrics, executionPassed: false, executionReason: failure };
 
   const accuracyScore = Math.round(100 * Math.exp(-Math.pow(normalizedError / 0.06, 1.35)));

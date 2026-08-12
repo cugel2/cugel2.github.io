@@ -140,7 +140,7 @@ function score(normalizedError: number, sigma: number): number {
   return Math.max(0, Math.min(100, Math.round(100 * Math.exp(-Math.pow(normalizedError / sigma, 1.35)))));
 }
 
-function analyseCircle(stroke: RawStroke, target: CircleTarget, cssPxPerMm: number): AnalysisResult<CircleMetrics> {
+function analyseCircle(stroke: RawStroke, target: CircleTarget, cssPxPerMm: number, correctionGateEnabled: boolean): AnalysisResult<CircleMetrics> {
   const points = pointsFromStroke(stroke, cssPxPerMm);
   const path = resampleByArcLength(points, 256);
   const center = pointCssPxToMm(target.centerCss, cssPxPerMm);
@@ -170,12 +170,12 @@ function analyseCircle(stroke: RawStroke, target: CircleTarget, cssPxPerMm: numb
   };
   const failure = baseFailure(stroke, pathLengthMm, expectedLength)
     ?? (coverage < Math.PI * 1.55 || coverage > Math.PI * 2.45 ? "Incomplete loop — make one full circle" : undefined)
-    ?? (angularVariation(phases) - coverage > Math.PI * 0.45 ? "Too corrective — commit to the next one" : undefined)
-    ?? (transitions > 10 ? "Too corrective — commit to the next one" : undefined);
+    ?? (correctionGateEnabled && (angularVariation(phases) - coverage > Math.PI * 0.45 || transitions > 10)
+      ? "Too corrective — commit to the next one" : undefined);
   return failure ? { metrics, executionPassed: false, executionReason: failure } : { metrics, executionPassed: true, accuracyScore: score(normalizedError, 0.1) };
 }
 
-function analyseEllipse(stroke: RawStroke, target: EllipseTarget, cssPxPerMm: number): AnalysisResult<EllipseMetrics> {
+function analyseEllipse(stroke: RawStroke, target: EllipseTarget, cssPxPerMm: number, correctionGateEnabled: boolean): AnalysisResult<EllipseMetrics> {
   const points = pointsFromStroke(stroke, cssPxPerMm);
   const path = resampleByArcLength(points, 256);
   const reference = referencePathMm(target, cssPxPerMm);
@@ -213,12 +213,12 @@ function analyseEllipse(stroke: RawStroke, target: EllipseTarget, cssPxPerMm: nu
   };
   const failure = baseFailure(stroke, pathLengthMm, expectedLength)
     ?? (coverage < Math.PI * 1.55 || coverage > Math.PI * 2.45 ? "Incomplete loop — make one full ellipse" : undefined)
-    ?? (angularVariation(phases) - coverage > Math.PI * 0.45 ? "Too corrective — commit to the next one" : undefined)
-    ?? (transitions > 12 ? "Too corrective — commit to the next one" : undefined);
+    ?? (correctionGateEnabled && (angularVariation(phases) - coverage > Math.PI * 0.45 || transitions > 12)
+      ? "Too corrective — commit to the next one" : undefined);
   return failure ? { metrics, executionPassed: false, executionReason: failure } : { metrics, executionPassed: true, accuracyScore: score(normalizedError, 0.065) };
 }
 
-function analyseArc(stroke: RawStroke, target: ArcTarget, cssPxPerMm: number): AnalysisResult<ArcMetrics> {
+function analyseArc(stroke: RawStroke, target: ArcTarget, cssPxPerMm: number, correctionGateEnabled: boolean): AnalysisResult<ArcMetrics> {
   const points = pointsFromStroke(stroke, cssPxPerMm);
   const path = resampleByArcLength(points, 256);
   const reference = referencePathMm(target, cssPxPerMm);
@@ -252,7 +252,8 @@ function analyseArc(stroke: RawStroke, target: ArcTarget, cssPxPerMm: number): A
   };
   const failure = baseFailure(stroke, pathLengthMm, expectedLength)
     ?? (coverage < expectedSweep * 0.62 || coverage > expectedSweep * 1.55 ? "Incomplete arc — pass through all three points" : undefined)
-    ?? (angularVariation(gatePhases) - unwrapCoverage(gatePhases) > expectedSweep * 0.45 ? "Too corrective — commit to the next one" : undefined);
+    ?? (correctionGateEnabled && angularVariation(gatePhases) - unwrapCoverage(gatePhases) > expectedSweep * 0.45
+      ? "Too corrective — commit to the next one" : undefined);
   return failure ? { metrics, executionPassed: false, executionReason: failure } : { metrics, executionPassed: true, accuracyScore: score(normalizedError, 0.06) };
 }
 
@@ -271,7 +272,7 @@ function nearestReferenceIndices(points: readonly Point2[], reference: readonly 
   });
 }
 
-function analyseSCurve(stroke: RawStroke, target: SCurveTarget, cssPxPerMm: number): AnalysisResult<SCurveMetrics> {
+function analyseSCurve(stroke: RawStroke, target: SCurveTarget, cssPxPerMm: number, correctionGateEnabled: boolean): AnalysisResult<SCurveMetrics> {
   const points = pointsFromStroke(stroke, cssPxPerMm);
   const path = resampleByArcLength(points, 256);
   const reference = referencePathMm(target, cssPxPerMm);
@@ -314,15 +315,21 @@ function analyseSCurve(stroke: RawStroke, target: SCurveTarget, cssPxPerMm: numb
   const failure = baseFailure(stroke, pathLengthMm, expectedLength)
     ?? (progression < 0.72 ? "Incomplete S curve — pass through all four points" : undefined)
     ?? (transitions < 1 ? "Wrong curve — make two opposing lobes" : undefined)
-    ?? (backtrackingFraction > 0.14 || pathLengthRatio > 1.42 ? "Too corrective — commit to the next one" : undefined);
+    ?? (correctionGateEnabled && (backtrackingFraction > 0.14 || pathLengthRatio > 1.42)
+      ? "Too corrective — commit to the next one" : undefined);
   return failure ? { metrics, executionPassed: false, executionReason: failure } : { metrics, executionPassed: true, accuracyScore: score(normalizedError, 0.055) };
 }
 
-export function analyseTargetStroke(stroke: RawStroke, target: TargetDefinition, cssPxPerMm: number): AnalysisResult<PrimitiveMetrics> {
+export function analyseTargetStroke(
+  stroke: RawStroke,
+  target: TargetDefinition,
+  cssPxPerMm: number,
+  correctionGateEnabled = true,
+): AnalysisResult<PrimitiveMetrics> {
   if (stroke.samples.length === 0) throw new Error("Cannot analyse an empty stroke");
-  if (target.kind === "LINE") return analyseLineStroke(stroke, target, cssPxPerMm);
-  if (target.kind === "ARC") return analyseArc(stroke, target, cssPxPerMm);
-  if (target.kind === "CIRCLE") return analyseCircle(stroke, target, cssPxPerMm);
-  if (target.kind === "ELLIPSE") return analyseEllipse(stroke, target, cssPxPerMm);
-  return analyseSCurve(stroke, target, cssPxPerMm);
+  if (target.kind === "LINE") return analyseLineStroke(stroke, target, cssPxPerMm, correctionGateEnabled);
+  if (target.kind === "ARC") return analyseArc(stroke, target, cssPxPerMm, correctionGateEnabled);
+  if (target.kind === "CIRCLE") return analyseCircle(stroke, target, cssPxPerMm, correctionGateEnabled);
+  if (target.kind === "ELLIPSE") return analyseEllipse(stroke, target, cssPxPerMm, correctionGateEnabled);
+  return analyseSCurve(stroke, target, cssPxPerMm, correctionGateEnabled);
 }
