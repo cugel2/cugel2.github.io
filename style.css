@@ -423,14 +423,24 @@ a {
   letter-spacing: 0;
 }
 
-.note-list-item h2 a,
+.note-list-link {
+  display: block;
+}
+
+.note-list-link h2,
 .related-notes a {
   transition: color 160ms ease;
 }
 
-.note-list-item h2 a:hover,
+.note-list-link:hover h2,
+.note-list-link:focus-visible h2,
 .related-notes a:hover {
   color: var(--accent);
+}
+
+.note-list-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
 }
 
 .note-list-item p {

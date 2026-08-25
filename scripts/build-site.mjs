@@ -11,7 +11,7 @@ import { loadNotes, displayNoteTitle } from "./lib/notes.mjs";
 // The JS overlay viewer is layered on top of this and is never required.
 
 const cwd = process.cwd();
-const STYLE_VERSION = 19;
+const STYLE_VERSION = 20;
 const GALLERY_VERSION = 16;
 const PERSON_ID = `${SITE_URL}/#person`;
 const BLOG_ID = `${SITE_URL}/notes/#blog`;
@@ -173,8 +173,7 @@ function photoPage(photo, previous, next, relatedNotes = []) {
       <figure class="photo-figure">
       ${pictureForViewer(photo)}
         <figcaption class="photo-caption">
-          ${photo.title ? `<h1 class="photo-title">${escapeHtml(photo.title)}</h1>` : ""}
-          <p class="photo-description">${escapeHtml(photo.description)}</p>
+${photo.title ? `          <h1 class="photo-title">${escapeHtml(photo.title)}</h1>\n` : ""}          <p class="photo-description">${escapeHtml(photo.description)}</p>
           <dl class="photo-meta">
             <div><dt>Date</dt><dd><time datetime="${escapeHtml(photo.date)}">${escapeHtml(
     prettyDate(photo.date)
@@ -365,9 +364,11 @@ function notesIndexPage(notes) {
 ${notes
   .map(
     (note) => `        <article class="note-list-item">
-          <time datetime="${escapeHtml(note.date)}">${escapeHtml(note.dateLabel)}</time>
-          <h2><a href="${escapeHtml(note.path)}">${escapeHtml(displayNoteTitle(note))}</a></h2>
-          <p>${escapeHtml(note.summary)}</p>
+          <a class="note-list-link" href="${escapeHtml(note.path)}">
+            <time datetime="${escapeHtml(note.date)}">${escapeHtml(note.dateLabel)}</time>
+            <h2>${escapeHtml(displayNoteTitle(note))}</h2>
+            <p>${escapeHtml(note.summary)}</p>
+          </a>
         </article>`
   )
   .join("\n")}
