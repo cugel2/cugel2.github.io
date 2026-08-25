@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { parseFrontmatter } from "./content.mjs";
 
@@ -36,7 +37,16 @@ function webpNameFor(filename) {
   return `${path.basename(filename, path.extname(filename))}.webp`;
 }
 
-function variant(directory, images, filename, width) {
+function versioned(url, version) {
+  return version ? `${url}?v=${version}` : url;
+}
+
+async function imageVersion(filePath) {
+  const contents = await readFile(filePath);
+  return createHash("sha256").update(contents).digest("hex").slice(0, 12);
+}
+
+function variant(directory, images, filename, width, version) {
   if (!images.has(filename)) {
     return null;
   }
@@ -47,8 +57,8 @@ function variant(directory, images, filename, width) {
   // the current URL is — the overlay viewer changes the address to /photos/<id>/
   // via pushState, and relative paths would otherwise resolve against that.
   return {
-    jpeg: `/${directory}/${filename}`,
-    webp: images.has(webpName) ? `/${directory}/${webpName}` : "",
+    jpeg: versioned(`/${directory}/${filename}`, version),
+    webp: images.has(webpName) ? versioned(`/${directory}/${webpName}`, version) : "",
     width
   };
 }
@@ -125,16 +135,21 @@ export async function loadPhotos() {
       continue;
     }
 
+    const version = largeImages.has(webName)
+      ? await imageVersion(path.join(largeDirectory, webName))
+      : "";
     const largeVariants = [
-      variant("images/large/small", largeSmallImages, webName, 1600),
-      variant("images/large", largeImages, webName, 3000)
+      variant("images/large/small", largeSmallImages, webName, 1600, version),
+      variant("images/large", largeImages, webName, 3000, version)
     ];
     const thumbVariants = [
-      variant("images/thumbs/small", thumbSmallImages, webName, 600),
-      variant("images/thumbs", thumbs, webName, 900)
+      variant("images/thumbs/small", thumbSmallImages, webName, 600, version),
+      variant("images/thumbs", thumbs, webName, 900, version)
     ];
 
-    const src = largeImages.has(webName) ? `/images/large/${webName}` : `/images/photos/${id}.jpg`;
+    const src = largeImages.has(webName)
+      ? versioned(`/images/large/${webName}`, version)
+      : `/images/photos/${id}.jpg`;
     const dimensions = largeImages.has(webName)
       ? imageDimensions(path.join(largeDirectory, webName))
       : { width: null, height: null };
@@ -156,18 +171,18 @@ export async function loadPhotos() {
       imageUrl: `${SITE_URL}${src}`,
       srcSrcset: srcset(largeVariants, "jpeg"),
       srcWebpSrcset: srcset(largeVariants, "webp"),
-      srcWebp: largeImages.has(webpName) ? `/images/large/${webpName}` : ""
+      srcWebp: largeImages.has(webpName) ? versioned(`/images/large/${webpName}`, version) : ""
     };
 
     if (thumbs.has(webName)) {
-      photo.thumb = `/images/thumbs/${webName}`;
+      photo.thumb = versioned(`/images/thumbs/${webName}`, version);
     }
 
     photo.thumbSrcset = srcset(thumbVariants, "jpeg");
     photo.thumbWebpSrcset = srcset(thumbVariants, "webp");
 
     if (thumbs.has(webpName)) {
-      photo.thumbWebp = `/images/thumbs/${webpName}`;
+      photo.thumbWebp = versioned(`/images/thumbs/${webpName}`, version);
     }
 
     photos.push(photo);
