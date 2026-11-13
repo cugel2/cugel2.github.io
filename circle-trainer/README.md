@@ -44,6 +44,10 @@ S curves and Boxes remain available as dedicated practice modes but are excluded
 
 Neither scheduler repeats the same type at a cycle boundary. Execution failures count as attempts; skips and cancelled pointers do not. The selected mode persists, while a reload begins a fresh seeded sequence.
 
+## Trophies
+
+The **Trophies** sheet shows one card per exercise with the highest-scoring attempt: score, date, and a redrawn thumbnail of the raw strokes over the dashed blue ideal (for boxes, the reference box and arrow too). Tap a card to see it larger with its measurements. Unscored attempts never count, ties go to the earliest attempt, and mixed-mode trials count for their exercise. Trials store their calibration id but not its scale, so a circle, ellipse, arc or S-curve trophy drawn under an older calibration is redrawn at the current scale.
+
 ## Input capture
 
 - Apple Pencil is accepted as `pointerType === "pen"`; mouse input is accepted for desktop development.

@@ -38,6 +38,7 @@
           <button type="button" class="text-button toggle-button" id="correctionGateButton" aria-pressed="false" title="Reject strokes with substantial correction or backtracking">Corrections: Off</button>
           <button type="button" class="text-button" id="calibrateButton">Calibrate</button>
           <button type="button" class="text-button" id="diagnosticsButton">Diagnostics</button>
+          <button type="button" class="text-button" id="trophiesButton">Trophies</button>
           <button type="button" class="primary-button" id="dataButton">Data</button>
         </nav>
       </header>
@@ -161,6 +162,30 @@
           <button type="button" class="secondary-button" id="copyDiagnosticsButton">Copy report</button>
           <button type="button" class="primary-button" id="exportDiagnosticsButton">Export diagnostics</button>
         </div>
+      </form>
+    </dialog>
+
+    <dialog id="trophyDialog" class="sheet trophy-sheet">
+      <form method="dialog">
+        <div class="sheet-header">
+          <div>
+            <p class="eyebrow">Personal bests</p>
+            <h2>Trophies</h2>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="Close trophies">×</button>
+        </div>
+        <p class="sheet-intro" id="trophyIntro">Your highest-scoring attempt at each exercise: your strokes in black, the ideal in dashed blue. Tap one to see it larger.</p>
+        <div class="trophy-grid" id="trophyGrid"></div>
+        <section class="trophy-detail" id="trophyDetail" hidden>
+          <button type="button" class="secondary-button" id="trophyBackButton">← All trophies</button>
+          <div class="trophy-detail-heading">
+            <h3 id="trophyDetailTitle">Best line</h3>
+            <strong id="trophyDetailScore">Accuracy —</strong>
+          </div>
+          <p class="trophy-detail-meta" id="trophyDetailMeta">—</p>
+          <canvas class="trophy-detail-canvas" id="trophyDetailCanvas" aria-label="Best attempt drawing"></canvas>
+          <p class="trophy-detail-meta" id="trophyDetailMetrics">—</p>
+        </section>
       </form>
     </dialog>
 

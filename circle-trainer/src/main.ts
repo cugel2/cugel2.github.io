@@ -4,6 +4,7 @@ import { arrowLabelCss, BOX_EDGES, BOX_STROKES_REQUIRED, boxAreas, nonHingeEdgeI
 import { analyseBoxStrokes } from "./core/boxMetrics";
 import { polylineLength } from "./core/geometry";
 import { rawSampleIdentity } from "./core/input";
+import { bestTrialsByExercise } from "./core/trophies";
 import { analyseTargetStroke, versionsForExercise } from "./core/primitiveMetrics";
 import { EXERCISE_LABELS, MODE_LABELS, PracticeScheduler } from "./core/scheduler";
 import { generateTarget, sampleTargetPathCss, targetCheckpointsCss } from "./core/targets";
@@ -24,6 +25,7 @@ import type {
   SingleStrokeTrialRecord,
   StrokeEventType,
   TargetDefinition,
+  TrialRecord,
 } from "./core/types";
 import {
   clearStrokes,
@@ -39,8 +41,9 @@ import {
   saveStroke,
   saveTrial,
 } from "./storage";
+import { createTrophyView } from "./trophyView";
 
-const APP_VERSION = "0.4.0";
+const APP_VERSION = "0.4.1";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -107,6 +110,17 @@ const diagnosticsDialog = requiredElement<HTMLDialogElement>("#diagnosticsDialog
 const diagnosticGrid = requiredElement<HTMLElement>("#diagnosticGrid");
 const dataDialog = requiredElement<HTMLDialogElement>("#dataDialog");
 const dataSummary = requiredElement<HTMLElement>("#dataSummary");
+const trophyDialog = requiredElement<HTMLDialogElement>("#trophyDialog");
+const trophyIntro = requiredElement<HTMLElement>("#trophyIntro");
+const trophyView = createTrophyView({
+  grid: requiredElement<HTMLElement>("#trophyGrid"),
+  detail: requiredElement<HTMLElement>("#trophyDetail"),
+  detailTitle: requiredElement<HTMLElement>("#trophyDetailTitle"),
+  detailScore: requiredElement<HTMLElement>("#trophyDetailScore"),
+  detailMeta: requiredElement<HTMLElement>("#trophyDetailMeta"),
+  detailMetrics: requiredElement<HTMLElement>("#trophyDetailMetrics"),
+  detailCanvas: requiredElement<HTMLCanvasElement>("#trophyDetailCanvas"),
+}, (trial) => trialCssPxPerMm(trial));
 
 const runtime = {
   pointerEventCount: 0,
@@ -901,6 +915,28 @@ async function showDataDialog(): Promise<void> {
   dataDialog.showModal();
 }
 
+/**
+ * Trials store their calibration id but not its px/mm value. Use the current calibration when it is the one
+ * the trial was drawn with, the default scale for uncalibrated trials, and otherwise the current scale as the
+ * best available guess (only mm-sized targets such as circles depend on it).
+ */
+function trialCssPxPerMm(trial: TrialRecord): number {
+  if (trial.calibrationId === null) return DEFAULT_CSS_PX_PER_MM;
+  return cssPxPerMm();
+}
+
+async function showTrophyDialog(): Promise<void> {
+  let trials: TrialRecord[] = [];
+  try {
+    trials = await getTrials();
+    trophyIntro.textContent = "Your highest-scoring attempt at each exercise: your strokes in black, the ideal in dashed blue. Tap one to see it larger.";
+  } catch {
+    trophyIntro.textContent = "Saved trials could not be read in this browser.";
+  }
+  trophyDialog.showModal();
+  trophyView.render(bestTrialsByExercise(trials));
+}
+
 async function deleteAllData(): Promise<void> {
   if (!window.confirm("Delete every saved stroke and trial from this browser? This cannot be undone.")) return;
   try {
@@ -947,6 +983,8 @@ function wireControls(): void {
   requiredElement<HTMLButtonElement>("#calibrateButton").addEventListener("click", () => { configureRuler(); calibrationDialog.showModal(); });
   requiredElement<HTMLButtonElement>("#diagnosticsButton").addEventListener("click", () => { renderDiagnostics(); diagnosticsDialog.showModal(); });
   requiredElement<HTMLButtonElement>("#dataButton").addEventListener("click", () => void showDataDialog());
+  requiredElement<HTMLButtonElement>("#trophiesButton").addEventListener("click", () => void showTrophyDialog());
+  requiredElement<HTMLButtonElement>("#trophyBackButton").addEventListener("click", () => trophyView.showGrid());
   requiredElement<HTMLButtonElement>("#saveCalibrationButton").addEventListener("click", () => void persistCalibration());
   requiredElement<HTMLButtonElement>("#resetCalibrationButton").addEventListener("click", () => {
     rulerSlider.value = String(Math.min(Number(rulerSlider.max), DEFAULT_RULER_WIDTH_CSS_PX));

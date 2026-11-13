@@ -2,3 +2,6 @@ node_modules/
 
 # Practice-data exports saved into the folder
 circle-trainer-*.json
+
+# Local to-do list
+TODO.md
