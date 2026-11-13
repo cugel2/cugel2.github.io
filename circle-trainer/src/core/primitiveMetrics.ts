@@ -1,4 +1,5 @@
 import { pointCssPxToMm, polylineLength, resampleByArcLength, wrapAngleRad } from "./geometry";
+import { BOX_METRIC_VERSION, BOX_SCORING_VERSION } from "./boxMetrics";
 import { analyseLineStroke, METRIC_VERSION as LINE_METRIC_VERSION, SCORING_VERSION as LINE_SCORING_VERSION } from "./lineMetrics";
 import { sampleTargetPathCss, targetPathLengthMm } from "./targets";
 import type {
@@ -24,6 +25,7 @@ const VERSIONS: Record<ExerciseType, { metric: string; scoring: string }> = {
   CIRCLE: { metric: "circle-1", scoring: "circle-1" },
   ELLIPSE: { metric: "ellipse-1", scoring: "ellipse-1" },
   S_CURVE: { metric: "s-curve-2", scoring: "s-curve-1" },
+  BOX: { metric: BOX_METRIC_VERSION, scoring: BOX_SCORING_VERSION },
 };
 
 export function versionsForExercise(type: ExerciseType): { metric: string; scoring: string } {
@@ -132,7 +134,6 @@ function baseFailure(stroke: RawStroke, pathLengthMm: number, expectedLengthMm: 
   if (pathLengthMm < expectedLengthMm * 0.5) return "Stroke incomplete — reach the whole shape";
   const durationMs = stroke.samples.at(-1)!.tMs - stroke.samples[0].tMs;
   if (durationMs <= 0) return "Couldn’t evaluate the stroke timing";
-  if (durationMs / Math.max(pathLengthMm, 1) > 35) return "Too slow — make one committed movement";
   return undefined;
 }
 
@@ -327,6 +328,7 @@ export function analyseTargetStroke(
   correctionGateEnabled = true,
 ): AnalysisResult<PrimitiveMetrics> {
   if (stroke.samples.length === 0) throw new Error("Cannot analyse an empty stroke");
+  if (target.kind === "BOX") throw new Error("Box trials are scored from all strokes with analyseBoxStrokes");
   if (target.kind === "LINE") return analyseLineStroke(stroke, target, cssPxPerMm, correctionGateEnabled);
   if (target.kind === "ARC") return analyseArc(stroke, target, cssPxPerMm, correctionGateEnabled);
   if (target.kind === "CIRCLE") return analyseCircle(stroke, target, cssPxPerMm, correctionGateEnabled);

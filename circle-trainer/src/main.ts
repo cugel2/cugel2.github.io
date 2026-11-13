@@ -1,22 +1,29 @@
 import "./styles.css";
 
+import { arrowLabelCss, BOX_EDGES, BOX_STROKES_REQUIRED, boxAreas, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
+import { analyseBoxStrokes } from "./core/boxMetrics";
+import { polylineLength } from "./core/geometry";
 import { rawSampleIdentity } from "./core/input";
 import { analyseTargetStroke, versionsForExercise } from "./core/primitiveMetrics";
 import { EXERCISE_LABELS, MODE_LABELS, PracticeScheduler } from "./core/scheduler";
 import { generateTarget, sampleTargetPathCss, targetCheckpointsCss } from "./core/targets";
 import type {
   AnalysisResult,
+  BoxMetrics,
+  BoxTarget,
+  BoxTrialRecord,
   DeviceSnapshot,
   ExerciseType,
   ExportBundle,
   PhysicalCalibration,
   PracticeMode,
+  PrimitiveExerciseType,
   PrimitiveMetrics,
   RawSample,
   RawStroke,
+  SingleStrokeTrialRecord,
   StrokeEventType,
   TargetDefinition,
-  TrialRecord,
 } from "./core/types";
 import {
   clearStrokes,
@@ -33,11 +40,16 @@ import {
   saveTrial,
 } from "./storage";
 
-const APP_VERSION = "0.3.3";
-const SCHEMA_VERSION = "2" as const;
+const APP_VERSION = "0.4.0";
+const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
-const VALID_MODES: readonly PracticeMode[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE", "MIXED_BLOCKED", "MIXED_RANDOM"];
+const VALID_MODES: readonly PracticeMode[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE", "BOX", "MIXED_BLOCKED", "MIXED_RANDOM"];
+/** Box strokes shorter than this (or with fewer samples) are treated as accidental taps and not counted. */
+const BOX_MIN_STROKE_SAMPLES = 8;
+const BOX_MIN_STROKE_PATH_MM = 6;
+const BOX_ACCENT = "#d2691e";
+const BOX_REFERENCE_GREY = "#9a968d";
 
 type TrialState = "PREPARING" | "READY" | "DRAWING" | "PROCESSING" | "FEEDBACK";
 
@@ -47,6 +59,7 @@ const INSTRUCTIONS: Record<ExerciseType, { kicker: string; prompt: string }> = {
   CIRCLE: { kicker: "Circle practice", prompt: "Draw one full circle through the four points." },
   ELLIPSE: { kicker: "Ellipse practice", prompt: "Draw one full ellipse through the four points." },
   S_CURVE: { kicker: "S-curve practice", prompt: "Draw one smooth S curve through the four points." },
+  BOX: { kicker: "Box practice", prompt: "Swing the box about the orange edge by the angle shown, then draw its other 11 edges on the right — one stroke each." },
 };
 
 function requiredElement<T extends Element>(selector: string): T {
@@ -66,6 +79,8 @@ const statusText = requiredElement<HTMLElement>("#statusText");
 const emptyState = requiredElement<HTMLElement>("#emptyState");
 const instructionType = requiredElement<HTMLElement>("#instructionType");
 const instructionText = requiredElement<HTMLElement>("#instructionText");
+const instructionNote = requiredElement<HTMLElement>("#emptyState span");
+const DEFAULT_INSTRUCTION_NOTE = instructionNote.textContent ?? "";
 const scaleStatus = requiredElement<HTMLElement>("#scaleStatus");
 const repCount = requiredElement<HTMLElement>("#repCount");
 const streakCount = requiredElement<HTMLElement>("#streakCount");
@@ -78,6 +93,7 @@ const feedbackDetail = requiredElement<HTMLElement>("#feedbackDetail");
 const modeSelect = requiredElement<HTMLSelectElement>("#practiceModeSelect");
 const correctionGateButton = requiredElement<HTMLButtonElement>("#correctionGateButton");
 const nextTrialButton = requiredElement<HTMLButtonElement>("#nextTrialButton");
+const undoStrokeButton = requiredElement<HTMLButtonElement>("#undoStrokeButton");
 const toast = requiredElement<HTMLElement>("#toast");
 
 const calibrationDialog = requiredElement<HTMLDialogElement>("#calibrationDialog");
@@ -111,6 +127,8 @@ let activePointerId: number | null = null;
 let activeStroke: RawStroke | null = null;
 let activeSampleKeys = new Set<string>();
 let completedStroke: RawStroke | null = null;
+/** Accepted strokes of the current Box trial, in drawing order. */
+let boxStrokes: RawStroke[] = [];
 let lastAnalysis: AnalysisResult<PrimitiveMetrics> | null = null;
 let sessionReps = 0;
 let sessionStreak = 0;
@@ -205,10 +223,129 @@ function drawIdealTarget(targetDefinition: TargetDefinition): void {
   context.restore();
 }
 
+function singularLabel(type: ExerciseType): string {
+  return type === "BOX" ? "box" : EXERCISE_LABELS[type].toLowerCase().replace(/s$/, "");
+}
+
+function strokeSegment(a: { x: number; y: number }, b: { x: number; y: number }): void {
+  context.beginPath();
+  context.moveTo(a.x, a.y);
+  context.lineTo(b.x, b.y);
+  context.stroke();
+}
+
+function drawHinge(corners: readonly { x: number; y: number }[], hingeEdgeIndex: number): void {
+  const [a, b] = BOX_EDGES[hingeEdgeIndex];
+  context.save();
+  context.strokeStyle = BOX_ACCENT;
+  context.lineWidth = 4;
+  context.setLineDash([]);
+  strokeSegment(corners[a], corners[b]);
+  context.restore();
+}
+
+function drawBoxDivider(): void {
+  const bounds = canvas.getBoundingClientRect();
+  const { landscape } = boxAreas({ width: bounds.width, height: bounds.height });
+  context.save();
+  context.strokeStyle = "rgba(23, 23, 23, 0.1)";
+  context.lineWidth = 1;
+  context.setLineDash([]);
+  if (landscape) strokeSegment({ x: bounds.width / 2, y: 24 }, { x: bounds.width / 2, y: bounds.height - 24 });
+  else strokeSegment({ x: 24, y: bounds.height / 2 }, { x: bounds.width - 24, y: bounds.height / 2 });
+  context.restore();
+}
+
+/**
+ * The complete reference box (all 12 edges), its hinge, the swing arrow and the angle label.
+ * Kept separate so a later "hide reference on first stroke" option only needs to skip this call.
+ */
+function drawBoxReference(box: BoxTarget): void {
+  const px = cssPxPerMm();
+  context.save();
+  context.strokeStyle = BOX_REFERENCE_GREY;
+  context.lineWidth = 1.2;
+  context.setLineDash([]);
+  for (const [a, b] of BOX_EDGES) strokeSegment(box.referenceCornersCss[a], box.referenceCornersCss[b]);
+  context.restore();
+  drawHinge(box.referenceCornersCss, box.hingeEdgeIndex);
+
+  const arrow = swingArrowCss(box, px);
+  context.save();
+  context.strokeStyle = BOX_ACCENT;
+  context.fillStyle = BOX_ACCENT;
+  context.lineWidth = 2;
+  context.setLineDash([]);
+  context.beginPath();
+  context.moveTo(arrow[0].x, arrow[0].y);
+  for (let index = 1; index < arrow.length; index += 1) context.lineTo(arrow[index].x, arrow[index].y);
+  context.stroke();
+  const tip = arrow.at(-1)!;
+  const before = arrow.at(-3) ?? arrow[0];
+  const heading = Math.atan2(tip.y - before.y, tip.x - before.x);
+  const head = Math.max(7, 1.6 * px);
+  context.beginPath();
+  context.moveTo(tip.x + Math.cos(heading) * head * 0.35, tip.y + Math.sin(heading) * head * 0.35);
+  context.lineTo(tip.x + Math.cos(heading + 2.6) * head, tip.y + Math.sin(heading + 2.6) * head);
+  context.lineTo(tip.x + Math.cos(heading - 2.6) * head, tip.y + Math.sin(heading - 2.6) * head);
+  context.closePath();
+  context.fill();
+  const label = arrowLabelCss(box, px);
+  context.font = "600 15px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(`${Math.abs(box.swingDeg)}°`, label.x, label.y);
+  context.restore();
+}
+
+function drawBoxAnswer(box: BoxTarget): void {
+  context.save();
+  context.strokeStyle = "#1557c0";
+  context.lineWidth = 2;
+  context.setLineDash([8, 6]);
+  for (const index of nonHingeEdgeIndices(box.hingeEdgeIndex)) {
+    const [a, b] = BOX_EDGES[index];
+    strokeSegment(box.answerCornersCss[a], box.answerCornersCss[b]);
+  }
+  context.restore();
+}
+
+function drawBoxTrial(box: BoxTarget): void {
+  drawBoxDivider();
+  drawBoxReference(box);
+  for (const stroke of boxStrokes) drawRawStroke(stroke);
+  if (activeStroke) drawRawStroke(activeStroke);
+  if (trialState === "FEEDBACK") drawBoxAnswer(box);
+  drawHinge(box.answerCornersCss, box.hingeEdgeIndex);
+}
+
+function boxProgressText(): string {
+  return `${EXERCISE_LABELS.BOX.replace(/es$/, "")} · ${boxStrokes.length}/${BOX_STROKES_REQUIRED}`;
+}
+
+function updateUndoButton(): void {
+  const boxDrawing = activeExercise === "BOX" && (trialState === "READY" || trialState === "DRAWING");
+  undoStrokeButton.hidden = !boxDrawing;
+  undoStrokeButton.disabled = !boxDrawing || trialState !== "READY" || boxStrokes.length === 0;
+}
+
+function undoBoxStroke(): void {
+  if (activeExercise !== "BOX" || trialState !== "READY" || boxStrokes.length === 0) return;
+  boxStrokes.pop();
+  completedStroke = boxStrokes.at(-1) ?? null;
+  statusText.textContent = boxProgressText();
+  updateUndoButton();
+  redrawAll();
+}
+
 function redrawAll(): void {
   const bounds = canvas.getBoundingClientRect();
   context.clearRect(0, 0, bounds.width, bounds.height);
   if (!target) return;
+  if (target.kind === "BOX") {
+    drawBoxTrial(target);
+    return;
+  }
   if (activeStroke) drawRawStroke(activeStroke);
   else if (completedStroke) drawRawStroke(completedStroke);
   if (trialState === "FEEDBACK") drawIdealTarget(target);
@@ -216,6 +353,7 @@ function redrawAll(): void {
 }
 
 function statusForCurrentTrial(): string {
+  if (activeExercise === "BOX") return boxProgressText();
   const exerciseLabel = EXERCISE_LABELS[activeExercise];
   if (selectedMode === "MIXED_BLOCKED") {
     const progress = scheduler.blockProgress()!;
@@ -241,6 +379,7 @@ function beginNewTrial(): void {
   activeStroke = null;
   activeSampleKeys = new Set<string>();
   completedStroke = null;
+  boxStrokes = [];
   lastAnalysis = null;
   feedbackCard.hidden = true;
   feedbackCard.classList.remove("failed");
@@ -257,9 +396,12 @@ function beginNewTrial(): void {
   const instruction = INSTRUCTIONS[activeExercise];
   instructionType.textContent = instruction.kicker;
   instructionText.textContent = instruction.prompt;
-  nextTrialButton.textContent = `Next ${EXERCISE_LABELS[activeExercise].toLowerCase().replace(/s$/, "")}`;
+  instructionNote.textContent = activeExercise === "BOX" ? "The true box appears in blue after the 11th edge." : DEFAULT_INSTRUCTION_NOTE;
+  emptyState.classList.toggle("box-mode", activeExercise === "BOX");
+  nextTrialButton.textContent = `Next ${singularLabel(activeExercise)}`;
   trialState = "READY";
   statusText.textContent = statusForCurrentTrial();
+  updateUndoButton();
   emptyState.classList.toggle("hidden", introducedExercises.has(activeExercise));
   updateBestHud();
   redrawAll();
@@ -345,7 +487,8 @@ function handlePointerDown(event: PointerEvent): void {
   try { canvas.setPointerCapture(event.pointerId); } catch { /* Pointer already ended. */ }
   introducedExercises.add(activeExercise);
   emptyState.classList.add("hidden");
-  statusText.textContent = `${EXERCISE_LABELS[activeExercise]} · commit to the movement`;
+  statusText.textContent = activeExercise === "BOX" ? boxProgressText() : `${EXERCISE_LABELS[activeExercise]} · commit to the movement`;
+  updateUndoButton();
   appendPointerSamples(event, "pointerdown");
 }
 
@@ -371,8 +514,19 @@ function updatePracticeHud(analysis: AnalysisResult): void {
   updateBestHud();
 }
 
+function boxFeedbackDetail(metrics: BoxMetrics): string {
+  const target = Math.abs(metrics.targetSwingDeg);
+  const fitted = Math.round(Math.abs(metrics.fittedSwingDeg));
+  const edges = `edges ${metrics.rmsOrthogonalDeviationMm.toFixed(1)} mm`;
+  const wrongWay = fitted >= 1 && Math.sign(metrics.fittedSwingDeg) !== Math.sign(metrics.targetSwingDeg);
+  return wrongWay
+    ? `You swung it the wrong way (${fitted}°) · target ${target}° · ${edges}`
+    : `You turned it ${fitted}° · target ${target}° · ${edges}`;
+}
+
 function feedbackDetails(analysis: AnalysisResult): string {
   const metrics = analysis.metrics;
+  if ("fittedSwingDeg" in metrics) return boxFeedbackDetail(metrics);
   if (activeExercise === "LINE" && "rmsOrthogonalDeviationMm" in metrics) {
     return `RMS error ${metrics.rmsOrthogonalDeviationMm.toFixed(1)} mm · endpoints ${metrics.endpointMeanErrorMm.toFixed(1)} mm`;
   }
@@ -393,10 +547,10 @@ function showFeedback(analysis: AnalysisResult): void {
   feedbackCard.hidden = false;
   nextTrialButton.textContent = "Next";
   if (analysis.executionPassed) {
-    feedbackResult.textContent = `Committed ${EXERCISE_LABELS[activeExercise].toLowerCase().replace(/s$/, "")} ✓`;
+    feedbackResult.textContent = `Committed ${singularLabel(activeExercise)} ✓`;
     feedbackScore.textContent = `Accuracy ${analysis.accuracyScore ?? 0}`;
     feedbackDetail.textContent = feedbackDetails(analysis);
-    statusText.textContent = "Feedback shown — ideal path in blue";
+    statusText.textContent = activeExercise === "BOX" ? "Feedback shown — true box in blue" : "Feedback shown — ideal path in blue";
   } else {
     feedbackCard.classList.add("failed");
     feedbackResult.textContent = "Execution not scored";
@@ -420,6 +574,11 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
   activeStroke = null;
   activePointerId = null;
 
+  if (target.kind === "BOX") {
+    await finishBoxStroke(stroke, target);
+    return;
+  }
+
   if (cancelled) {
     try { await saveStroke(stroke); savedStrokeCount += 1; } catch { showToast("Interrupted stroke could not be saved"); }
     beginNewTrial();
@@ -431,13 +590,13 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
     lastAnalysis = analysis;
     const versions = versionsForExercise(activeExercise);
     const schedule = { ...scheduler.context(), generationIndex: targetGenerationIndex - 1 };
-    const trial: TrialRecord = {
+    const trial: SingleStrokeTrialRecord = {
       id: createId(),
       appVersion: APP_VERSION,
       metricVersion: versions.metric,
       scoringVersion: versions.scoring,
       createdAtEpochMs: Date.now(),
-      exerciseType: activeExercise,
+      exerciseType: activeExercise as PrimitiveExerciseType,
       practiceMode: selectedMode,
       correctionGateEnabled,
       schedule,
@@ -463,6 +622,84 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
     feedbackDetail.textContent = "The raw stroke was kept for diagnostics.";
     statusText.textContent = "Evaluation failed — raw stroke preserved";
     redrawAll();
+  }
+}
+
+function showEvaluationFailure(): void {
+  trialState = "FEEDBACK";
+  feedbackCard.hidden = false;
+  feedbackCard.classList.add("failed");
+  feedbackResult.textContent = "Couldn’t evaluate this stroke";
+  feedbackScore.textContent = "Try another one";
+  feedbackDetail.textContent = "The raw stroke was kept for diagnostics.";
+  statusText.textContent = "Evaluation failed — raw stroke preserved";
+  updateUndoButton();
+  redrawAll();
+}
+
+function returnToBoxDrawing(message?: string): void {
+  trialState = "READY";
+  if (message) showToast(message);
+  statusText.textContent = boxProgressText();
+  updateUndoButton();
+  redrawAll();
+}
+
+/** One Box stroke has ended: drop it, keep it, or (on the 11th) score the whole box. */
+async function finishBoxStroke(stroke: RawStroke, box: BoxTarget): Promise<void> {
+  if (stroke.cancelled) {
+    void saveStroke(stroke).then(() => { savedStrokeCount += 1; }, () => undefined);
+    returnToBoxDrawing("Stroke interrupted — not counted");
+    return;
+  }
+  const px = cssPxPerMm();
+  const pathMm = polylineLength(stroke.samples.map((sample) => ({ x: sample.xCss / px, y: sample.yCss / px })));
+  if (stroke.samples.length < BOX_MIN_STROKE_SAMPLES || pathMm < BOX_MIN_STROKE_PATH_MM) {
+    returnToBoxDrawing("Too short — not counted");
+    return;
+  }
+  boxStrokes.push(stroke);
+  if (boxStrokes.length < BOX_STROKES_REQUIRED) {
+    returnToBoxDrawing();
+    return;
+  }
+  await submitBoxTrial(box);
+}
+
+async function submitBoxTrial(box: BoxTarget): Promise<void> {
+  trialState = "PROCESSING";
+  updateUndoButton();
+  statusText.textContent = boxProgressText();
+  const strokes = [...boxStrokes];
+  try {
+    const analysis = analyseBoxStrokes(strokes, box, cssPxPerMm());
+    lastAnalysis = analysis;
+    const versions = versionsForExercise("BOX");
+    const trial: BoxTrialRecord = {
+      id: createId(),
+      appVersion: APP_VERSION,
+      metricVersion: versions.metric,
+      scoringVersion: versions.scoring,
+      createdAtEpochMs: Date.now(),
+      exerciseType: "BOX",
+      practiceMode: selectedMode,
+      correctionGateEnabled: false,
+      schedule: { ...scheduler.context(), generationIndex: targetGenerationIndex - 1 },
+      target: box,
+      rawStrokes: strokes,
+      calibrationId: calibration?.id ?? null,
+      derived: analysis,
+    };
+    await Promise.all([...strokes.map(saveStroke), saveTrial(trial)]);
+    savedStrokeCount += strokes.length;
+    savedTrialCount += 1;
+    updatePracticeHud(analysis);
+    scheduler.advance();
+    trialState = "FEEDBACK";
+    showFeedback(analysis);
+    redrawAll();
+  } catch {
+    showEvaluationFailure();
   }
 }
 
@@ -590,7 +827,7 @@ async function showDataDialog(): Promise<void> {
     trials.forEach((trial) => { counts[trial.exerciseType] += 1; });
     dataSummary.textContent = trials.length === 0
       ? "No practice trials saved yet."
-      : `${trials.length.toLocaleString()} trials saved · ${counts.LINE} lines · ${counts.ARC} arcs · ${counts.CIRCLE} circles · ${counts.ELLIPSE} ellipses · ${counts.S_CURVE} S curves.`;
+      : `${trials.length.toLocaleString()} trials saved · ${counts.LINE} lines · ${counts.ARC} arcs · ${counts.CIRCLE} circles · ${counts.ELLIPSE} ellipses · ${counts.S_CURVE} S curves · ${counts.BOX} boxes.`;
   } catch { dataSummary.textContent = "Saved data could not be read in this browser."; }
   dataDialog.showModal();
 }
@@ -625,6 +862,7 @@ function wireControls(): void {
     void saveCorrectionGateEnabled(correctionGateEnabled).catch(() => showToast("Correction setting could not be saved"));
   });
   nextTrialButton.addEventListener("click", beginNewTrial);
+  undoStrokeButton.addEventListener("click", undoBoxStroke);
   modeSelect.addEventListener("change", () => {
     const mode = modeSelect.value as PracticeMode;
     if (!VALID_MODES.includes(mode) || trialState === "DRAWING") {

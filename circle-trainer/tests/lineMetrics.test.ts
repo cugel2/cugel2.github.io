@@ -48,11 +48,11 @@ describe("line analysis", () => {
     expect(result.accuracyScore).toBeLessThan(70);
   });
 
-  it("rejects a very slow constructed stroke before accuracy scoring", () => {
-    const result = analyseLineStroke(stroke(linePoints(), 5000), target, 1);
-    expect(result.executionPassed).toBe(false);
-    expect(result.accuracyScore).toBeUndefined();
-    expect(result.executionReason).toContain("Too slow");
+  it("scores a slow straight stroke the same as a fast one", () => {
+    const slow = analyseLineStroke(stroke(linePoints(), 60000), target, 1);
+    const fast = analyseLineStroke(stroke(linePoints(), 400), target, 1);
+    expect(slow.executionPassed).toBe(true);
+    expect(slow.accuracyScore).toBe(fast.accuracyScore);
   });
 
   it("can score a corrective line when correction rejection is off", () => {

@@ -1,8 +1,10 @@
 import { seededRandom, shuffle } from "./random";
-import type { ExerciseType, PracticeMode, ScheduleContext } from "./types";
+import type { ExerciseType, PracticeMode, PrimitiveExerciseType, ScheduleContext } from "./types";
 
-export const EXERCISE_TYPES: readonly ExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE"];
+export const EXERCISE_TYPES: readonly PrimitiveExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE"];
 export const MIXED_EXERCISE_TYPES: readonly ExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE"];
+/** Every single-exercise mode, including the multi-stroke Box drill (which is never part of a mixed mode). */
+export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [...EXERCISE_TYPES, "BOX"];
 
 export const EXERCISE_LABELS: Record<ExerciseType, string> = {
   LINE: "Lines",
@@ -10,6 +12,7 @@ export const EXERCISE_LABELS: Record<ExerciseType, string> = {
   CIRCLE: "Circles",
   ELLIPSE: "Ellipses",
   S_CURVE: "S Curves",
+  BOX: "Boxes",
 };
 
 export const MODE_LABELS: Record<PracticeMode, string> = {
@@ -19,7 +22,7 @@ export const MODE_LABELS: Record<PracticeMode, string> = {
 };
 
 function isExerciseType(mode: PracticeMode): mode is ExerciseType {
-  return EXERCISE_TYPES.includes(mode as ExerciseType);
+  return ALL_EXERCISE_TYPES.includes(mode as ExerciseType);
 }
 
 function orderedCycle(seed: string, cycleIndex: number, previous: ExerciseType | null): ExerciseType[] {

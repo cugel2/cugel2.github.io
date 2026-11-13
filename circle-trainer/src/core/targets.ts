@@ -1,5 +1,6 @@
+import { BOX_EDGES, generateBoxTarget } from "./box";
 import { randomBetween, seededRandom, type RandomSource } from "./random";
-import type { EllipseTarget, ExerciseType, Point2, TargetDefinition } from "./types";
+import type { EllipseTarget, ExerciseType, Point2, PrimitiveExerciseType, PrimitiveTargetDefinition, TargetDefinition } from "./types";
 
 export interface ViewportSize {
   width: number;
@@ -17,7 +18,17 @@ function ellipsePoint(target: EllipseTarget, phase: number, cssPxPerMm: number):
   return { x: target.centerCss.x + local.x, y: target.centerCss.y + local.y };
 }
 
+/** For a box this samples the answer box's edges one after another (not one continuous path). */
 export function sampleTargetPathCss(target: TargetDefinition, cssPxPerMm: number, count = 256): Point2[] {
+  if (target.kind === "BOX") {
+    const perEdge = Math.max(2, Math.ceil(count / BOX_EDGES.length));
+    return BOX_EDGES.flatMap(([a, b]) => Array.from({ length: perEdge }, (_, index) => {
+      const t = index / (perEdge - 1);
+      const start = target.answerCornersCss[a];
+      const end = target.answerCornersCss[b];
+      return { x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t };
+    }));
+  }
   const points: Point2[] = [];
   const samples = Math.max(2, count);
   for (let index = 0; index < samples; index += 1) {
@@ -48,6 +59,7 @@ export function sampleTargetPathCss(target: TargetDefinition, cssPxPerMm: number
 }
 
 export function targetCheckpointsCss(target: TargetDefinition, cssPxPerMm: number): Point2[] {
+  if (target.kind === "BOX") return [];
   if (target.kind === "LINE") return [target.aCss, target.bCss];
   if (target.kind === "ARC") return [0, 0.5, 1].map((t) => sampleTargetPathCss(target, cssPxPerMm, 3)[Math.round(t * 2)]);
   if (target.kind === "CIRCLE") return [0, 0.25, 0.5, 0.75].map((t) => {
@@ -87,7 +99,7 @@ function practicalSizeMm(
   return randomBetween(random, last.minimumMm, last.maximumMm);
 }
 
-function candidateTarget(type: ExerciseType, viewport: ViewportSize, cssPxPerMm: number, random: RandomSource, margin: number): TargetDefinition {
+function candidateTarget(type: PrimitiveExerciseType, viewport: ViewportSize, cssPxPerMm: number, random: RandomSource, margin: number): PrimitiveTargetDefinition {
   const drawableWidth = viewport.width - margin * 2;
   const drawableHeight = viewport.height - margin * 2;
   const shortSide = Math.min(drawableWidth, drawableHeight);
@@ -145,7 +157,7 @@ function candidateTarget(type: ExerciseType, viewport: ViewportSize, cssPxPerMm:
   };
 }
 
-function fallbackTarget(type: ExerciseType, viewport: ViewportSize, cssPxPerMm: number): TargetDefinition {
+function fallbackTarget(type: PrimitiveExerciseType, viewport: ViewportSize, cssPxPerMm: number): PrimitiveTargetDefinition {
   const centerCss = { x: viewport.width / 2, y: viewport.height / 2 };
   const span = Math.min(viewport.width, viewport.height) * 0.62;
   if (type === "LINE") return { kind: "LINE", aCss: { x: centerCss.x - span / 2, y: centerCss.y }, bCss: { x: centerCss.x + span / 2, y: centerCss.y }, lengthMm: span / cssPxPerMm };
@@ -166,6 +178,7 @@ export function generateTarget(
   sessionSeed: string,
   sequenceIndex: number,
 ): TargetDefinition {
+  if (type === "BOX") return generateBoxTarget(viewport, cssPxPerMm, sessionSeed, sequenceIndex);
   const random = seededRandom(`${sessionSeed}:target:${sequenceIndex}:${type}`);
   const margin = Math.min(72, Math.max(34, Math.min(viewport.width, viewport.height) * 0.08));
   for (let attempt = 0; attempt < 220; attempt += 1) {

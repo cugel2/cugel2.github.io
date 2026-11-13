@@ -42,7 +42,6 @@ function executionFailure(
   if (sampleCount < 8) return "Stroke too short — try again";
   if (metrics.pathLengthMm < Math.max(20, targetLengthMm * 0.45)) return "Stroke too short — reach the other point";
   if (metrics.durationMs <= 0) return "Couldn’t evaluate the stroke timing";
-  if (metrics.durationMs / Math.max(metrics.pathLengthMm, 1) > 35) return "Too slow — make one committed movement";
   if (correctionGateEnabled && (metrics.pathEfficiency < 0.5 || metrics.totalTurningRad > 3.2)) {
     return "Too corrective — commit to the next one";
   }

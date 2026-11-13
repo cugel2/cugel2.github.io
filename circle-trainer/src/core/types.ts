@@ -28,7 +28,8 @@ export interface RawStroke {
   samples: RawSample[];
 }
 
-export type ExerciseType = "LINE" | "ARC" | "CIRCLE" | "ELLIPSE" | "S_CURVE";
+export type PrimitiveExerciseType = "LINE" | "ARC" | "CIRCLE" | "ELLIPSE" | "S_CURVE";
+export type ExerciseType = PrimitiveExerciseType | "BOX";
 export type PracticeMode = ExerciseType | "MIXED_BLOCKED" | "MIXED_RANDOM";
 
 export interface LineTarget {
@@ -70,7 +71,27 @@ export interface SCurveTarget {
   thetaRad: number;
 }
 
-export type TargetDefinition = LineTarget | ArcTarget | CircleTarget | EllipseTarget | SCurveTarget;
+/**
+ * Hinge-swing box drill. The parameters fully determine the 3D scene; the projected corners (CSS px,
+ * corner i has x/y/z sign from bits 0/1/2) are stored too so saved records are self-contained.
+ */
+export interface BoxTarget {
+  kind: "BOX";
+  dimensionsMm: [number, number, number];
+  /** Unit quaternion [w, x, y, z] of the reference pose. */
+  referenceRotation: [number, number, number, number];
+  hingeEdgeIndex: number;
+  /** Signed swing about the hinge edge (from its lower-index corner to its higher-index corner, right-handed). */
+  swingDeg: number;
+  cameraDistanceFactor: number;
+  referenceOffsetCss: Point2;
+  answerOffsetCss: Point2;
+  referenceCornersCss: Point2[];
+  answerCornersCss: Point2[];
+}
+
+export type PrimitiveTargetDefinition = LineTarget | ArcTarget | CircleTarget | EllipseTarget | SCurveTarget;
+export type TargetDefinition = PrimitiveTargetDefinition | BoxTarget;
 
 export interface CommonMetrics {
   durationMs: number;
@@ -129,7 +150,34 @@ export interface SCurveMetrics extends CommonMetrics {
   curvatureSignTransitions: number;
 }
 
-export type PrimitiveMetrics = LineMetrics | ArcMetrics | CircleMetrics | EllipseMetrics | SCurveMetrics;
+export interface BoxEdgeMetric {
+  edgeIndex: number;
+  strokeId: string;
+  rmsMm: number;
+  endpointMm: number;
+  angleErrorDeg: number;
+}
+
+export interface BoxMetrics {
+  edges: BoxEdgeMetric[];
+  /** sqrt(mean(rms_i^2)) over the matched edges. */
+  rmsOrthogonalDeviationMm: number;
+  /** sqrt(mean(endpoint_i^2)) over the matched edges. */
+  endpointMeanErrorMm: number;
+  meanAngleErrorDeg: number;
+  fittedSwingDeg: number;
+  targetSwingDeg: number;
+  scaleMm: number;
+  normalizedError: number;
+  /** First sample of the first stroke to last sample of the last stroke. */
+  durationMs: number;
+  /** Sum of per-stroke durations (pen down only). */
+  drawingDurationMs: number;
+  pathLengthMm: number;
+  strokeCount: number;
+}
+
+export type PrimitiveMetrics = LineMetrics | ArcMetrics | CircleMetrics | EllipseMetrics | SCurveMetrics | BoxMetrics;
 
 export interface AnalysisResult<M extends PrimitiveMetrics = PrimitiveMetrics> {
   metrics: M;
@@ -148,21 +196,34 @@ export interface ScheduleContext {
   positionInBlock?: number;
 }
 
-export interface TrialRecord {
+interface TrialRecordBase {
   id: string;
   appVersion: string;
   metricVersion: string;
   scoringVersion: string;
   createdAtEpochMs: number;
-  exerciseType: ExerciseType;
   practiceMode: PracticeMode;
   correctionGateEnabled: boolean;
   schedule: ScheduleContext;
+  calibrationId: string | null;
+}
+
+export interface SingleStrokeTrialRecord extends TrialRecordBase {
+  exerciseType: PrimitiveExerciseType;
   target: TargetDefinition;
   rawStroke: RawStroke;
-  calibrationId: string | null;
   derived: AnalysisResult;
 }
+
+export interface BoxTrialRecord extends TrialRecordBase {
+  exerciseType: "BOX";
+  target: BoxTarget;
+  /** Accepted strokes in drawing order (undone and discarded strokes are not included). */
+  rawStrokes: RawStroke[];
+  derived: AnalysisResult<BoxMetrics>;
+}
+
+export type TrialRecord = SingleStrokeTrialRecord | BoxTrialRecord;
 
 export interface LegacyLineTrialRecord {
   id: string;
@@ -195,7 +256,7 @@ export interface DeviceSnapshot {
 }
 
 export interface ExportBundle {
-  schemaVersion: "2";
+  schemaVersion: "3";
   appVersion: string;
   exportedAt: number;
   calibration: PhysicalCalibration | null;
