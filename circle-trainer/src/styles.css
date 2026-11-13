@@ -235,6 +235,32 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 .feedback-card[hidden] { display: none; }
+
+/* Box tips: a scrollable panel over the right side, below the feedback card. */
+.tips-panel {
+  position: absolute;
+  z-index: 1;
+  top: 18px;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, calc(100% - 36px));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 254, 250, 0.96);
+  box-shadow: 0 16px 44px rgba(23, 23, 23, 0.12);
+  backdrop-filter: blur(10px);
+}
+.tips-panel[hidden] { display: none; }
+.tips-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 16px 8px 20px; }
+.tips-header h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+.tips-body { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 20px 20px; font-size: 13px; line-height: 1.5; }
+.tips-body h3 { margin: 18px 0 4px; font-size: 13px; font-weight: 650; }
+.tips-body p { margin: 0 0 6px; }
+.tips-body ul { margin: 0 0 6px; padding-left: 18px; }
+.tips-body li { margin-bottom: 2px; }
+.tips-lead { color: var(--muted); }
 .feedback-result { margin: 0; color: var(--muted); font-size: 12px; }
 .feedback-card strong { font-size: 22px; font-weight: 550; letter-spacing: -0.02em; }
 .feedback-card span { min-height: 18px; color: var(--muted); font-size: 11px; line-height: 1.45; }

@@ -46,8 +46,18 @@ export const MAX_HINGE_OUT_OF_PLANE_DEG = 50;
 export const MIN_AXIS_SEPARATION_DEG = 12;
 /** The arrow shows the first part of the swing only, so it gives direction without revealing the answer. */
 export const ARROW_SWEEP_DEG = 20;
+/**
+ * The arrow also starts this far *before* the current position, so it is a visibly curved arc
+ * while its head still only shows ARROW_SWEEP_DEG of the swing. Its midpoint is "now".
+ */
+export const ARROW_BACK_SWEEP_DEG = 20;
 /** Minimum on-screen length of that arrow for it to be readable. */
-export const MIN_ARROW_LENGTH_MM = 5;
+export const MIN_ARROW_LENGTH_MM = 12;
+/**
+ * The arrow runs on a circle this many times wider than the far edge's own path (same centre, same plane),
+ * so it is longer and sits outside the box's lines instead of on top of them.
+ */
+export const ARROW_RADIUS_FACTOR = 1.4;
 /** The angle label sits this far beyond the arrow tip. */
 export const ARROW_LABEL_OFFSET_MM = 7;
 /** Extra room kept around the label so the text does not clip the area edge. */
@@ -190,16 +200,24 @@ export function answerCornersMmForSwing(target: BoxTarget, swingDeg: number, css
   return answerMm.map((point) => ({ x: offset.x + point.x, y: offset.y + point.y }));
 }
 
-/** Arrow showing the first ARROW_SWEEP_DEG of the path swept by the midpoint of the edge opposite the hinge. */
-export function swingArrowMm(parameters: BoxParameters, steps = 16): Point2[] {
+/**
+ * Arrow along the path of the midpoint of the edge opposite the hinge, pushed outward from the hinge by
+ * ARROW_RADIUS_FACTOR, running from ARROW_BACK_SWEEP_DEG before the current position to ARROW_SWEEP_DEG into the swing.
+ */
+export function swingArrowMm(parameters: BoxParameters, steps = 24): Point2[] {
   const distance = cameraDistanceMm(parameters.dimensionsMm, parameters.cameraDistanceFactor);
   const reference = referenceCorners3d(parameters.dimensionsMm, parameters.referenceRotation);
   const [a, b] = BOX_EDGES[oppositeEdgeIndex(parameters.hingeEdgeIndex)];
   const midpoint = scale(add(reference[a], reference[b]), 0.5);
   const { origin, direction } = hingeAxis(reference, parameters.hingeEdgeIndex);
-  const sweepRad = (Math.sign(parameters.swingDeg) * ARROW_SWEEP_DEG * Math.PI) / 180;
+  const sign = Math.sign(parameters.swingDeg);
+  const fromRad = (-sign * ARROW_BACK_SWEEP_DEG * Math.PI) / 180;
+  const toRad = (sign * ARROW_SWEEP_DEG * Math.PI) / 180;
+  const offset = sub(midpoint, origin);
+  const along = scale(direction, dot(offset, direction));
+  const start = add(along, scale(sub(offset, along), ARROW_RADIUS_FACTOR));
   return Array.from({ length: steps + 1 }, (_, index) => {
-    const rotated = add(origin, rotateAboutAxis(sub(midpoint, origin), direction, (sweepRad * index) / steps));
+    const rotated = add(origin, rotateAboutAxis(start, direction, fromRad + ((toRad - fromRad) * index) / steps));
     return projectPoint(rotated, distance);
   });
 }

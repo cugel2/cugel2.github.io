@@ -34,6 +34,7 @@
           </select>
           <button type="button" class="text-button" id="newTrialButton">New</button>
           <button type="button" class="text-button" id="undoStrokeButton" hidden title="Remove the last box edge">Undo</button>
+          <button type="button" class="text-button toggle-button" id="boxTipsButton" aria-pressed="false" aria-controls="boxTipsPanel" hidden>Tips</button>
           <button type="button" class="text-button toggle-button" id="correctionGateButton" aria-pressed="false" title="Reject strokes with substantial correction or backtracking">Corrections: Off</button>
           <button type="button" class="text-button" id="calibrateButton">Calibrate</button>
           <button type="button" class="text-button" id="diagnosticsButton">Diagnostics</button>
@@ -48,6 +49,60 @@
           <p id="instructionText">Draw one committed stroke between the two points.</p>
           <span>The ideal path appears only after you lift the Pencil.</span>
         </div>
+        <aside class="tips-panel" id="boxTipsPanel" aria-labelledby="boxTipsTitle" hidden>
+          <div class="tips-header">
+            <div>
+              <p class="eyebrow">Box practice</p>
+              <h2 id="boxTipsTitle">Tips</h2>
+            </div>
+            <button type="button" class="icon-button" id="closeBoxTipsButton" aria-label="Hide tips">×</button>
+          </div>
+          <div class="tips-body">
+            <p class="tips-lead">Turning a box about one edge is really a flat 2D turn, copied along that edge. Most of these tricks come from that.</p>
+
+            <h3>1. Some edges are free</h3>
+            <p>The hinge doesn’t move, so the 3 other edges parallel to it stay parallel to it. On screen they run nearly parallel to the orange hinge, converging slightly, at about its length. Draw the rest first, then add these three to join the two ends.</p>
+
+            <h3>2. Rotate the end face, not the box</h3>
+            <p>At each end of the hinge is a face perpendicular to it: a rectangle with one corner on the hinge. The whole swing is that rectangle turning about its pinned corner, like a sign on a nail.</p>
+            <ul>
+              <li>Picture the end rectangle turning by the angle.</li>
+              <li>Draw it at one end of the hinge.</li>
+              <li>Draw the same shape at the other end, slightly smaller or larger for perspective.</li>
+              <li>Join them with the three hinge-parallel edges from tip 1.</li>
+            </ul>
+            <p>That’s all 11 edges: 4 + 4 for the two end rectangles, then the 3 joining edges.</p>
+
+            <h3>3. The Y at each hinge corner</h3>
+            <p>At each end of the hinge, three edges meet in a Y: the hinge plus two edges perpendicular to it. Only those two turn, together, like clock hands stuck at a fixed angle. Get both Ys right and the rest follows. Check: a corner pointing at you forms a Y with all three angles wider than 90°; a corner seen from the side forms an arrow.</p>
+
+            <h3>4. Anchor on 90°</h3>
+            <p>A 90° swing is easy: one face swaps into the other’s position. Each perpendicular edge takes the other’s direction, one of them flipped. From there:</p>
+            <ul>
+              <li><strong>30°</strong> — a third of the way.</li>
+              <li><strong>45°</strong> — halfway between the old direction and the 90° one.</li>
+              <li><strong>60°</strong> — two thirds of the way.</li>
+            </ul>
+            <p>Perspective squashes the turn, so this is approximate, but it beats guessing.</p>
+
+            <h3>5. Use the arrow as an ellipse</h3>
+            <p>Every moving corner travels on a circle around the hinge, which looks like an ellipse squashed along the hinge’s direction. The arrow follows that curve just outside the far edge: its middle is where the far edge is now, and its head is 20° into the swing. Keep going along the same curve past the head — about a quarter of the arrow’s length for 30°, just over half for 45°, a whole arrow length for 60° — and the far edge’s middle lands a little inside that point.</p>
+
+            <h3>6. Foreshortening shows which faces open up</h3>
+            <ul>
+              <li>An edge turning toward or away from you gets shorter on screen.</li>
+              <li>An edge turning across the picture gets longer.</li>
+              <li>A face tilting toward you grows; one tilting away gets thinner.</li>
+            </ul>
+            <p>If every face looks the same size as in the reference, something’s off.</p>
+
+            <h3>7. Check before the last edge</h3>
+            <p>Look at the three families of 4 parallel edges. Each should point roughly the same way, converging slightly. One edge breaking its family is the usual mistake.</p>
+
+            <h3>Off-screen practice</h3>
+            <p>Hold a phone or matchbox and swing it about one edge while watching that edge’s corners. In the app, try predicting just the far edge (tip 5) before drawing anything.</p>
+          </div>
+        </aside>
         <aside class="feedback-card" id="feedbackCard" aria-live="polite" hidden>
           <p class="feedback-result" id="feedbackResult">Committed stroke</p>
           <strong id="feedbackScore">Accuracy —</strong>

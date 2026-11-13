@@ -94,6 +94,9 @@ const modeSelect = requiredElement<HTMLSelectElement>("#practiceModeSelect");
 const correctionGateButton = requiredElement<HTMLButtonElement>("#correctionGateButton");
 const nextTrialButton = requiredElement<HTMLButtonElement>("#nextTrialButton");
 const undoStrokeButton = requiredElement<HTMLButtonElement>("#undoStrokeButton");
+const boxTipsButton = requiredElement<HTMLButtonElement>("#boxTipsButton");
+const boxTipsPanel = requiredElement<HTMLElement>("#boxTipsPanel");
+const BOX_TIPS_OPEN_KEY = "circle-trainer:box-tips-open";
 const toast = requiredElement<HTMLElement>("#toast");
 
 const calibrationDialog = requiredElement<HTMLDialogElement>("#calibrationDialog");
@@ -129,6 +132,7 @@ let activeSampleKeys = new Set<string>();
 let completedStroke: RawStroke | null = null;
 /** Accepted strokes of the current Box trial, in drawing order. */
 let boxStrokes: RawStroke[] = [];
+let boxTipsOpen = readBoxTipsOpen();
 let lastAnalysis: AnalysisResult<PrimitiveMetrics> | null = null;
 let sessionReps = 0;
 let sessionStreak = 0;
@@ -270,31 +274,77 @@ function drawBoxReference(box: BoxTarget): void {
   context.restore();
   drawHinge(box.referenceCornersCss, box.hingeEdgeIndex);
 
-  const arrow = swingArrowCss(box, px);
+  drawSwingArrow(swingArrowCss(box, px), px);
   context.save();
-  context.strokeStyle = BOX_ACCENT;
   context.fillStyle = BOX_ACCENT;
-  context.lineWidth = 2;
-  context.setLineDash([]);
-  context.beginPath();
-  context.moveTo(arrow[0].x, arrow[0].y);
-  for (let index = 1; index < arrow.length; index += 1) context.lineTo(arrow[index].x, arrow[index].y);
-  context.stroke();
-  const tip = arrow.at(-1)!;
-  const before = arrow.at(-3) ?? arrow[0];
-  const heading = Math.atan2(tip.y - before.y, tip.x - before.x);
-  const head = Math.max(7, 1.6 * px);
-  context.beginPath();
-  context.moveTo(tip.x + Math.cos(heading) * head * 0.35, tip.y + Math.sin(heading) * head * 0.35);
-  context.lineTo(tip.x + Math.cos(heading + 2.6) * head, tip.y + Math.sin(heading + 2.6) * head);
-  context.lineTo(tip.x + Math.cos(heading - 2.6) * head, tip.y + Math.sin(heading - 2.6) * head);
-  context.closePath();
-  context.fill();
   const label = arrowLabelCss(box, px);
   context.font = "600 15px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
   context.textAlign = "center";
   context.textBaseline = "middle";
+  context.strokeStyle = "rgba(255, 254, 250, 0.95)";
+  context.lineWidth = 4;
+  context.lineJoin = "round";
+  context.strokeText(`${Math.abs(box.swingDeg)}°`, label.x, label.y);
   context.fillText(`${Math.abs(box.swingDeg)}°`, label.x, label.y);
+  context.restore();
+}
+
+/**
+ * Tail dot → curved shaft → large head, all over a paper-coloured halo so the arrow reads clearly even
+ * where it crosses the reference box's grey edges.
+ */
+function drawSwingArrow(arrow: readonly { x: number; y: number }[], px: number): void {
+  const tip = arrow.at(-1)!;
+  const before = arrow.at(-4) ?? arrow[0];
+  const heading = Math.atan2(tip.y - before.y, tip.x - before.x);
+  const head = Math.max(11, 2.4 * px);
+  // Stop the shaft inside the head so its round cap doesn't poke out of the point.
+  const shaftEnd = { x: tip.x - Math.cos(heading) * head * 0.5, y: tip.y - Math.sin(heading) * head * 0.5 };
+  const headPoints = [
+    { x: tip.x + Math.cos(heading) * head * 0.25, y: tip.y + Math.sin(heading) * head * 0.25 },
+    { x: tip.x + Math.cos(heading + 2.65) * head, y: tip.y + Math.sin(heading + 2.65) * head },
+    { x: tip.x + Math.cos(heading - 2.65) * head, y: tip.y + Math.sin(heading - 2.65) * head },
+  ];
+  const tracePath = (): void => {
+    context.beginPath();
+    context.moveTo(arrow[0].x, arrow[0].y);
+    for (let index = 1; index < arrow.length - 1; index += 1) context.lineTo(arrow[index].x, arrow[index].y);
+    context.lineTo(shaftEnd.x, shaftEnd.y);
+  };
+  const traceHead = (): void => {
+    context.beginPath();
+    context.moveTo(headPoints[0].x, headPoints[0].y);
+    context.lineTo(headPoints[1].x, headPoints[1].y);
+    context.lineTo(headPoints[2].x, headPoints[2].y);
+    context.closePath();
+  };
+  const tailRadius = 3.2;
+  context.save();
+  context.setLineDash([]);
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  // Halo.
+  context.strokeStyle = "rgba(255, 254, 250, 0.95)";
+  context.fillStyle = "rgba(255, 254, 250, 0.95)";
+  context.lineWidth = 8;
+  tracePath();
+  context.stroke();
+  traceHead();
+  context.stroke();
+  context.beginPath();
+  context.arc(arrow[0].x, arrow[0].y, tailRadius + 3, 0, Math.PI * 2);
+  context.fill();
+  // Arrow.
+  context.strokeStyle = BOX_ACCENT;
+  context.fillStyle = BOX_ACCENT;
+  context.lineWidth = 2.6;
+  tracePath();
+  context.stroke();
+  traceHead();
+  context.fill();
+  context.beginPath();
+  context.arc(arrow[0].x, arrow[0].y, tailRadius, 0, Math.PI * 2);
+  context.fill();
   context.restore();
 }
 
@@ -321,6 +371,24 @@ function drawBoxTrial(box: BoxTarget): void {
 
 function boxProgressText(): string {
   return `${EXERCISE_LABELS.BOX.replace(/es$/, "")} · ${boxStrokes.length}/${BOX_STROKES_REQUIRED}`;
+}
+
+/** Device-local convenience only, so plain localStorage (guarded) rather than IndexedDB. */
+function readBoxTipsOpen(): boolean {
+  try { return window.localStorage.getItem(BOX_TIPS_OPEN_KEY) === "1"; } catch { return false; }
+}
+
+function updateBoxTips(): void {
+  const boxMode = activeExercise === "BOX";
+  boxTipsButton.hidden = !boxMode;
+  boxTipsButton.setAttribute("aria-pressed", String(boxTipsOpen));
+  boxTipsPanel.hidden = !boxMode || !boxTipsOpen;
+}
+
+function setBoxTipsOpen(open: boolean): void {
+  boxTipsOpen = open;
+  try { window.localStorage.setItem(BOX_TIPS_OPEN_KEY, open ? "1" : "0"); } catch { /* Private mode: just don't remember. */ }
+  updateBoxTips();
 }
 
 function updateUndoButton(): void {
@@ -402,6 +470,7 @@ function beginNewTrial(): void {
   trialState = "READY";
   statusText.textContent = statusForCurrentTrial();
   updateUndoButton();
+  updateBoxTips();
   emptyState.classList.toggle("hidden", introducedExercises.has(activeExercise));
   updateBestHud();
   redrawAll();
@@ -863,6 +932,8 @@ function wireControls(): void {
   });
   nextTrialButton.addEventListener("click", beginNewTrial);
   undoStrokeButton.addEventListener("click", undoBoxStroke);
+  boxTipsButton.addEventListener("click", () => setBoxTipsOpen(!boxTipsOpen));
+  requiredElement<HTMLButtonElement>("#closeBoxTipsButton").addEventListener("click", () => setBoxTipsOpen(false));
   modeSelect.addEventListener("change", () => {
     const mode = modeSelect.value as PracticeMode;
     if (!VALID_MODES.includes(mode) || trialState === "DRAWING") {
