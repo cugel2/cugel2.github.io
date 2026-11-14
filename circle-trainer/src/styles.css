@@ -281,7 +281,7 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .hud {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.7fr);
   border-top: 1px solid var(--line);
   background: var(--paper-deep);
 }

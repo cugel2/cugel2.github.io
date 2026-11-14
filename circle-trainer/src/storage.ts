@@ -1,3 +1,4 @@
+import type { DailyTotals } from "./core/timer";
 import type { Handedness, LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
 
 const DB_NAME = "circle-trainer";
@@ -9,6 +10,7 @@ const CALIBRATION_KEY = "physical-calibration";
 const PRACTICE_MODE_KEY = "practice-mode";
 const CORRECTION_GATE_KEY = "correction-gate-enabled";
 const HANDEDNESS_KEY = "handedness";
+const PRACTICE_TIME_KEY = "practice-time-by-day";
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -184,4 +186,29 @@ export async function getHandedness(): Promise<Handedness | null> {
   });
   database.close();
   return handedness;
+}
+
+/** Practice milliseconds per practice day ("YYYY-MM-DD", rolling over at 4 am). */
+export async function savePracticeTime(totals: DailyTotals): Promise<void> {
+  const database = await openDatabase();
+  const transaction = database.transaction(SETTINGS, "readwrite");
+  transaction.objectStore(SETTINGS).put(totals, PRACTICE_TIME_KEY);
+  await waitForTransaction(transaction);
+  database.close();
+}
+
+export async function getPracticeTime(): Promise<DailyTotals | null> {
+  const database = await openDatabase();
+  const request = database.transaction(SETTINGS, "readonly").objectStore(SETTINGS).get(PRACTICE_TIME_KEY);
+  const totals = await new Promise<DailyTotals | null>((resolve, reject) => {
+    request.onsuccess = () => {
+      const value: unknown = request.result;
+      if (!value || typeof value !== "object") { resolve(null); return; }
+      // Keep only well-formed entries.
+      resolve(Object.fromEntries(Object.entries(value).filter(([key, ms]) => /^\d{4}-\d{2}-\d{2}$/.test(key) && typeof ms === "number" && Number.isFinite(ms) && ms >= 0)));
+    };
+    request.onerror = () => reject(request.error ?? new Error("Could not read practice time"));
+  });
+  database.close();
+  return totals;
 }

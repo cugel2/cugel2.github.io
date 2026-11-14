@@ -36,19 +36,22 @@ import {
   getCalibration,
   getCorrectionGateEnabled,
   getHandedness,
+  getPracticeTime,
   getPracticeMode,
   getStrokes,
   getTrials,
   saveCalibration,
   saveCorrectionGateEnabled,
   saveHandedness,
+  savePracticeTime,
   savePracticeMode,
   saveStroke,
   saveTrial,
 } from "./storage";
 import { createTrophyView } from "./trophyView";
+import { formatClock, formatMinutes, PracticeClock } from "./core/timer";
 
-const APP_VERSION = "0.6.1";
+const APP_VERSION = "0.7.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -100,6 +103,7 @@ const scaleStatus = requiredElement<HTMLElement>("#scaleStatus");
 const repCount = requiredElement<HTMLElement>("#repCount");
 const streakCount = requiredElement<HTMLElement>("#streakCount");
 const lastScore = requiredElement<HTMLElement>("#lastScore");
+const practiceTime = requiredElement<HTMLElement>("#practiceTime");
 const bestScore = requiredElement<HTMLElement>("#bestScore");
 const feedbackCard = requiredElement<HTMLElement>("#feedbackCard");
 const feedbackResult = requiredElement<HTMLElement>("#feedbackResult");
@@ -169,6 +173,7 @@ let bestByExercise: Partial<Record<ExerciseType, number>> = {};
 let savedStrokeCount = 0;
 let savedTrialCount = 0;
 let toastTimer: number | undefined;
+let practiceClock = new PracticeClock({}, document.visibilityState === "visible");
 let touchNoticeShown = false;
 const introducedExercises = new Set<ExerciseType>();
 
@@ -187,6 +192,20 @@ function getDeviceSnapshot(): DeviceSnapshot {
     pointerEvents: "PointerEvent" in window,
     coalescedEvents: "PointerEvent" in window && typeof PointerEvent.prototype.getCoalescedEvents === "function",
   };
+}
+
+/** Session and today's practice time, refreshed every second for display only (counting uses timestamps). */
+function updatePracticeTime(): void {
+  const now = Date.now();
+  practiceTime.textContent = `${formatClock(practiceClock.sessionTotalMs(now))} · ${formatMinutes(practiceClock.todayTotalMs(now))} today`;
+}
+
+let lastSavedPracticeMs = -1;
+
+function persistPracticeTime(): void {
+  const now = Date.now();
+  lastSavedPracticeMs = practiceClock.todayTotalMs(now);
+  void savePracticeTime(practiceClock.snapshot(now)).catch(() => undefined);
 }
 
 function showToast(message: string): void {
@@ -688,6 +707,7 @@ function handlePointerDown(event: PointerEvent): void {
   trialState = "DRAWING";
   try { canvas.setPointerCapture(event.pointerId); } catch { /* Pointer already ended. */ }
   introducedExercises.add(activeExercise);
+  practiceClock.recordActivity(Date.now());
   emptyState.classList.add("hidden");
   statusText.textContent = activeExercise === "BOX" ? boxProgressText() : `${EXERCISE_LABELS[activeExercise]} · commit to the movement`;
   updateUndoButton();
@@ -774,6 +794,9 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
   stroke.cancelled = cancelled;
   stroke.completedAtEpochMs = Date.now();
   completedStroke = stroke;
+  practiceClock.recordActivity(Date.now());
+  persistPracticeTime();
+  updatePracticeTime();
   activeStroke = null;
   activePointerId = null;
 
@@ -1017,6 +1040,7 @@ async function exportAllData(): Promise<void> {
     const bundle: ExportBundle = {
       schemaVersion: SCHEMA_VERSION, appVersion: APP_VERSION, exportedAt: Date.now(), calibration,
       selectedMode, correctionGateEnabled, device: getDeviceSnapshot(), strokes, trials,
+      practiceTimeByDay: practiceClock.snapshot(Date.now()),
     };
     downloadJson(`circle-trainer-${dateStamp()}.json`, bundle);
     showToast("JSON export created");
@@ -1126,15 +1150,26 @@ function wireControls(): void {
   canvas.addEventListener("pointercancel", (event) => void finishStroke(event, true));
   canvas.addEventListener("contextmenu", (event) => event.preventDefault());
   window.addEventListener("resize", () => { resizeCanvas(); if (trialState !== "DRAWING") beginNewTrial(); });
+  document.addEventListener("visibilitychange", () => {
+    const visible = document.visibilityState === "visible";
+    practiceClock.setVisible(visible, Date.now());
+    if (!visible) persistPracticeTime();
+    updatePracticeTime();
+  });
+  window.addEventListener("pagehide", persistPracticeTime);
+  window.setInterval(() => { if (document.visibilityState === "visible") updatePracticeTime(); }, 1000);
+  // Saving on pagehide is not reliable (the write may not finish), so also save while time is accruing.
+  window.setInterval(() => { if (practiceClock.todayTotalMs(Date.now()) !== lastSavedPracticeMs) persistPracticeTime(); }, 10_000);
 }
 
 async function initialize(): Promise<void> {
   wireControls();
   resizeCanvas();
   try {
-    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, strokes, trials] = await Promise.all([
-      getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getStrokes(), getTrials(),
+    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, strokes, trials] = await Promise.all([
+      getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getPracticeTime(), getStrokes(), getTrials(),
     ]);
+    practiceClock = new PracticeClock(storedPracticeTime ?? {}, document.visibilityState === "visible");
     calibration = storedCalibration;
     handedness = storedHandedness ?? DEFAULT_HANDEDNESS;
     correctionGateEnabled = storedCorrectionGate ?? false;
@@ -1152,6 +1187,7 @@ async function initialize(): Promise<void> {
   applyHandedness();
   configureRuler();
   resetSession(selectedMode);
+  updatePracticeTime();
   if (new URLSearchParams(window.location.search).has("diagnostics") || window.location.hash === "#diagnostics") {
     renderDiagnostics();
     diagnosticsDialog.showModal();

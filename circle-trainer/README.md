@@ -100,6 +100,10 @@ The build writes the deployable page, assets, manifest, service worker, and diag
 https://johnbraybrooke.com/circle-trainer/
 ```
 
+## Practice time
+
+The last cell of the bottom bar shows the current session and today's total, e.g. `12:34 · 41 min today`, for logging by hand (for example in Toggl). Time is counted from timestamps, never from timer ticks (`src/core/timer.ts`): it accrues only while the page is visible and a stroke started or ended within the last minute (`IDLE_MS`), so reading feedback between strokes counts but walking away does not. A break of 15 minutes or more (`SESSION_BREAK_MS`) starts a new session. Days roll over at 4 am local time (`DAY_ROLLOVER_HOUR`), and time across the rollover is split between the two days. Per-day totals are kept in the settings store (`practice-time-by-day`), saved after every stroke, every 10 seconds while time is accruing, and when the page is hidden, and included in JSON exports as `practiceTimeByDay`. There is no network or Toggl integration. Delete all data removes strokes and trials but keeps the time totals.
+
 ## Toolbar and Settings
 
 The toolbar holds only what is used while practising: the mode picker, New, Undo and Tips (Box only), Trophies and Settings. Everything set once lives in the **Settings** sheet: drawing hand, the reject-corrected-strokes option, ruler calibration, and buttons that open Diagnostics and Practice data (export or delete). Diagnostics also opens directly from `?diagnostics` or `#diagnostics`.
@@ -134,6 +138,7 @@ Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw da
 12. In Settings, switch the drawing hand: in landscape Box the reference moves to the side away from that hand, and the feedback card and Tips follow it.
 13. Confirm the toolbar fits on one row in both iPad orientations, including Box mode with Undo and Tips.
 14. In Tapers, draw each profile in both directions with the Pencil: the stroke widens with pressure as you draw, the dots read as the wanted widths, and the score and start/mid/end widths feel fair. Note how hard you have to press for the thickest widths.
+15. Draw for a few minutes, pause for over a minute, switch apps and come back, then reload: the session and today's time stop shortly after you stop drawing, ignore time in the background, and today's total survives the reload.
 
 ## Privacy
 

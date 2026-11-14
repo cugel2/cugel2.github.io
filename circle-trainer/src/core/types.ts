@@ -301,4 +301,6 @@ export interface ExportBundle {
   device: DeviceSnapshot;
   strokes: RawStroke[];
   trials: TrialRecord[];
+  /** Practice milliseconds per practice day ("YYYY-MM-DD", rolling over at 4 am). Added in 0.7.0. */
+  practiceTimeByDay?: Record<string, number>;
 }
