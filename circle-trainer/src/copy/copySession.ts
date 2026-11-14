@@ -35,7 +35,7 @@ export interface CopyStroke {
 export interface CopySession {
   version: 1;
   bookId: string | null;
-  /** Frame width / height; follows the screen until the first stroke, then fixed. */
+  /** Frame width / height, set when the copy starts and kept through rotations. */
   frameAspect: number;
   /** What the reference frame shows now. */
   view: View | null;

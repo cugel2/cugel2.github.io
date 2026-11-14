@@ -149,26 +149,40 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   }
 
   /**
-   * The frame shape for a new copy: one shape for both orientations, so
-   * rotating mid-copy changes nothing. The space in each orientation is
-   * remembered once seen; until then the other one is estimated by turning
-   * this layout on its side.
+   * The frame shape for a new copy, set once when the copy starts: one shape
+   * for both orientations, so rotating only scales the frame. The space in
+   * each orientation is remembered once seen (see rememberSpaceSoon); until
+   * then the other one is estimated by turning this layout on its side.
    */
   function naturalAspect(): number {
     const stage = elements.stage.getBoundingClientRect();
     const landscape = stage.width >= stage.height;
     const here = frameSpace();
     const spaces = readFrameSpaces();
-    if (here.width > 150 && here.height > 150) {
-      spaces[landscape ? "landscape" : "portrait"] = here;
-      writeFrameSpaces(spaces);
-    }
     const estimate: Area = {
       width: Math.max(1, stage.height / 2 - 2 * PANE_PAD),
       height: Math.max(1, stage.width - PANE_TOP - PANE_PAD),
     };
     const other = spaces[landscape ? "portrait" : "landscape"] ?? estimate;
-    return sharedFrameAspect(here, other);
+    return clampAspect(sharedFrameAspect(here, other));
+  }
+
+  /**
+   * Remember this orientation's space only once the screen has settled:
+   * while the iPad rotates, Safari reports in-between sizes.
+   */
+  let spaceTimer: number | undefined;
+  function rememberSpaceSoon(): void {
+    window.clearTimeout(spaceTimer);
+    spaceTimer = window.setTimeout(() => {
+      if (!visible) return;
+      const stage = elements.stage.getBoundingClientRect();
+      const here = frameSpace();
+      if (here.width < 150 || here.height < 150) return;
+      const spaces = readFrameSpaces();
+      spaces[stage.width >= stage.height ? "landscape" : "portrait"] = here;
+      writeFrameSpaces(spaces);
+    }, 1000);
   }
 
   function measure(): void {
@@ -181,9 +195,11 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       canvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
       canvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
     }
-    // The frame follows the pane until the first stroke locks the copy; after
-    // that it keeps its shape and the largest frame of that shape is fitted.
-    if (session && !session.lockedView) session = { ...session, frameAspect: naturalAspect() };
+    // A copy keeps the frame shape it started with; rotating only fits the
+    // largest frame of that shape. (A shape saved by an older version that
+    // is out of range is replaced while nothing depends on it.)
+    if (session && !session.lockedView && clampAspect(session.frameAspect) !== session.frameAspect) session = { ...session, frameAspect: naturalAspect() };
+    rememberSpaceSoon();
     const aspect = session?.frameAspect ?? naturalAspect();
     const availableWidth = Math.max(1, paneSize.width - 2 * PANE_PAD);
     const availableHeight = Math.max(1, paneSize.height - PANE_TOP - PANE_PAD);
@@ -1152,6 +1168,13 @@ function context2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
 }
 
 const FRAME_SPACE_KEY = "circle-trainer:copy-frame-space";
+/** Frame shapes outside this range (width / height) come only from odd layouts, e.g. mid-rotation. */
+const MIN_FRAME_ASPECT = 0.45;
+const MAX_FRAME_ASPECT = 1.6;
+
+function clampAspect(aspect: number): number {
+  return Number.isFinite(aspect) ? Math.min(MAX_FRAME_ASPECT, Math.max(MIN_FRAME_ASPECT, aspect)) : 1;
+}
 
 interface FrameSpaces { landscape?: Area; portrait?: Area }
 
