@@ -539,11 +539,18 @@ button { -webkit-tap-highlight-color: transparent; }
 .copy-spacer { flex: 1; }
 .copy-bar .pill-button { flex-shrink: 0; padding: 0 11px; white-space: nowrap; }
 .copy-bar .segmented { flex-shrink: 0; }
-.segmented { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, 0.85); }
-.segmented button { min-height: 32px; padding: 0 11px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font-size: 13px; cursor: pointer; }
-.segmented button[aria-pressed="true"] { background: var(--ink); color: #fff; }
-.copy-opacity { flex: 1 1 90px; width: 40px; min-width: 36px; max-width: 120px; }
-.copy-tools#copyCompareBar { flex: 1 1 auto; min-width: 0; }
+/* Compare and Draw share one button of one width, so it never moves under your finger. */
+#copyCompareButton { justify-content: center; min-width: 84px; }
+#copyTintButton { padding: 0 8px; font-size: 12px; }
+.copy-bar .segmented button { padding: 0 7px; font-size: 12px; }
+/* If the compare controls ever run out of room they are clipped, never laid over Draw and Save. */
+.copy-tools#copyCompareBar { overflow: hidden; }
+/* Scoped to Copy's bars: the Settings sheet has its own .segmented switches, which must stay as they were. */
+.copy-bar .segmented { background: rgba(255, 255, 255, 0.85); }
+.copy-bar .segmented button { min-width: 0; min-height: 32px; color: var(--ink); }
+.copy-bar .segmented button[aria-pressed="true"] { color: #fff; }
+.copy-opacity { flex: 1 1 90px; width: 40px; min-width: 28px; max-width: 120px; }
+.copy-tools#copyCompareBar { flex: 1 1 auto; min-width: 0; gap: 5px; }
 .copy-opacity:disabled { opacity: 0.35; }
 
 .copy-empty {

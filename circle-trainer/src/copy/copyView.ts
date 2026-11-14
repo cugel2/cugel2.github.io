@@ -45,6 +45,7 @@ export interface CopyElements {
   saveDialog: HTMLDialogElement;
   saveDrawingButton: HTMLButtonElement;
   saveSideBySideButton: HTMLButtonElement;
+  saveOverlayButton: HTMLButtonElement;
   saveNote: HTMLElement;
   savePreview: HTMLElement;
   savePreviewImage: HTMLImageElement;
@@ -103,6 +104,9 @@ interface Capture { original: HTMLCanvasElement; tinted: HTMLCanvasElement }
 
 interface SharpTile { doc: DocRect; canvas: HTMLCanvasElement }
 
+/** The images Save offers; the last two need a framing (at least one stroke). */
+interface ExportFiles { drawing: File; sideBySide: File | null; overlay: File | null }
+
 export function createCopyView(elements: CopyElements, services: CopyServices): CopyView {
   const referenceContext = context2d(elements.referenceCanvas);
   const drawingContext = context2d(elements.drawingCanvas);
@@ -135,7 +139,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   const gestures = new GestureTracker();
   let mouseDrag: { pointerId: number; last: Point } | null = null;
   /** Files for Save to Photos, made when the dialog opens so the tap can share them at once. */
-  let readyExports: { drawing: File; sideBySide: File | null } | null = null;
+  let readyExports: ExportFiles | null = null;
 
   // ----- layout -----
 
@@ -522,7 +526,6 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     elements.saveButton.disabled = strokes === 0;
     elements.compareBar.hidden = comparing === null;
     elements.drawTools.hidden = comparing !== null;
-    elements.saveButton.hidden = comparing !== null;
     elements.drawingBar.hidden = source === null;
     for (const button of elements.compareButtons) button.setAttribute("aria-pressed", String(button.dataset.compare === comparing));
     elements.opacityInput.value = String(Math.round((session?.bothOpacity ?? 0.5) * 100));
@@ -974,45 +977,52 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     return frame.width / frame.height;
   }
 
-  async function renderExports(): Promise<{ drawing: File; sideBySide: File | null }> {
+  async function renderExports(): Promise<ExportFiles> {
     if (!session) throw new Error("No copy");
     const aspect = exportAspect();
     const width = aspect >= 1 ? SAVE_LONG_SIDE_PX : Math.round(SAVE_LONG_SIDE_PX * aspect);
     const height = Math.round(width / aspect);
     const widthScale = width / frame.width;
-    const drawing = document.createElement("canvas");
-    drawing.width = width;
-    drawing.height = height;
-    const context = context2d(drawing);
-    context.fillStyle = "#fff";
-    context.fillRect(0, 0, width, height);
-    for (const stroke of session.strokes) drawStroke(context, stroke.points, width, widthScale);
+    const drawStrokes = (target: CanvasRenderingContext2D) => {
+      for (const stroke of session!.strokes) drawStroke(target, stroke.points, width, widthScale);
+    };
+    const drawing = blankCanvas(width, height);
+    drawStrokes(context2d(drawing));
 
     let sideBySide: HTMLCanvasElement | null = null;
+    let overlay: HTMLCanvasElement | null = null;
     if (session.lockedView && source) {
+      // The locked framing, rendered sharply at export size (a PDF page is re-rendered, not scaled up).
+      const reference = blankCanvas(width, height);
+      const referenceContext = context2d(reference);
+      if (!await renderView(referenceContext, session.lockedView, { width, height })) {
+        drawDocument(referenceContext, session.lockedView, { width, height }, { left: 0, top: 0, right: width, bottom: height });
+      }
+
       const gap = Math.round(width * 0.04);
-      sideBySide = document.createElement("canvas");
-      sideBySide.width = width * 2 + gap;
-      sideBySide.height = height;
+      sideBySide = blankCanvas(width * 2 + gap, height);
       const both = context2d(sideBySide);
-      both.fillStyle = "#fff";
-      both.fillRect(0, 0, sideBySide.width, height);
       // Same sides as in the app: drawing on the drawing hand's side.
       const drawingLeft = services.handedness() === "LEFT";
       both.drawImage(drawing, drawingLeft ? 0 : width + gap, 0);
-      both.save();
-      both.translate(drawingLeft ? width + gap : 0, 0);
-      both.beginPath();
-      both.rect(0, 0, width, height);
-      both.clip();
-      drawDocument(both, session.lockedView, { width, height }, { left: 0, top: 0, right: width, bottom: height });
-      both.restore();
+      both.drawImage(reference, drawingLeft ? width + gap : 0, 0);
+
+      // As Compare's Both view shows it: the reference under your lines, with its tint and opacity.
+      overlay = blankCanvas(width, height);
+      const over = context2d(overlay);
+      over.globalAlpha = session.bothOpacity;
+      over.drawImage(session.tint ? tintedCopy(reference) : reference, 0, 0);
+      over.globalAlpha = 1;
+      drawStrokes(over);
     }
     const stamp = new Date().toISOString().slice(0, 10);
     const base = `${(bookName || "copy").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").slice(0, 40) || "copy"}-${stamp}`;
+    const png = async (canvas: HTMLCanvasElement | null, suffix: string) =>
+      canvas ? new File([await toPng(canvas)], `${base}${suffix}.png`, { type: "image/png" }) : null;
     return {
-      drawing: new File([await toPng(drawing)], `${base}.png`, { type: "image/png" }),
-      sideBySide: sideBySide ? new File([await toPng(sideBySide)], `${base}-side-by-side.png`, { type: "image/png" }) : null,
+      drawing: (await png(drawing, ""))!,
+      sideBySide: await png(sideBySide, "-side-by-side"),
+      overlay: await png(overlay, "-overlay"),
     };
   }
 
@@ -1020,13 +1030,17 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     if (!session || session.strokes.length === 0) return;
     readyExports = null;
     hidePreview();
-    elements.saveDrawingButton.disabled = true;
-    elements.saveSideBySideButton.disabled = true;
-    elements.saveNote.textContent = "Preparing the image…";
+    // The choice matching what you are looking at is the prominent one.
+    const comparing = session.compare !== null;
+    setButtonEmphasis(elements.saveDrawingButton, !comparing);
+    setButtonEmphasis(elements.saveOverlayButton, comparing);
+    for (const button of [elements.saveDrawingButton, elements.saveSideBySideButton, elements.saveOverlayButton]) button.disabled = true;
+    elements.saveNote.textContent = "Preparing the images…";
     renderExports().then((files) => {
       readyExports = files;
       elements.saveDrawingButton.disabled = false;
       elements.saveSideBySideButton.disabled = files.sideBySide === null;
+      elements.saveOverlayButton.disabled = files.overlay === null;
       elements.saveNote.textContent = canShareFiles(files.drawing)
         ? "Opens the share sheet. Choose “Save Image” to put it in Photos."
         : "Choose one, then press and hold the picture to save it.";
@@ -1035,8 +1049,8 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   }
 
   /** Runs synchronously in the tap handler: Safari opens the share sheet only from a user gesture. */
-  function shareExport(which: "drawing" | "sideBySide"): void {
-    const file = readyExports ? (which === "drawing" ? readyExports.drawing : readyExports.sideBySide) : null;
+  function shareExport(which: keyof ExportFiles): void {
+    const file = readyExports?.[which] ?? null;
     if (!file) return;
     if (canShareFiles(file)) {
       navigator.share({ files: [file] }).then(() => elements.saveDialog.close(), (error: unknown) => {
@@ -1111,6 +1125,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   elements.saveButton.addEventListener("click", openSaveDialog);
   elements.saveDrawingButton.addEventListener("click", () => shareExport("drawing"));
   elements.saveSideBySideButton.addEventListener("click", () => shareExport("sideBySide"));
+  elements.saveOverlayButton.addEventListener("click", () => shareExport("overlay"));
   elements.saveDialog.addEventListener("close", hidePreview);
   elements.libraryButton.addEventListener("click", openLibrary);
   elements.memorySelect.addEventListener("change", () => {
@@ -1202,6 +1217,11 @@ function blankCanvas(width: number, height: number, white = true): HTMLCanvasEle
     context.fillRect(0, 0, canvas.width, canvas.height);
   }
   return canvas;
+}
+
+function setButtonEmphasis(button: HTMLButtonElement, primary: boolean): void {
+  button.classList.toggle("primary-button", primary);
+  button.classList.toggle("secondary-button", !primary);
 }
 
 function releaseCanvas(canvas: HTMLCanvasElement): void {
