@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampView, docToFrame, fitPage, frameToDoc, layoutPages, MIN_VIEW_WIDTH, moveView, PAGE_GAP, pageAt, pageTiles, visiblePages, zoomAbout } from "../src/copy/docSpace";
+import { clampView, docToFrame, fitPage, fittedArea, sharedFrameAspect, frameToDoc, layoutPages, MIN_VIEW_WIDTH, moveView, PAGE_GAP, pageAt, pageTiles, visiblePages, zoomAbout } from "../src/copy/docSpace";
 
 const frame = { width: 400, height: 500 };
 const layout = layoutPages([{ width: 800, height: 1200 }, { width: 600, height: 600 }, { width: 1000, height: 1500 }]);
@@ -74,5 +74,22 @@ describe("docSpace", () => {
     expect(pageAt(layout, 1.5 + PAGE_GAP * 0.4)).toBe(0);
     expect(pageAt(layout, 1.5 + PAGE_GAP * 0.6)).toBe(1);
     expect(pageAt(layout, 99)).toBe(2);
+  });
+
+  it("picks one frame shape that works in both orientations", () => {
+    // John's iPad: landscape panes leave 508 × 646 pt, portrait 373 × 878.
+    const landscape = { width: 508, height: 646 };
+    const portrait = { width: 373, height: 878 };
+    const aspect = sharedFrameAspect(landscape, portrait);
+    expect(aspect).toBeCloseTo(373 / 646);
+    expect(sharedFrameAspect(portrait, landscape)).toBeCloseTo(aspect);
+    // The frame is 373 × 646 either way, beating each orientation's own shape.
+    expect(fittedArea(aspect, landscape)).toBeCloseTo(373 * 646);
+    expect(fittedArea(aspect, portrait)).toBeCloseTo(373 * 646);
+    for (const own of [508 / 646, 373 / 878]) {
+      expect(Math.min(fittedArea(own, landscape), fittedArea(own, portrait))).toBeLessThan(373 * 646);
+    }
+    // The same space twice keeps its own shape.
+    expect(sharedFrameAspect(landscape, landscape)).toBeCloseTo(508 / 646);
   });
 });

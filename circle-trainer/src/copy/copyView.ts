@@ -12,8 +12,8 @@ import {
   toFrameUnits, undoStroke, type CompareView, type CopyPoint, type CopySession, type CopyStroke,
 } from "./copySession";
 import {
-  clampView, fitPage, layoutPages, moveView, pageAt, pageTiles, sameView, viewHeight, zoomAbout,
-  type DocLayout, type DocRect, type FrameSize, type Point, type View,
+  clampView, fitPage, layoutPages, moveView, pageAt, pageTiles, sameView, sharedFrameAspect, viewHeight, zoomAbout,
+  type Area, type DocLayout, type DocRect, type FrameSize, type Point, type View,
 } from "./docSpace";
 import { GestureTracker } from "./gestures";
 import { addBook, bookKindOf, getBook, listBooks, loadCurrentCopy, removeBook, saveCurrentCopy, updateBook, type BookMeta } from "./library";
@@ -143,11 +143,32 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     return { width: frame.width, height: frame.height };
   }
 
-  /** Width / height of the space a frame can use in a pane. */
+  /** The space a frame can use in a pane, as laid out now. */
+  function frameSpace(): Area {
+    return { width: Math.max(1, paneSize.width - 2 * PANE_PAD), height: Math.max(1, paneSize.height - PANE_TOP - PANE_PAD) };
+  }
+
+  /**
+   * The frame shape for a new copy: one shape for both orientations, so
+   * rotating mid-copy changes nothing. The space in each orientation is
+   * remembered once seen; until then the other one is estimated by turning
+   * this layout on its side.
+   */
   function naturalAspect(): number {
-    const width = Math.max(1, paneSize.width - 2 * PANE_PAD);
-    const height = Math.max(1, paneSize.height - PANE_TOP - PANE_PAD);
-    return width / height;
+    const stage = elements.stage.getBoundingClientRect();
+    const landscape = stage.width >= stage.height;
+    const here = frameSpace();
+    const spaces = readFrameSpaces();
+    if (here.width > 150 && here.height > 150) {
+      spaces[landscape ? "landscape" : "portrait"] = here;
+      writeFrameSpaces(spaces);
+    }
+    const estimate: Area = {
+      width: Math.max(1, stage.height / 2 - 2 * PANE_PAD),
+      height: Math.max(1, stage.width - PANE_TOP - PANE_PAD),
+    };
+    const other = spaces[landscape ? "portrait" : "landscape"] ?? estimate;
+    return sharedFrameAspect(here, other);
   }
 
   function measure(): void {
@@ -1128,6 +1149,24 @@ function context2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas 2D is unavailable in this browser");
   return context;
+}
+
+const FRAME_SPACE_KEY = "circle-trainer:copy-frame-space";
+
+interface FrameSpaces { landscape?: Area; portrait?: Area }
+
+function readFrameSpaces(): FrameSpaces {
+  try {
+    const value = JSON.parse(localStorage.getItem(FRAME_SPACE_KEY) ?? "{}") as FrameSpaces;
+    const valid = (area: Area | undefined) => area && area.width > 0 && area.height > 0 ? area : undefined;
+    return { landscape: valid(value.landscape), portrait: valid(value.portrait) };
+  } catch {
+    return {};
+  }
+}
+
+function writeFrameSpaces(spaces: FrameSpaces): void {
+  try { localStorage.setItem(FRAME_SPACE_KEY, JSON.stringify(spaces)); } catch { /* storage blocked: estimate instead */ }
 }
 
 function blankCanvas(width: number, height: number, white = true): HTMLCanvasElement {
