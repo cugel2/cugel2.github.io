@@ -565,6 +565,28 @@ button { -webkit-tap-highlight-color: transparent; }
 .copy-empty .primary-button { display: inline-flex; align-items: center; }
 
 .copy-save-choices { display: flex; flex-wrap: wrap; gap: 10px; }
+.pill-select { appearance: none; -webkit-appearance: none; padding-right: 12px; font: inherit; font-size: 13px; }
+.copy-memory-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.copy-memory-bar[hidden],
+.copy-memory-bar span[hidden] { display: none; }
+.copy-memory-bar span { margin: 0 2px 0 9px; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.copy-memory-bar .pill-button { flex-shrink: 0; }
+.primary-pill { border-color: var(--ink); background: var(--ink); color: #fff; }
 .copy-library-sheet { width: min(620px, calc(100vw - 32px)); }
 .copy-library-list { display: flex; flex-direction: column; max-height: 52vh; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
 .copy-library-list li { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }

@@ -126,9 +126,21 @@
           <div class="copy-bar" id="copyReferenceBar" hidden>
             <span class="copy-book" id="copyBookName"></span>
             <button type="button" class="pill-button" id="copyPageButton" title="Go to a page" hidden>p. 1</button>
-            <button type="button" class="pill-button" id="copyBackToFrameButton" hidden>Back to frame</button>
+            <select class="pill-button pill-select" id="copyMemorySelect" aria-label="Draw from memory" title="Draw from memory: study the reference, then it is hidden">
+              <option value="0">Memory off</option>
+              <option value="15">Memory 15 s</option>
+              <option value="30">Memory 30 s</option>
+              <option value="60">Memory 60 s</option>
+              <option value="120">Memory 120 s</option>
+            </select>
             <button type="button" class="pill-button" id="copyNewButton" title="Start again: clear the drawing and reframe">New copy</button>
             <button type="button" class="pill-button" id="copyLibraryButton" title="Your stored books and pictures">Books…</button>
+          </div>
+          <div class="copy-memory-bar" id="copyMemoryBar" hidden>
+            <button type="button" class="pill-button" id="copyBackToFrameButton" hidden>Back to frame</button>
+            <span id="copyMemoryText"></span>
+            <button type="button" class="pill-button primary-pill" id="copyMemoryStartButton">Start</button>
+            <button type="button" class="pill-button" id="copyMemoryPeekButton" title="Show the reference for 3 seconds">Peek</button>
           </div>
           <div class="copy-empty" id="copyEmpty">
             <p class="eyebrow">Copy</p>

@@ -69,7 +69,7 @@ import {
   type DailyQueueState,
 } from "./core/dailyQueue";
 
-const APP_VERSION = "0.10.0";
+const APP_VERSION = "0.11.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -203,6 +203,11 @@ const copyView = createCopyView({
   libraryDialog: requiredElement<HTMLDialogElement>("#copyLibraryDialog"),
   libraryList: requiredElement<HTMLElement>("#copyLibraryList"),
   libraryNote: requiredElement<HTMLElement>("#copyLibraryNote"),
+  memorySelect: requiredElement<HTMLSelectElement>("#copyMemorySelect"),
+  memoryBar: requiredElement<HTMLElement>("#copyMemoryBar"),
+  memoryText: requiredElement<HTMLElement>("#copyMemoryText"),
+  memoryStartButton: requiredElement<HTMLButtonElement>("#copyMemoryStartButton"),
+  memoryPeekButton: requiredElement<HTMLButtonElement>("#copyMemoryPeekButton"),
 }, {
   pxPerMm: () => cssPxPerMm(),
   handedness: () => handedness,

@@ -10,6 +10,17 @@ import { sameView, type View } from "./docSpace";
 
 export type CompareView = "MINE" | "BOTH" | "REFERENCE";
 
+/** Draw from memory: how long you may study the reference (0 = off). */
+export const MEMORY_SECONDS = [0, 15, 30, 60, 120] as const;
+/** How long a Peek shows the reference again. */
+export const PEEK_MS = 3000;
+
+/**
+ * OFF: memory off. READY: on, waiting for Start. STUDY: counting down, the
+ * reference visible. HIDDEN: covered, draw from memory. PEEK: briefly shown.
+ */
+export type MemoryPhase = "OFF" | "READY" | "STUDY" | "HIDDEN" | "PEEK";
+
 export interface CopyPoint {
   x: number;
   y: number;
@@ -37,26 +48,90 @@ export interface CopySession {
   bothOpacity: number;
   /** Tint the reference's dark lines blue in Both. */
   tint: boolean;
+  /** Draw from memory: study time in seconds, 0 for off. Kept across new copies. */
+  memorySeconds: number;
+  /** When Start was tapped; null before. */
+  memoryStartedAt: number | null;
+  /** While a Peek shows the reference, when it hides again. */
+  peekUntil: number | null;
+  peeks: number;
   updatedAt: number;
 }
 
 export function newSession(bookId: string | null, frameAspect: number, view: View | null, now = Date.now()): CopySession {
-  return { version: 1, bookId, frameAspect, view, lockedView: null, strokes: [], compare: null, bothOpacity: 0.5, tint: true, updatedAt: now };
+  return {
+    version: 1, bookId, frameAspect, view, lockedView: null, strokes: [], compare: null, bothOpacity: 0.5, tint: true,
+    memorySeconds: 0, memoryStartedAt: null, peekUntil: null, peeks: 0, updatedAt: now,
+  };
 }
 
-/** A fresh copy of the same reference: strokes and framing go, the view and compare settings stay. */
+/** A fresh copy of the same reference: strokes and framing go; the view, compare and memory settings stay. */
 export function newCopy(session: CopySession, frameAspect: number, now = Date.now()): CopySession {
-  return { ...newSession(session.bookId, frameAspect, session.view, now), bothOpacity: session.bothOpacity, tint: session.tint };
+  return {
+    ...newSession(session.bookId, frameAspect, session.view, now),
+    bothOpacity: session.bothOpacity,
+    tint: session.tint,
+    memorySeconds: session.memorySeconds,
+  };
 }
 
-/** Drawing is allowed only while not comparing: never with the reference showing in the drawing frame. */
-export function canDraw(session: CopySession): boolean {
-  return session.compare === null && session.view !== null;
+// ----- draw from memory -----
+
+export function memoryPhase(session: CopySession, now = Date.now()): MemoryPhase {
+  if (session.memorySeconds <= 0) return "OFF";
+  if (session.memoryStartedAt === null) return "READY";
+  if (now < session.memoryStartedAt + session.memorySeconds * 1000) return "STUDY";
+  if (session.peekUntil !== null && now < session.peekUntil) return "PEEK";
+  return "HIDDEN";
+}
+
+/** Time left to study, in ms (0 once hidden). */
+export function studyRemainingMs(session: CopySession, now = Date.now()): number {
+  if (session.memoryStartedAt === null) return session.memorySeconds * 1000;
+  return Math.max(0, session.memoryStartedAt + session.memorySeconds * 1000 - now);
+}
+
+/** Changing the setting starts the memory exercise over (the framing stays if there are strokes). */
+export function setMemorySeconds(session: CopySession, seconds: number): CopySession {
+  const valid = (MEMORY_SECONDS as readonly number[]).includes(seconds) ? seconds : 0;
+  return { ...session, memorySeconds: valid, memoryStartedAt: null, peekUntil: null, peeks: 0 };
+}
+
+/** Start: the framing locks now, and the study countdown begins. */
+export function startMemory(session: CopySession, now = Date.now()): CopySession {
+  if (session.memorySeconds <= 0 || !session.view || session.memoryStartedAt !== null) return session;
+  return { ...session, lockedView: session.lockedView ?? { ...session.view }, memoryStartedAt: now, peekUntil: null, peeks: 0, compare: null };
+}
+
+export function peek(session: CopySession, now = Date.now()): CopySession {
+  if (memoryPhase(session, now) !== "HIDDEN") return session;
+  return { ...session, peeks: session.peeks + 1, peekUntil: now + PEEK_MS };
+}
+
+/** The reference is covered while drawing from memory (Compare still reveals it). */
+export function referenceCovered(session: CopySession, now = Date.now()): boolean {
+  return memoryPhase(session, now) === "HIDDEN" && session.compare === null;
+}
+
+/** Once Start is tapped the reference stays where it was studied. */
+export function referenceMovable(session: CopySession): boolean {
+  return session.memorySeconds <= 0 || session.memoryStartedAt === null || session.compare !== null;
+}
+
+/**
+ * Drawing is allowed only while not comparing (never with the reference
+ * showing in the drawing frame), and, from memory, only once the reference
+ * has been hidden: drawing while studying it would be copying.
+ */
+export function canDraw(session: CopySession, now = Date.now()): boolean {
+  if (session.compare !== null || session.view === null) return false;
+  const phase = memoryPhase(session, now);
+  return phase !== "READY" && phase !== "STUDY";
 }
 
 /** Called at pen-down. The first stroke locks the framing. */
-export function startStroke(session: CopySession): CopySession | null {
-  if (!canDraw(session)) return null;
+export function startStroke(session: CopySession, now = Date.now()): CopySession | null {
+  if (!canDraw(session, now)) return null;
   if (session.lockedView || !session.view) return session;
   return { ...session, lockedView: { ...session.view } };
 }
@@ -71,7 +146,7 @@ export function addStroke(session: CopySession, stroke: CopyStroke, now = Date.n
  * the reference can be reframed and the next stroke locks the new framing.
  */
 function releaseIfEmpty(session: CopySession): CopySession {
-  return session.strokes.length > 0 ? session : { ...session, lockedView: null, compare: null };
+  return session.strokes.length > 0 ? session : { ...session, lockedView: null, compare: null, memoryStartedAt: null, peekUntil: null, peeks: 0 };
 }
 
 export function undoStroke(session: CopySession, now = Date.now()): CopySession {
@@ -151,6 +226,10 @@ export function parseSession(value: unknown): CopySession | null {
     compare: lockedView ? compare : null,
     bothOpacity: Number.isFinite(raw.bothOpacity) ? Math.min(1, Math.max(0.1, raw.bothOpacity!)) : 0.5,
     tint: raw.tint !== false,
+    memorySeconds: (MEMORY_SECONDS as readonly number[]).includes(raw.memorySeconds as number) ? raw.memorySeconds! : 0,
+    memoryStartedAt: Number.isFinite(raw.memoryStartedAt) ? raw.memoryStartedAt! : null,
+    peekUntil: null,
+    peeks: Number.isFinite(raw.peeks) ? Math.max(0, Math.floor(raw.peeks!)) : 0,
     updatedAt: Number.isFinite(raw.updatedAt) ? raw.updatedAt! : 0,
   };
 }

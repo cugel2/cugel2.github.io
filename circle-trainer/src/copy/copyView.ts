@@ -7,8 +7,9 @@
 import type { Handedness } from "../core/types";
 import { COPY_FALLBACK_WIDTH_MM, COPY_WIDTH_RANGE, drawVariableWidthStroke, pressureWidthsMm } from "../core/strokeRender";
 import {
-  addStroke, backToFrame, blink, canCompare, clearStrokes, fromFrameUnits, isOffFrame, newCopy, newSession, parseSession,
-  setCompare, setView, startStroke, toFrameUnits, undoStroke, type CompareView, type CopyPoint, type CopySession, type CopyStroke,
+  addStroke, backToFrame, blink, canCompare, clearStrokes, fromFrameUnits, isOffFrame, memoryPhase, newCopy, newSession, parseSession,
+  peek, referenceCovered, referenceMovable, setCompare, setMemorySeconds, setView, startMemory, startStroke, studyRemainingMs,
+  toFrameUnits, undoStroke, type CompareView, type CopyPoint, type CopySession, type CopyStroke,
 } from "./copySession";
 import {
   clampView, fitPage, layoutPages, moveView, pageAt, pageTiles, sameView, viewHeight, zoomAbout,
@@ -53,6 +54,11 @@ export interface CopyElements {
   libraryDialog: HTMLDialogElement;
   libraryList: HTMLElement;
   libraryNote: HTMLElement;
+  memorySelect: HTMLSelectElement;
+  memoryBar: HTMLElement;
+  memoryText: HTMLElement;
+  memoryStartButton: HTMLButtonElement;
+  memoryPeekButton: HTMLButtonElement;
 }
 
 export interface CopyServices {
@@ -116,6 +122,8 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   let sharpGeneration = 0;
   let captureGeneration = 0;
   let bookSaveTimer: number | undefined;
+  /** Ticks while the study countdown or a peek runs, so the cover appears on time. */
+  let memoryTicker: number | undefined;
   let frame: FrameRect = { left: 0, top: 0, width: 1, height: 1 };
   let paneSize = { width: 1, height: 1 };
   let capture: Capture | null = null;
@@ -213,6 +221,21 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     context.fillStyle = DIM;
     context.fill("evenodd");
     outlineFrame(context, session.lockedView && !isOffFrame(session) ? "#1557c0" : "#171717", isOffFrame(session));
+    if (referenceCovered(session)) drawCover(context);
+  }
+
+  /** Draw from memory: the reference is covered, frame and all. */
+  function drawCover(context: CanvasRenderingContext2D): void {
+    context.fillStyle = BACKDROP;
+    context.fillRect(0, PANE_TOP - 8, paneSize.width, paneSize.height);
+    outlineFrame(context, "#9a968d", true);
+    context.fillStyle = "#77716a";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.font = "500 17px Inter, -apple-system, sans-serif";
+    context.fillText("Hidden: draw from memory", frame.left + frame.width / 2, frame.top + frame.height / 2 - 12);
+    context.font = "13px Inter, -apple-system, sans-serif";
+    context.fillText("Compare shows it again", frame.left + frame.width / 2, frame.top + frame.height / 2 + 14);
   }
 
   function outlineFrame(context: CanvasRenderingContext2D, colour: string, dashed = false): void {
@@ -414,6 +437,24 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     if (options.save !== false) scheduleSave();
     updateControls();
     requestRender();
+    ensureMemoryTicker();
+  }
+
+  function ensureMemoryTicker(): void {
+    const phase = session ? memoryPhase(session) : "OFF";
+    const needed = visible && (phase === "STUDY" || phase === "PEEK");
+    if (needed && memoryTicker === undefined) {
+      memoryTicker = window.setInterval(() => {
+        updateControls();
+        requestRender();
+        ensureMemoryTicker();
+      }, 250);
+    } else if (!needed && memoryTicker !== undefined) {
+      window.clearInterval(memoryTicker);
+      memoryTicker = undefined;
+      updateControls();
+      requestRender();
+    }
   }
 
   /** Each book remembers where you were in it. */
@@ -458,12 +499,37 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     const pages = source?.pageCount ?? 0;
     elements.pageButton.hidden = pages < 2;
     if (pages >= 2) elements.pageButton.textContent = `p. ${currentPage() + 1} / ${pages}`;
+    updateMemoryControls();
     updateStatus();
+  }
+
+  function updateMemoryControls(): void {
+    const phase = session ? memoryPhase(session) : "OFF";
+    elements.memorySelect.value = String(session?.memorySeconds ?? 0);
+    elements.memorySelect.disabled = !session;
+    // This bar at the foot of the reference pane holds the memory controls and Back to frame.
+    const showMemory = phase !== "OFF" && source !== null && (session?.compare ?? null) === null;
+    if (session && !referenceMovable(session)) elements.backToFrameButton.hidden = true;
+    elements.memoryBar.hidden = !showMemory && elements.backToFrameButton.hidden;
+    elements.memoryText.hidden = !showMemory;
+    elements.memoryStartButton.hidden = !showMemory || phase !== "READY";
+    elements.memoryPeekButton.hidden = !showMemory || (phase !== "HIDDEN" && phase !== "PEEK");
+    elements.memoryPeekButton.disabled = phase === "PEEK";
+    const peeks = session?.peeks ?? 0;
+    const peekText = peeks === 0 ? "no peeks" : peeks === 1 ? "1 peek" : `${peeks} peeks`;
+    elements.memoryText.textContent =
+      phase === "READY" ? `Frame it, then study it for ${session!.memorySeconds} s`
+      : phase === "STUDY" ? `Study it: hidden in ${Math.ceil(studyRemainingMs(session!) / 1000)} s`
+      : phase === "PEEK" ? `Peeking · ${peekText}`
+      : `From memory · ${peekText}`;
   }
 
   function updateStatus(): void {
     if (!source || !session) statusText = "Copy · choose a PDF or a picture to copy from";
     else if (session.compare === "MINE" || session.compare === "REFERENCE") statusText = "Comparing · tap the frame with the Pencil to flip";
+    else if (memoryPhase(session) === "READY") statusText = "From memory · frame the reference, then tap Start";
+    else if (memoryPhase(session) === "STUDY") statusText = "From memory · study it; drawing starts when it hides";
+    else if (memoryPhase(session) === "HIDDEN" || memoryPhase(session) === "PEEK") statusText = `From memory · ${session.strokes.length} ${session.strokes.length === 1 ? "stroke" : "strokes"}`;
     else if (session.compare === "BOTH") statusText = "Comparing · reference under your lines";
     else if (!session.lockedView) statusText = "Copy · frame the reference with a finger, then draw";
     else if (isOffFrame(session)) statusText = "Copy · moved: Compare uses the framing of your first stroke";
@@ -587,7 +653,10 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       services.showToast("That file is no longer stored");
       return;
     }
+    // Compare and memory settings carry over to the new book.
+    const previous = session;
     session = newSession(id, naturalAspect(), null);
+    if (previous) session = { ...session, bothOpacity: previous.bothOpacity, tint: previous.tint, memorySeconds: previous.memorySeconds };
     measure();
     const remembered = isStoredView(meta.lastView) ? clampView(meta.lastView, layout!, frameSize()) : fitPage(layout!, frameSize());
     update(setView(session, remembered), { rebake: true });
@@ -725,7 +794,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   }
 
   function onReferenceDown(event: PointerEvent): void {
-    if (!session?.view) return;
+    if (!session?.view || !referenceMovable(session)) return;
     if (event.pointerType === "touch") {
       event.preventDefault();
       gestures.down(event.pointerId, localPoint(event, elements.referenceCanvas));
@@ -757,6 +826,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
 
   function onReferenceWheel(event: WheelEvent): void {
     if (!session?.view || !layout) return;
+    if (!referenceMovable(session)) { event.preventDefault(); return; }
     event.preventDefault();
     const point = localPoint(event, elements.referenceCanvas);
     if (event.ctrlKey || event.metaKey) {
@@ -803,7 +873,12 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     }
     if (active || !insideFrame(point)) return;
     const next = startStroke(session);
-    if (!next) return;
+    if (!next) {
+      const phase = memoryPhase(session);
+      if (phase === "READY") services.showToast("Tap Start, study the reference, then draw it from memory");
+      else if (phase === "STUDY") services.showToast(`Study it first: it hides in ${Math.ceil(studyRemainingMs(session) / 1000)} s`);
+      return;
+    }
     event.preventDefault();
     update(next, { save: false });
     active = { pointerId: event.pointerId, points: [], keys: new Set() };
@@ -1001,6 +1076,16 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   elements.saveSideBySideButton.addEventListener("click", () => shareExport("sideBySide"));
   elements.saveDialog.addEventListener("close", hidePreview);
   elements.libraryButton.addEventListener("click", openLibrary);
+  elements.memorySelect.addEventListener("change", () => {
+    if (!session) return;
+    if (session.memoryStartedAt !== null && session.strokes.length > 0 && !window.confirm("Start the memory exercise over? Your strokes stay.")) {
+      elements.memorySelect.value = String(session.memorySeconds);
+      return;
+    }
+    update(setMemorySeconds(session, Number(elements.memorySelect.value)));
+  });
+  elements.memoryStartButton.addEventListener("click", () => { if (session) update(startMemory(session, Date.now())); });
+  elements.memoryPeekButton.addEventListener("click", () => { if (session) update(peek(session, Date.now())); });
   elements.pageButton.addEventListener("click", jumpToPage);
 
   new ResizeObserver(() => { if (visible && !active) { measure(); requestRender(); } }).observe(elements.stage);
@@ -1013,12 +1098,14 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       updateControls();
       requestRender();
       if (!loaded) void restore();
+      ensureMemoryTicker();
     },
     hide() {
       visible = false;
       elements.stage.hidden = true;
       window.clearTimeout(sharpTimer);
       source?.cancelRegions?.();
+      ensureMemoryTicker();
       gestures.clear();
       mouseDrag = null;
       active = null;
