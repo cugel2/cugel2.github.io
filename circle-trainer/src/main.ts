@@ -1,6 +1,6 @@
 import "./styles.css";
 
-import { arrowLabelCss, BOX_EDGES, BOX_STROKES_REQUIRED, boxAreas, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
+import { arrowLabelCss, BOX_EDGES, BOX_FACES, BOX_STROKES_REQUIRED, boxAreas, boxShading, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
 import { analyseBoxStrokes } from "./core/boxMetrics";
 import { polylineLength } from "./core/geometry";
 import { rawSampleIdentity } from "./core/input";
@@ -48,7 +48,7 @@ import {
 } from "./storage";
 import { createTrophyView } from "./trophyView";
 
-const APP_VERSION = "0.6.0";
+const APP_VERSION = "0.6.1";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -58,6 +58,12 @@ const BOX_MIN_STROKE_SAMPLES = 8;
 const BOX_MIN_STROKE_PATH_MM = 6;
 const BOX_ACCENT = "#d2691e";
 const BOX_REFERENCE_GREY = "#9a968d";
+/** Hidden reference edges: the same grey, fainter, so the wireframe reads one way only. */
+const BOX_HIDDEN_EDGE = "rgba(154, 150, 141, 0.38)";
+const BOX_FACE_SHADE = "rgba(120, 114, 104, 0.16)";
+const BOX_ANSWER_FACE_SHADE = "rgba(21, 87, 192, 0.14)";
+/** The same face after the swing, when it has turned away from the viewer. */
+const BOX_ANSWER_FACE_SHADE_AWAY = "rgba(21, 87, 192, 0.05)";
 
 type TrialState = "PREPARING" | "READY" | "DRAWING" | "PROCESSING" | "FEEDBACK";
 
@@ -343,13 +349,30 @@ function drawBoxDivider(): void {
  * The complete reference box (all 12 edges), its hinge, the swing arrow and the angle label.
  * Kept separate so a later "hide reference on first stroke" option only needs to skip this call.
  */
+function fillFace(corners: readonly { x: number; y: number }[], faceIndex: number, color: string): void {
+  const points = BOX_FACES[faceIndex].corners.map((corner) => corners[corner]);
+  context.save();
+  context.beginPath();
+  context.moveTo(points[0].x, points[0].y);
+  for (const point of points.slice(1)) context.lineTo(point.x, point.y);
+  context.closePath();
+  context.fillStyle = color;
+  context.fill();
+  context.restore();
+}
+
 function drawBoxReference(box: BoxTarget): void {
   const px = cssPxPerMm();
+  const shading = boxShading(box);
+  fillFace(box.referenceCornersCss, shading.faceIndex, BOX_FACE_SHADE);
   context.save();
-  context.strokeStyle = BOX_REFERENCE_GREY;
-  context.lineWidth = 1.2;
   context.setLineDash([]);
-  for (const [a, b] of BOX_EDGES) strokeSegment(box.referenceCornersCss[a], box.referenceCornersCss[b]);
+  BOX_EDGES.forEach(([a, b], index) => {
+    const hidden = shading.referenceHiddenEdges.includes(index);
+    context.strokeStyle = hidden ? BOX_HIDDEN_EDGE : BOX_REFERENCE_GREY;
+    context.lineWidth = hidden ? 1 : 1.3;
+    strokeSegment(box.referenceCornersCss[a], box.referenceCornersCss[b]);
+  });
   context.restore();
   drawHinge(box.referenceCornersCss, box.hingeEdgeIndex);
 
@@ -442,6 +465,11 @@ function drawBoxAnswer(box: BoxTarget): void {
 function drawBoxTrial(box: BoxTarget): void {
   drawBoxDivider();
   drawBoxReference(box);
+  if (trialState === "FEEDBACK") {
+    // The same physical face as in the reference, under the strokes so they stay readable.
+    const shading = boxShading(box);
+    fillFace(box.answerCornersCss, shading.faceIndex, shading.answerFaceVisible ? BOX_ANSWER_FACE_SHADE : BOX_ANSWER_FACE_SHADE_AWAY);
+  }
   for (const stroke of boxStrokes) drawRawStroke(stroke);
   if (activeStroke) drawRawStroke(activeStroke);
   if (trialState === "FEEDBACK") drawBoxAnswer(box);

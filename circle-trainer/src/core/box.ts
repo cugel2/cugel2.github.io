@@ -241,6 +241,93 @@ export function arrowLabelCss(target: BoxTarget, cssPxPerMm: number): Point2 {
   return { x: target.referenceOffsetCss.x + label.x * cssPxPerMm, y: target.referenceOffsetCss.y + label.y * cssPxPerMm };
 }
 
+/* ---------- faces and visibility (display only; scoring never uses these) ---------- */
+
+export interface BoxFace {
+  axis: number;
+  /** 0 = the face at the negative end of the axis, 1 = the positive end. */
+  side: 0 | 1;
+  /** Corner indices in order around the face. */
+  corners: [number, number, number, number];
+}
+
+/** The six faces: for each axis, the face whose corners all have that axis bit equal to `side`. */
+export const BOX_FACES: readonly BoxFace[] = (() => {
+  const faces: BoxFace[] = [];
+  for (let axis = 0; axis < 3; axis += 1) {
+    const [i, j] = [0, 1, 2].filter((other) => other !== axis);
+    for (const side of [0, 1] as const) {
+      const base = side << axis;
+      faces.push({ axis, side, corners: [base, base | (1 << i), base | (1 << i) | (1 << j), base | (1 << j)] });
+    }
+  }
+  return faces;
+})();
+
+/** The two faces that meet at an edge. */
+export function edgeFaceIndices(edgeIndex: number): [number, number] {
+  const axis = edgeAxis(edgeIndex);
+  const [start] = BOX_EDGES[edgeIndex];
+  const [i, j] = [0, 1, 2].filter((other) => other !== axis);
+  const faceFor = (faceAxis: number) => BOX_FACES.findIndex((face) => face.axis === faceAxis && face.side === ((start >> faceAxis) & 1));
+  return [faceFor(i), faceFor(j)];
+}
+
+/** Whether each face points toward the camera at (0, 0, -D). */
+export function faceVisibility(corners: readonly Vec3[], distanceMm: number): boolean[] {
+  const centre = scale(corners.reduce((sum, corner) => add(sum, corner), [0, 0, 0] as Vec3), 1 / corners.length);
+  const camera: Vec3 = [0, 0, -distanceMm];
+  return BOX_FACES.map((face) => {
+    const faceCentre = scale(face.corners.reduce((sum, index) => add(sum, corners[index]), [0, 0, 0] as Vec3), 0.25);
+    const outward = sub(faceCentre, centre);
+    return dot(outward, sub(camera, faceCentre)) > 0;
+  });
+}
+
+/** Edges whose two faces both point away from the camera: the ones a solid box would hide. */
+export function hiddenEdgeIndices(visibility: readonly boolean[]): number[] {
+  return BOX_EDGES.map((_, index) => index).filter((index) => edgeFaceIndices(index).every((face) => !visibility[face]));
+}
+
+function polygonArea(points: readonly Point2[]): number {
+  let total = 0;
+  for (let index = 0; index < points.length; index += 1) {
+    const a = points[index];
+    const b = points[(index + 1) % points.length];
+    total += a.x * b.y - b.x * a.y;
+  }
+  return Math.abs(total) / 2;
+}
+
+export interface BoxShading {
+  /** The face shaded in the reference: the visible face with the largest projected area. */
+  faceIndex: number;
+  referenceHiddenEdges: number[];
+  /** Whether that same physical face still points toward the viewer after the swing. */
+  answerFaceVisible: boolean;
+}
+
+/** Derived from the stored target parameters, so old records shade the same way. */
+export function boxShading(parameters: BoxParameters): BoxShading {
+  const distance = cameraDistanceMm(parameters.dimensionsMm, parameters.cameraDistanceFactor);
+  const reference = referenceCorners3d(parameters.dimensionsMm, parameters.referenceRotation);
+  const answer = swungCorners3d(reference, parameters.hingeEdgeIndex, (parameters.swingDeg * Math.PI) / 180);
+  const referenceVisible = faceVisibility(reference, distance);
+  const projected = reference.map((point) => projectPoint(point, distance));
+  let faceIndex = 0;
+  let largest = -1;
+  BOX_FACES.forEach((face, index) => {
+    if (!referenceVisible[index]) return;
+    const area = polygonArea(face.corners.map((corner) => projected[corner]));
+    if (area > largest) { largest = area; faceIndex = index; }
+  });
+  return {
+    faceIndex,
+    referenceHiddenEdges: hiddenEdgeIndices(referenceVisible),
+    answerFaceVisible: faceVisibility(answer, distance)[faceIndex],
+  };
+}
+
 /* ---------- layout ---------- */
 
 export function boxMarginCss(viewport: BoxViewport): number {

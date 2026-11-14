@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   answerCornersMmForSwing,
   BOX_EDGES,
+  BOX_FACES,
   boxAreas,
+  boxShading,
+  edgeFaceIndices,
+  faceVisibility,
+  hiddenEdgeIndices,
   boxTargetRejection,
   generateBoxTarget,
   length3,
@@ -133,6 +138,45 @@ describe("drawing hand layout", () => {
         // Same shape either way: only the halves swap.
         expect(target.dimensionsMm).toEqual(generateBoxTarget(VIEWPORTS[0], PX, "hand-seed", index, hand === "LEFT" ? "RIGHT" : "LEFT").dimensionsMm);
       }
+    }
+  });
+});
+
+describe("box shading", () => {
+  it("lists six faces of four corners sharing one axis bit, and two faces per edge", () => {
+    expect(BOX_FACES).toHaveLength(6);
+    for (const face of BOX_FACES) {
+      expect(new Set(face.corners).size).toBe(4);
+      for (const corner of face.corners) expect((corner >> face.axis) & 1).toBe(face.side);
+    }
+    BOX_EDGES.forEach(([a, b], index) => {
+      for (const faceIndex of edgeFaceIndices(index)) {
+        expect(BOX_FACES[faceIndex].corners).toContain(a);
+        expect(BOX_FACES[faceIndex].corners).toContain(b);
+      }
+    });
+  });
+
+  it("sees only the near face of an unrotated box, and hides the other eight edges", () => {
+    const corners = referenceCorners3d([20, 20, 20], IDENTITY);
+    const visible = faceVisibility(corners, 120);
+    // The camera is on -z, so only the z = -10 face (axis 2, side 0) faces it.
+    expect(BOX_FACES.filter((_, index) => visible[index])).toEqual([{ axis: 2, side: 0, corners: [0, 1, 3, 2] }]);
+    expect(hiddenEdgeIndices(visible)).toHaveLength(8);
+  });
+
+  it("never shows opposite faces together, and hides 3–8 edges, for generated boxes", () => {
+    for (let index = 0; index < 40; index += 1) {
+      const box = generateBoxTarget(VIEWPORTS[index % 2], PX, "shade-seed", index);
+      const shading = boxShading(box);
+      const visible = faceVisibility(referenceCorners3d(box.dimensionsMm, box.referenceRotation), Math.hypot(...box.dimensionsMm) * box.cameraDistanceFactor);
+      for (let axis = 0; axis < 3; axis += 1) expect(visible[axis * 2] && visible[axis * 2 + 1]).toBe(false);
+      expect(visible[shading.faceIndex]).toBe(true);
+      expect(shading.referenceHiddenEdges.length).toBeGreaterThanOrEqual(3);
+      expect(shading.referenceHiddenEdges.length).toBeLessThanOrEqual(8);
+      // A hidden edge never belongs to the shaded (visible) face.
+      for (const edge of shading.referenceHiddenEdges) expect(edgeFaceIndices(edge)).not.toContain(shading.faceIndex);
+      expect(boxShading(box)).toEqual(shading);
     }
   });
 });

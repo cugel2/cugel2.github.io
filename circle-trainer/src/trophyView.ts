@@ -1,4 +1,4 @@
-import { BOX_EDGES, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
+import { BOX_EDGES, BOX_FACES, boxShading, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
 import { EXERCISE_LABELS, MODE_LABELS } from "./core/scheduler";
 import { strokeWidthsMm, taperMetricText, taperOutlineCss } from "./core/taper";
 import { sampleTargetPathCss } from "./core/targets";
@@ -18,6 +18,8 @@ interface Mark {
   dash?: number[];
   /** Draw a small arrowhead at the last point and a dot at the first. */
   arrow?: boolean;
+  /** Fill the closed polygon with `color` instead of stroking it. */
+  fill?: boolean;
   /** Per-point stroke widths in the trial's CSS px; these scale with the drawing (a physical width), unlike `width`. */
   widths?: Array<number | null>;
 }
@@ -32,7 +34,14 @@ function trialMarks(trial: TrialRecord, cssPxPerMm: number): Mark[] {
   });
   if (trial.exerciseType === "BOX") {
     const box = trial.target;
-    for (const [a, b] of BOX_EDGES) marks.push({ points: [box.referenceCornersCss[a], box.referenceCornersCss[b]], color: BOX_REFERENCE_GREY, width: 1 });
+    const shading = boxShading(box);
+    const face = (corners: Point2[]) => BOX_FACES[shading.faceIndex].corners.map((corner) => corners[corner]);
+    marks.push({ points: face(box.referenceCornersCss), color: "rgba(120, 114, 104, 0.16)", width: 0, fill: true });
+    marks.push({ points: face(box.answerCornersCss), color: shading.answerFaceVisible ? "rgba(21, 87, 192, 0.14)" : "rgba(21, 87, 192, 0.05)", width: 0, fill: true });
+    BOX_EDGES.forEach(([a, b], index) => {
+      const hidden = shading.referenceHiddenEdges.includes(index);
+      marks.push({ points: [box.referenceCornersCss[a], box.referenceCornersCss[b]], color: hidden ? "rgba(154, 150, 141, 0.38)" : BOX_REFERENCE_GREY, width: 1 });
+    });
     marks.push({ points: swingArrowCss(box, cssPxPerMm), color: BOX_ACCENT, width: 1.6, arrow: true });
     for (const stroke of trial.rawStrokes) marks.push(strokeMark(stroke.samples));
     for (const index of nonHingeEdgeIndices(box.hingeEdgeIndex)) {
@@ -87,6 +96,14 @@ export function drawTrialThumbnail(canvas: HTMLCanvasElement, trial: TrialRecord
     context.fillStyle = mark.color;
     context.lineWidth = mark.width * lineScale;
     context.setLineDash((mark.dash ?? []).map((value) => value * lineScale));
+    if (mark.fill) {
+      context.beginPath();
+      context.moveTo(points[0].x, points[0].y);
+      for (const point of points.slice(1)) context.lineTo(point.x, point.y);
+      context.closePath();
+      context.fill();
+      continue;
+    }
     if (mark.widths) {
       const widths = mark.widths;
       for (let index = 1; index < points.length; index += 1) {
