@@ -1,6 +1,6 @@
 import { BOX_EDGES, generateBoxTarget } from "./box";
 import { randomBetween, seededRandom, type RandomSource } from "./random";
-import type { EllipseTarget, ExerciseType, Point2, PrimitiveExerciseType, PrimitiveTargetDefinition, TargetDefinition } from "./types";
+import type { EllipseTarget, ExerciseType, Handedness, Point2, PrimitiveExerciseType, PrimitiveTargetDefinition, TargetDefinition } from "./types";
 
 export interface ViewportSize {
   width: number;
@@ -177,8 +177,9 @@ export function generateTarget(
   cssPxPerMm: number,
   sessionSeed: string,
   sequenceIndex: number,
+  handedness?: Handedness,
 ): TargetDefinition {
-  if (type === "BOX") return generateBoxTarget(viewport, cssPxPerMm, sessionSeed, sequenceIndex);
+  if (type === "BOX") return generateBoxTarget(viewport, cssPxPerMm, sessionSeed, sequenceIndex, handedness);
   const random = seededRandom(`${sessionSeed}:target:${sequenceIndex}:${type}`);
   const margin = Math.min(72, Math.max(34, Math.min(viewport.width, viewport.height) * 0.08));
   for (let attempt = 0; attempt < 220; attempt += 1) {

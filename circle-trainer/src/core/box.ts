@@ -1,5 +1,5 @@
 import { randomBetween, seededRandom, type RandomSource } from "./random";
-import type { BoxTarget, Point2 } from "./types";
+import { DEFAULT_HANDEDNESS, type BoxTarget, type Handedness, type Point2 } from "./types";
 
 /**
  * Pure geometry for the Box "hinge swing" drill.
@@ -247,17 +247,22 @@ export function boxMarginCss(viewport: BoxViewport): number {
   return Math.min(72, Math.max(34, Math.min(viewport.width, viewport.height) * 0.08));
 }
 
-/** Reference area left (or top in portrait), answer area right (or bottom), each inset by the margin. */
-export function boxAreas(viewport: BoxViewport): { reference: BoxRect; answer: BoxRect; landscape: boolean } {
+/**
+ * In landscape the drawing (answer) area is on the drawing hand's side and the reference on the other, so the
+ * hand and arm never cover the reference: left-handed puts the answer left. In portrait the reference is on top
+ * for either hand. Each area is inset by the margin.
+ */
+export function boxAreas(
+  viewport: BoxViewport,
+  handedness: Handedness = DEFAULT_HANDEDNESS,
+): { reference: BoxRect; answer: BoxRect; landscape: boolean } {
   const margin = boxMarginCss(viewport);
   const landscape = viewport.width >= viewport.height;
   if (landscape) {
     const half = viewport.width / 2;
-    return {
-      landscape,
-      reference: { x: margin, y: margin, width: half - margin * 1.5, height: viewport.height - margin * 2 },
-      answer: { x: half + margin / 2, y: margin, width: half - margin * 1.5, height: viewport.height - margin * 2 },
-    };
+    const left: BoxRect = { x: margin, y: margin, width: half - margin * 1.5, height: viewport.height - margin * 2 };
+    const right: BoxRect = { x: half + margin / 2, y: margin, width: half - margin * 1.5, height: viewport.height - margin * 2 };
+    return handedness === "LEFT" ? { landscape, reference: right, answer: left } : { landscape, reference: left, answer: right };
   }
   const half = viewport.height / 2;
   return {
@@ -356,14 +361,19 @@ export function meanConvergenceDeg(cornersMm: readonly Point2[]): number {
  * Returns null when the target passes every generation filter, otherwise a short reason.
  * Exported so tests (and later features such as chaining) can check any target.
  */
-export function boxTargetRejection(target: BoxTarget, viewport: BoxViewport, cssPxPerMm: number): string | null {
+export function boxTargetRejection(
+  target: BoxTarget,
+  viewport: BoxViewport,
+  cssPxPerMm: number,
+  handedness: Handedness = DEFAULT_HANDEDNESS,
+): string | null {
   const { referenceMm, answerMm } = projectBoxPair(target);
   if (Math.min(minProjectedEdgeMm(referenceMm), minProjectedEdgeMm(answerMm)) < MIN_PROJECTED_EDGE_MM) return "short-edge";
   if (hingeOutOfPlaneDeg(target) > MAX_HINGE_OUT_OF_PLANE_DEG) return "hinge-out-of-plane";
   if (Math.min(minAxisSeparationDeg(referenceMm), minAxisSeparationDeg(answerMm)) < MIN_AXIS_SEPARATION_DEG) return "axes-too-close";
   const arrowMm = swingArrowMm(target);
   if (arrowLengthMm(arrowMm) < MIN_ARROW_LENGTH_MM) return "arrow-too-short";
-  const areas = boxAreas(viewport);
+  const areas = boxAreas(viewport, handedness);
   if (!insideRect(toCss(referenceExtentMm(referenceMm, arrowMm), target.referenceOffsetCss, cssPxPerMm), areas.reference)) return "reference-does-not-fit";
   if (!insideRect(toCss(answerMm, target.answerOffsetCss, cssPxPerMm), areas.answer)) return "answer-does-not-fit";
   return null;
@@ -376,12 +386,17 @@ export function boxTargetRejection(target: BoxTarget, viewport: BoxViewport, css
  * position of the hinge in the drawing area does not hint at where the swung box ends up: the union of
  * the reference (with arrow) and the answer is centred in the area.
  */
-export function buildBoxTarget(parameters: BoxParameters, viewport: BoxViewport, cssPxPerMm: number): BoxTarget {
+export function buildBoxTarget(
+  parameters: BoxParameters,
+  viewport: BoxViewport,
+  cssPxPerMm: number,
+  handedness: Handedness = DEFAULT_HANDEDNESS,
+): BoxTarget {
   const { referenceMm, answerMm } = projectBoxPair(parameters);
   const arrowMm = swingArrowMm(parameters);
   const union = bounds([...referenceExtentMm(referenceMm, arrowMm), ...answerMm]);
   const centreMm = { x: (union.minX + union.maxX) / 2, y: (union.minY + union.maxY) / 2 };
-  const areas = boxAreas(viewport);
+  const areas = boxAreas(viewport, handedness);
   const placement = (rect: BoxRect): Point2 => ({
     x: rect.x + rect.width / 2 - centreMm.x * cssPxPerMm,
     y: rect.y + rect.height / 2 - centreMm.y * cssPxPerMm,
@@ -450,13 +465,14 @@ export function generateBoxTarget(
   cssPxPerMm: number,
   sessionSeed: string,
   sequenceIndex: number,
+  handedness: Handedness = DEFAULT_HANDEDNESS,
 ): BoxTarget {
   const random = seededRandom(`${sessionSeed}:target:${sequenceIndex}:BOX`);
   for (let attempt = 0; attempt < GENERATION_ATTEMPTS; attempt += 1) {
-    const candidate = buildBoxTarget(candidateParameters(random), viewport, cssPxPerMm);
-    if (boxTargetRejection(candidate, viewport, cssPxPerMm) === null) return candidate;
+    const candidate = buildBoxTarget(candidateParameters(random), viewport, cssPxPerMm, handedness);
+    if (boxTargetRejection(candidate, viewport, cssPxPerMm, handedness) === null) return candidate;
   }
-  return buildBoxTarget(FALLBACK_BOX_PARAMETERS, viewport, cssPxPerMm);
+  return buildBoxTarget(FALLBACK_BOX_PARAMETERS, viewport, cssPxPerMm, handedness);
 }
 
 /** Every edge of a corner set as css segments, in BOX_EDGES order. */

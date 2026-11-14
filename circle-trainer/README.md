@@ -15,8 +15,8 @@ The app is self-contained under `/circle-trainer/`. It does not add analytics, c
 
 ### Box drill (hinge swing)
 
-1. The left half (top half in portrait) shows a complete reference box — all 12 edges, hidden ones included — in thin grey. One edge, the hinge, is thick orange. A curved orange arrow (dot to arrowhead) shows which way the box swings about the hinge, with the angle (30°, 45° or 60°). It follows the far edge's path just outside the box, from 20° before the current position to 20° into the swing, so it shows direction without giving away the answer.
-2. The right half (bottom half in portrait) shows only the hinge, as the identical 2D segment translated. It sits at the same place relative to its half as in the reference, so its position gives nothing away.
+1. The reference half shows a complete reference box — all 12 edges, hidden ones included — in thin grey. One edge, the hinge, is thick orange. A curved orange arrow (dot to arrowhead) shows which way the box swings about the hinge, with the angle (30°, 45° or 60°). It follows the far edge's path just outside the box, from 20° before the current position to 20° into the swing, so it shows direction without giving away the answer.
+2. The drawing half shows only the hinge, as the identical 2D segment translated. It sits at the same place relative to its half as in the reference, so its position gives nothing away.
 3. The user draws the other 11 edges of the swung box from imagination, one stroke each, in any order. The status line shows progress (`Box · 4/11`). Strokes with fewer than 8 samples or under 6 mm of path are discarded with a toast; an interrupted (`pointercancel`) stroke is dropped without ending the trial. **Undo** removes the last accepted edge.
 4. When the 11th edge is accepted the trial submits by itself: the true swung box appears in dashed blue over the raw strokes, with one 0–100 score and a rotation readout.
 
@@ -91,9 +91,13 @@ The build writes the deployable page, assets, manifest, service worker, and diag
 https://johnbraybrooke.com/circle-trainer/
 ```
 
+## Drawing hand
+
+The **Setup** sheet has a Drawing hand setting (Left by default, stored in the settings store). In landscape, Box puts the drawing half on the drawing hand's side and the reference on the other, so the hand and arm never cover the reference: left-handed means drawing on the left, reference on the right. In portrait the reference is on top for either hand. The feedback card and scale note sit on the side away from the drawing hand; Box tips open over the drawing half so the reference stays visible while reading them. Changing the hand re-lays out a box that has not been started; a box in progress keeps its layout. Saved Box targets store their own positions, so old records and scores are unaffected.
+
 ## Physical calibration
 
-The ruler screen maps CSS pixels to physical millimetres. The user adjusts a horizontal line against a physical ruler until it measures exactly 100 mm. CSS absolute `mm` units are not trusted.
+The ruler screen in the Setup sheet maps CSS pixels to physical millimetres. The user adjusts a horizontal line against a physical ruler until it measures exactly 100 mm. CSS absolute `mm` units are not trusted.
 
 ## Storage and compatibility
 
@@ -114,6 +118,7 @@ Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw da
 9. Confirm finger movement does not draw or scroll the canvas.
 10. Export JSON and inspect the saved target, mode, schedule, metrics, and raw samples.
 11. In Boxes, check the arrow and angle label are legible, draw a full box, use Undo, and cancel a stroke mid-way; confirm the score and rotation readout feel fair.
+12. In Setup, switch the drawing hand: in landscape Box the reference moves to the side away from that hand, and the feedback card and Tips follow it.
 
 ## Privacy
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   answerCornersMmForSwing,
   BOX_EDGES,
+  boxAreas,
   boxTargetRejection,
   generateBoxTarget,
   length3,
@@ -101,6 +102,38 @@ describe("box geometry", () => {
       }
     }
     expect(generateBoxTarget(VIEWPORTS[0], PX, "box-seed", 1)).not.toEqual(generateBoxTarget(VIEWPORTS[0], PX, "box-seed", 2));
+  });
+});
+
+describe("drawing hand layout", () => {
+  const centreX = (rect: { x: number; width: number }) => rect.x + rect.width / 2;
+
+  it("puts the drawing half on the drawing hand's side in landscape", () => {
+    const left = boxAreas(VIEWPORTS[0], "LEFT");
+    const right = boxAreas(VIEWPORTS[0], "RIGHT");
+    expect(centreX(left.answer)).toBeLessThan(centreX(left.reference));
+    expect(centreX(right.answer)).toBeGreaterThan(centreX(right.reference));
+    expect(left.answer).toEqual(right.reference);
+    expect(left.reference).toEqual(right.answer);
+    expect(boxAreas(VIEWPORTS[0])).toEqual(left);
+  });
+
+  it("keeps the reference on top in portrait for either hand", () => {
+    expect(boxAreas(VIEWPORTS[1], "LEFT")).toEqual(boxAreas(VIEWPORTS[1], "RIGHT"));
+    expect(boxAreas(VIEWPORTS[1]).reference.y).toBeLessThan(boxAreas(VIEWPORTS[1]).answer.y);
+  });
+
+  it("generates targets that fit the chosen hand's layout", () => {
+    for (const hand of ["LEFT", "RIGHT"] as const) {
+      for (let index = 0; index < 20; index += 1) {
+        const target = generateBoxTarget(VIEWPORTS[0], PX, "hand-seed", index, hand);
+        expect(boxTargetRejection(target, VIEWPORTS[0], PX, hand)).toBeNull();
+        const answerIsLeft = target.answerOffsetCss.x < target.referenceOffsetCss.x;
+        expect(answerIsLeft).toBe(hand === "LEFT");
+        // Same shape either way: only the halves swap.
+        expect(target.dimensionsMm).toEqual(generateBoxTarget(VIEWPORTS[0], PX, "hand-seed", index, hand === "LEFT" ? "RIGHT" : "LEFT").dimensionsMm);
+      }
+    }
   });
 });
 

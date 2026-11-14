@@ -1,4 +1,4 @@
-import type { LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
+import type { Handedness, LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
 
 const DB_NAME = "circle-trainer";
 const DB_VERSION = 2;
@@ -8,6 +8,7 @@ const SETTINGS = "settings";
 const CALIBRATION_KEY = "physical-calibration";
 const PRACTICE_MODE_KEY = "practice-mode";
 const CORRECTION_GATE_KEY = "correction-gate-enabled";
+const HANDEDNESS_KEY = "handedness";
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -164,4 +165,23 @@ export async function getCorrectionGateEnabled(): Promise<boolean | null> {
   });
   database.close();
   return enabled;
+}
+
+export async function saveHandedness(handedness: Handedness): Promise<void> {
+  const database = await openDatabase();
+  const transaction = database.transaction(SETTINGS, "readwrite");
+  transaction.objectStore(SETTINGS).put(handedness, HANDEDNESS_KEY);
+  await waitForTransaction(transaction);
+  database.close();
+}
+
+export async function getHandedness(): Promise<Handedness | null> {
+  const database = await openDatabase();
+  const request = database.transaction(SETTINGS, "readonly").objectStore(SETTINGS).get(HANDEDNESS_KEY);
+  const handedness = await new Promise<Handedness | null>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result === "LEFT" || request.result === "RIGHT" ? request.result : null);
+    request.onerror = () => reject(request.error ?? new Error("Could not read handedness"));
+  });
+  database.close();
+  return handedness;
 }

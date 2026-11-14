@@ -236,7 +236,15 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .feedback-card[hidden] { display: none; }
 
-/* Box tips: a scrollable panel over the right side, below the feedback card. */
+/*
+ * The feedback card and scale note sit on the side away from the drawing hand (left-handed by default: the
+ * right). Box tips go over the drawing half instead, so the reference box stays visible while reading them.
+ */
+.drawing-stage[data-hand="right"] .feedback-card { right: auto; left: 18px; }
+.drawing-stage[data-hand="left"] .tips-panel { right: auto; left: 18px; }
+.drawing-stage[data-hand="right"] .corner-note { right: auto; left: 14px; }
+
+/* Box tips: a scrollable panel over the drawing half, below the feedback card. */
 .tips-panel {
   position: absolute;
   z-index: 1;
@@ -327,6 +335,11 @@ button { -webkit-tap-highlight-color: transparent; }
 .ruler-line i { position: absolute; top: -10px; width: 2px; height: 22px; background: var(--ink); }
 .ruler-line i:first-child { left: 0; }
 .ruler-line i:last-child { right: 0; }
+.hand-setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; font-size: 14px; }
+.segmented { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; }
+.segmented button { min-width: 64px; min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.segmented button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.hand-note { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
 .range-label { display: flex; justify-content: space-between; margin: 20px 0 10px; color: var(--muted); font-size: 12px; }
 .range-label output { color: var(--ink); font-variant-numeric: tabular-nums; }
 #rulerSlider { width: 100%; accent-color: var(--accent); }
@@ -420,6 +433,7 @@ button { -webkit-tap-highlight-color: transparent; }
   .hud strong { margin: auto; font-size: 11px; }
   .sheet form { padding: 22px; }
   .feedback-card { top: 12px; right: 12px; }
+  .drawing-stage[data-hand="right"] .feedback-card { right: auto; left: 12px; }
 }
 
 @media (max-width: 560px) {

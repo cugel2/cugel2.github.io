@@ -36,14 +36,14 @@
           <button type="button" class="text-button" id="undoStrokeButton" hidden title="Remove the last box edge">Undo</button>
           <button type="button" class="text-button toggle-button" id="boxTipsButton" aria-pressed="false" aria-controls="boxTipsPanel" hidden>Tips</button>
           <button type="button" class="text-button toggle-button" id="correctionGateButton" aria-pressed="false" title="Reject strokes with substantial correction or backtracking">Corrections: Off</button>
-          <button type="button" class="text-button" id="calibrateButton">Calibrate</button>
+          <button type="button" class="text-button" id="calibrateButton">Setup</button>
           <button type="button" class="text-button" id="diagnosticsButton">Diagnostics</button>
           <button type="button" class="text-button" id="trophiesButton">Trophies</button>
           <button type="button" class="primary-button" id="dataButton">Data</button>
         </nav>
       </header>
 
-      <section class="drawing-stage" aria-label="Apple Pencil drawing surface">
+      <section class="drawing-stage" aria-label="Apple Pencil drawing surface" data-hand="left">
         <canvas id="drawingCanvas"></canvas>
         <div class="empty-state" id="emptyState">
           <p class="eyebrow" id="instructionType">Line practice</p>
@@ -125,11 +125,19 @@
       <form method="dialog">
         <div class="sheet-header">
           <div>
-            <p class="eyebrow">Physical scale</p>
-            <h2>Ruler calibration</h2>
+            <p class="eyebrow">Hand and scale</p>
+            <h2>Setup</h2>
           </div>
-          <button class="icon-button" value="cancel" aria-label="Close calibration">×</button>
+          <button class="icon-button" value="cancel" aria-label="Close setup">×</button>
         </div>
+        <div class="hand-setting" role="group" aria-labelledby="handSettingLabel">
+          <span id="handSettingLabel">Drawing hand</span>
+          <div class="segmented">
+            <button type="button" data-hand="LEFT" aria-pressed="true">Left</button>
+            <button type="button" data-hand="RIGHT" aria-pressed="false">Right</button>
+          </div>
+        </div>
+        <p class="hand-note">Side-by-side drills put the reference on the other side, so your hand never covers it.</p>
         <p class="sheet-intro">Place a physical ruler against the screen. Adjust the line until it measures exactly 100 mm.</p>
         <div class="ruler-workspace">
           <div class="ruler-line" id="rulerLine" aria-hidden="true"><i></i><i></i></div>

@@ -32,6 +32,10 @@ export type PrimitiveExerciseType = "LINE" | "ARC" | "CIRCLE" | "ELLIPSE" | "S_C
 export type ExerciseType = PrimitiveExerciseType | "BOX";
 export type PracticeMode = ExerciseType | "MIXED_BLOCKED" | "MIXED_RANDOM";
 
+/** The hand that holds the Pencil. Side-by-side layouts keep the reference away from it. */
+export type Handedness = "LEFT" | "RIGHT";
+export const DEFAULT_HANDEDNESS: Handedness = "LEFT";
+
 export interface LineTarget {
   kind: "LINE";
   aCss: Point2;

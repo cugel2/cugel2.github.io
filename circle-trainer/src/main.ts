@@ -27,23 +27,26 @@ import type {
   TargetDefinition,
   TrialRecord,
 } from "./core/types";
+import { DEFAULT_HANDEDNESS, type Handedness } from "./core/types";
 import {
   clearStrokes,
   clearTrials,
   getCalibration,
   getCorrectionGateEnabled,
+  getHandedness,
   getPracticeMode,
   getStrokes,
   getTrials,
   saveCalibration,
   saveCorrectionGateEnabled,
+  saveHandedness,
   savePracticeMode,
   saveStroke,
   saveTrial,
 } from "./storage";
 import { createTrophyView } from "./trophyView";
 
-const APP_VERSION = "0.4.1";
+const APP_VERSION = "0.5.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -62,7 +65,7 @@ const INSTRUCTIONS: Record<ExerciseType, { kicker: string; prompt: string }> = {
   CIRCLE: { kicker: "Circle practice", prompt: "Draw one full circle through the four points." },
   ELLIPSE: { kicker: "Ellipse practice", prompt: "Draw one full ellipse through the four points." },
   S_CURVE: { kicker: "S-curve practice", prompt: "Draw one smooth S curve through the four points." },
-  BOX: { kicker: "Box practice", prompt: "Swing the box about the orange edge by the angle shown, then draw its other 11 edges on the right — one stroke each." },
+  BOX: { kicker: "Box practice", prompt: "Swing the box about the orange edge by the angle shown, then draw its other 11 edges from the lone orange edge — one stroke each." },
 };
 
 function requiredElement<T extends Element>(selector: string): T {
@@ -103,6 +106,8 @@ const BOX_TIPS_OPEN_KEY = "circle-trainer:box-tips-open";
 const toast = requiredElement<HTMLElement>("#toast");
 
 const calibrationDialog = requiredElement<HTMLDialogElement>("#calibrationDialog");
+const handButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".hand-setting button[data-hand]"));
+const drawingStage = requiredElement<HTMLElement>(".drawing-stage");
 const rulerLine = requiredElement<HTMLElement>("#rulerLine");
 const rulerSlider = requiredElement<HTMLInputElement>("#rulerSlider");
 const rulerOutput = requiredElement<HTMLOutputElement>("#rulerOutput");
@@ -134,6 +139,7 @@ const runtime = {
 
 let calibration: PhysicalCalibration | null = null;
 let correctionGateEnabled = false;
+let handedness: Handedness = DEFAULT_HANDEDNESS;
 let selectedMode: PracticeMode = "LINE";
 let scheduler = new PracticeScheduler("LINE", createId());
 let targetGenerationIndex = 0;
@@ -450,6 +456,22 @@ function updateBestHud(): void {
   bestScore.textContent = best === undefined ? "—" : String(best);
 }
 
+/** Overlays (feedback card, tips) sit on the side away from the drawing hand; Box layout reads the same setting. */
+function applyHandedness(): void {
+  drawingStage.dataset.hand = handedness.toLowerCase();
+  for (const button of handButtons) button.setAttribute("aria-pressed", String(button.dataset.hand === handedness));
+}
+
+function setHandedness(next: Handedness): void {
+  if (next === handedness) return;
+  handedness = next;
+  applyHandedness();
+  void saveHandedness(next).catch(() => showToast("Hand setting could not be saved"));
+  // Re-lay out a Box that has not been started; a box in progress keeps its layout until the next one.
+  if (activeExercise === "BOX" && trialState === "READY" && boxStrokes.length === 0) beginNewTrial();
+  else if (activeExercise === "BOX") showToast("Applies from the next box");
+}
+
 function updateCorrectionGateButton(): void {
   correctionGateButton.textContent = `Corrections: ${correctionGateEnabled ? "On" : "Off"}`;
   correctionGateButton.setAttribute("aria-pressed", String(correctionGateEnabled));
@@ -473,6 +495,7 @@ function beginNewTrial(): void {
     cssPxPerMm(),
     scheduler.sessionSeed,
     targetGenerationIndex,
+    handedness,
   );
   targetGenerationIndex += 1;
   const instruction = INSTRUCTIONS[activeExercise];
@@ -858,6 +881,7 @@ function buildDiagnosticReport(): Record<string, string | number | boolean> {
     "Overlapping samples removed": runtime.duplicateSampleCount,
     "Out-of-order batches repaired": runtime.reorderedSampleCount,
     "Finger touches ignored": runtime.ignoredTouchCount,
+    "Drawing hand": handedness === "LEFT" ? "Left" : "Right",
     "Calibration": calibration ? `${calibration.cssPxPerMm.toFixed(4)} CSS px/mm` : "Not calibrated",
     "Last normalized error": lastAnalysis ? lastAnalysis.metrics.normalizedError.toFixed(5) : "No scored trial",
     "Saved input strokes": savedStrokeCount,
@@ -995,6 +1019,7 @@ function wireControls(): void {
   requiredElement<HTMLButtonElement>("#exportDataButton").addEventListener("click", () => void exportAllData());
   requiredElement<HTMLButtonElement>("#deleteDataButton").addEventListener("click", () => void deleteAllData());
   rulerSlider.addEventListener("input", updateRulerDisplay);
+  for (const button of handButtons) button.addEventListener("click", () => setHandedness(button.dataset.hand === "RIGHT" ? "RIGHT" : "LEFT"));
   canvas.addEventListener("pointerdown", handlePointerDown);
   canvas.addEventListener("pointermove", handlePointerMove);
   canvas.addEventListener("pointerup", (event) => void finishStroke(event, false));
@@ -1007,10 +1032,11 @@ async function initialize(): Promise<void> {
   wireControls();
   resizeCanvas();
   try {
-    const [storedCalibration, storedMode, storedCorrectionGate, strokes, trials] = await Promise.all([
-      getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getStrokes(), getTrials(),
+    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, strokes, trials] = await Promise.all([
+      getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getStrokes(), getTrials(),
     ]);
     calibration = storedCalibration;
+    handedness = storedHandedness ?? DEFAULT_HANDEDNESS;
     correctionGateEnabled = storedCorrectionGate ?? false;
     selectedMode = storedMode && VALID_MODES.includes(storedMode) ? storedMode : "LINE";
     savedStrokeCount = strokes.length;
@@ -1023,6 +1049,7 @@ async function initialize(): Promise<void> {
   } catch { showToast("Local storage is unavailable; drawing still works"); }
   updateScaleStatus();
   updateCorrectionGateButton();
+  applyHandedness();
   configureRuler();
   resetSession(selectedMode);
   if (new URLSearchParams(window.location.search).has("diagnostics") || window.location.hash === "#diagnostics") {
