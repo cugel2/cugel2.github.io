@@ -125,17 +125,18 @@
           <canvas id="copyReferenceCanvas" aria-label="Reference: drag with a finger to move, pinch to zoom"></canvas>
           <div class="copy-bar" id="copyReferenceBar" hidden>
             <span class="copy-book" id="copyBookName"></span>
+            <button type="button" class="pill-button" id="copyPageButton" title="Go to a page" hidden>p. 1</button>
             <button type="button" class="pill-button" id="copyBackToFrameButton" hidden>Back to frame</button>
             <button type="button" class="pill-button" id="copyNewButton" title="Start again: clear the drawing and reframe">New copy</button>
-            <label class="pill-button" for="copyFileInput" title="Copy from a different picture">Picture…</label>
+            <button type="button" class="pill-button" id="copyLibraryButton" title="Your stored books and pictures">Books…</button>
           </div>
           <div class="copy-empty" id="copyEmpty">
             <p class="eyebrow">Copy</p>
-            <p>Copy from a picture: a photo of a page, a screenshot, a scan.</p>
-            <label class="primary-button" for="copyFileInput">Choose a picture…</label>
-            <span>Move it with a finger and pinch to zoom. Your first stroke fixes the framing that Compare uses.</span>
+            <p>Copy from a book (PDF) or a picture: a photo of a page, a screenshot, a scan.</p>
+            <label class="primary-button" for="copyFileInput">Choose a PDF or picture…</label>
+            <span>It is stored on this iPad. Drag the pages with a finger and pinch to zoom. Your first stroke fixes the framing that Compare uses.</span>
           </div>
-          <input type="file" id="copyFileInput" class="visually-hidden" accept="image/*" />
+          <input type="file" id="copyFileInput" class="visually-hidden" accept="application/pdf,.pdf,image/*" />
         </div>
         <div class="copy-pane copy-drawing" id="copyDrawingPane">
           <canvas id="copyDrawingCanvas" aria-label="Drawing frame: draw with Apple Pencil"></canvas>
@@ -299,6 +300,20 @@
           <img id="copySavePreviewImage" alt="The picture to save" />
           <figcaption>Press and hold the picture, then choose “Save to Photos”. <a id="copySaveDownloadLink" href="#">Download it instead</a></figcaption>
         </figure>
+      </form>
+    </dialog>
+
+    <dialog id="copyLibraryDialog" class="sheet copy-library-sheet">
+      <form method="dialog">
+        <div class="sheet-header">
+          <h2>Books and pictures</h2>
+          <button class="icon-button" value="close" aria-label="Close">×</button>
+        </div>
+        <p class="sheet-intro" id="copyLibraryNote">Books are stored on this device only.</p>
+        <ul class="copy-library-list" id="copyLibraryList"></ul>
+        <div class="sheet-actions">
+          <label class="primary-button copy-add-button" for="copyFileInput">Add a PDF or picture…</label>
+        </div>
       </form>
     </dialog>
 

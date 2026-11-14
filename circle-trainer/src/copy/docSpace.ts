@@ -117,3 +117,50 @@ export function sameView(a: View | null, b: View | null, tolerance = 1e-6): bool
   if (!a || !b) return a === b;
   return Math.abs(a.x - b.x) < tolerance && Math.abs(a.y - b.y) < tolerance && Math.abs(a.w - b.w) < tolerance;
 }
+
+export interface DocRect { x: number; y: number; w: number; h: number }
+
+export interface PageTile {
+  index: number;
+  /** The part of the page, as fractions of its width and height. */
+  region: { u0: number; v0: number; u1: number; v1: number };
+  /** Where that part sits in the document. */
+  doc: DocRect;
+}
+
+/** The parts of each page inside `rect` (document units). */
+export function pageTiles(layout: DocLayout, rect: DocRect): PageTile[] {
+  const tiles: PageTile[] = [];
+  const x0 = Math.max(0, rect.x);
+  const x1 = Math.min(1, rect.x + rect.w);
+  if (x1 <= x0) return tiles;
+  layout.tops.forEach((top, index) => {
+    const height = layout.heights[index];
+    const y0 = Math.max(top, rect.y);
+    const y1 = Math.min(top + height, rect.y + rect.h);
+    if (y1 <= y0) return;
+    tiles.push({
+      index,
+      region: { u0: x0, v0: (y0 - top) / height, u1: x1, v1: (y1 - top) / height },
+      doc: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 },
+    });
+  });
+  return tiles;
+}
+
+/** The page at document height `y`: the one containing it, or the nearest. */
+export function pageAt(layout: DocLayout, y: number): number {
+  let best = 0;
+  let bestDistance = Infinity;
+  layout.tops.forEach((top, index) => {
+    const bottom = top + layout.heights[index];
+    const distance = y < top ? top - y : y > bottom ? y - bottom : 0;
+    if (distance < bestDistance) { best = index; bestDistance = distance; }
+  });
+  return best;
+}
+
+/** The view's rectangle in document units. */
+export function viewRect(view: View, frame: FrameSize): DocRect {
+  return { x: view.x, y: view.y, w: view.w, h: viewHeight(view, frame) };
+}

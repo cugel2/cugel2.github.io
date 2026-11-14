@@ -7,11 +7,26 @@ import type { PageSize } from "./docSpace";
 
 export type DrawContext = CanvasRenderingContext2D;
 
+/** Part of a page, as fractions of its width (u) and height (v). */
+export interface PageRegion { u0: number; v0: number; u1: number; v1: number }
+
 export interface PageSource {
   readonly pageCount: number;
   pageSize(index: number): PageSize;
-  /** Draws page `index` scaled to fill (x, y, width, height) in the context's current units. */
+  /**
+   * Draws page `index` scaled to fill (x, y, width, height) in the context's
+   * current units, at once. A PDF draws its quick low-resolution bitmap, or a
+   * placeholder while that is still being made (it calls `onUpdate` when ready).
+   */
   draw(context: DrawContext, index: number, x: number, y: number, width: number, height: number): void;
+  /**
+   * Renders `region` of page `index` sharply into a canvas of widthPx × heightPx.
+   * Absent for images, which `draw` already shows at full quality. Resolves to
+   * null if cancelled by `cancelRegions`.
+   */
+  renderRegion?(index: number, region: PageRegion, widthPx: number, heightPx: number): Promise<HTMLCanvasElement | null>;
+  /** Cancels sharp renders asked for so far (the view moved on). */
+  cancelRegions?(): void;
   dispose(): void;
 }
 

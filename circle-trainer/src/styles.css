@@ -466,6 +466,10 @@ button { -webkit-tap-highlight-color: transparent; }
 .app-shell.copy-active { grid-template-rows: var(--bar-height) minmax(0, 1fr); }
 
 .copy-stage {
+  /* A Pencil tap then drag is text selection on the iPad; nothing here is text to select. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   min-height: 0;
@@ -561,6 +565,15 @@ button { -webkit-tap-highlight-color: transparent; }
 .copy-empty .primary-button { display: inline-flex; align-items: center; }
 
 .copy-save-choices { display: flex; flex-wrap: wrap; gap: 10px; }
+.copy-library-sheet { width: min(620px, calc(100vw - 32px)); }
+.copy-library-list { display: flex; flex-direction: column; max-height: 52vh; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.copy-library-list li { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.copy-library-list .copy-library-empty { color: var(--muted); font-size: 14px; }
+.copy-library-text { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+.copy-library-text strong { overflow: hidden; font-size: 14px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+.copy-library-text span { color: var(--muted); font-size: 12px; }
+.copy-library-list button { flex-shrink: 0; }
+.copy-add-button { display: inline-flex; align-items: center; }
 .copy-save-preview { margin: 18px 0 0; }
 .copy-save-preview[hidden] { display: none; }
 .copy-save-preview img { display: block; max-width: 100%; max-height: 48vh; margin: 0 auto; border: 1px solid var(--line); background: #fff; -webkit-touch-callout: default; user-select: auto; -webkit-user-select: auto; }

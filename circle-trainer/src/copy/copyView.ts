@@ -10,10 +10,14 @@ import {
   addStroke, backToFrame, blink, canCompare, clearStrokes, fromFrameUnits, isOffFrame, newCopy, newSession, parseSession,
   setCompare, setView, startStroke, toFrameUnits, undoStroke, type CompareView, type CopyPoint, type CopySession, type CopyStroke,
 } from "./copySession";
-import { clampView, fitPage, layoutPages, moveView, zoomAbout, type DocLayout, type FrameSize, type Point, type View } from "./docSpace";
+import {
+  clampView, fitPage, layoutPages, moveView, pageAt, pageTiles, sameView, viewHeight, zoomAbout,
+  type DocLayout, type DocRect, type FrameSize, type Point, type View,
+} from "./docSpace";
 import { GestureTracker } from "./gestures";
-import { addBook, bookKindOf, getBook, loadCurrentCopy, saveCurrentCopy } from "./library";
+import { addBook, bookKindOf, getBook, listBooks, loadCurrentCopy, removeBook, saveCurrentCopy, updateBook, type BookMeta } from "./library";
 import { imageSource, type PageSource } from "./pageSource";
+import { openPdfPageSource } from "./pdfSource";
 
 export interface CopyElements {
   stage: HTMLElement;
@@ -44,6 +48,11 @@ export interface CopyElements {
   savePreview: HTMLElement;
   savePreviewImage: HTMLImageElement;
   saveDownloadLink: HTMLAnchorElement;
+  pageButton: HTMLButtonElement;
+  libraryButton: HTMLButtonElement;
+  libraryDialog: HTMLDialogElement;
+  libraryList: HTMLElement;
+  libraryNote: HTMLElement;
 }
 
 export interface CopyServices {
@@ -71,6 +80,8 @@ const AUTOSAVE_DELAY_MS = 400;
 const TINT = [21, 87, 192] as const;
 /** Luminance at and above which the reference counts as paper when tinted. */
 const TINT_PAPER_LEVEL = 225;
+/** Wait this long after the view stops moving before rendering it sharply (ms). */
+const SHARPEN_DELAY_MS = 150;
 const BACKDROP = "#ebe7de";
 const DIM = "rgba(235, 231, 222, 0.78)";
 
@@ -84,6 +95,8 @@ interface ActiveStroke {
 
 interface Capture { original: HTMLCanvasElement; tinted: HTMLCanvasElement }
 
+interface SharpTile { doc: DocRect; canvas: HTMLCanvasElement }
+
 export function createCopyView(elements: CopyElements, services: CopyServices): CopyView {
   const referenceContext = context2d(elements.referenceCanvas);
   const drawingContext = context2d(elements.drawingCanvas);
@@ -96,6 +109,13 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   let source: PageSource | null = null;
   let layout: DocLayout | null = null;
   let bookName = "";
+  let bookId: string | null = null;
+  /** Sharp renders of what is on screen, placed in document units. */
+  let sharpTiles: SharpTile[] = [];
+  let sharpTimer: number | undefined;
+  let sharpGeneration = 0;
+  let captureGeneration = 0;
+  let bookSaveTimer: number | undefined;
   let frame: FrameRect = { left: 0, top: 0, width: 1, height: 1 };
   let paneSize = { width: 1, height: 1 };
   let capture: Capture | null = null;
@@ -150,6 +170,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     if (session?.view && layout && !session.lockedView) session = setView(session, clampView(session.view, layout, frameSize()));
     rebuildCapture();
     rebake();
+    scheduleSharpen();
   }
 
   // ----- drawing the document -----
@@ -180,6 +201,10 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     context.save();
     context.translate(frame.left, frame.top);
     drawDocument(context, session.view, frameSize(), { left: -frame.left, top: -frame.top, right: paneSize.width - frame.left, bottom: paneSize.height - frame.top });
+    const scale = frame.width / session.view.w;
+    for (const tile of sharpTiles) {
+      context.drawImage(tile.canvas, (tile.doc.x - session.view.x) * scale, (tile.doc.y - session.view.y) * scale, tile.doc.w * scale, tile.doc.h * scale);
+    }
     context.restore();
     // Dim everything outside the frame, so it is clear what will be compared.
     context.beginPath();
@@ -264,23 +289,35 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
 
   // ----- compare capture -----
 
-  /** The locked framing at frame resolution, plus a copy with dark lines tinted blue and paper made clear. */
+  /**
+   * The locked framing at frame resolution, plus a copy with dark lines tinted
+   * blue and paper made clear. Drawn at once from what is to hand, then, for a
+   * PDF, replaced by a sharp render.
+   */
   function rebuildCapture(): void {
     capture = null;
+    captureGeneration += 1;
     if (!session?.lockedView || !source) return;
     const pixelRatio = window.devicePixelRatio || 1;
-    const original = document.createElement("canvas");
-    original.width = Math.max(1, Math.round(frame.width * pixelRatio));
-    original.height = Math.max(1, Math.round(frame.height * pixelRatio));
+    const original = blankCanvas(frame.width * pixelRatio, frame.height * pixelRatio);
     const context = context2d(original);
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    context.fillStyle = "#fff";
-    context.fillRect(0, 0, frame.width, frame.height);
     drawDocument(context, session.lockedView, frameSize(), { left: 0, top: 0, right: frame.width, bottom: frame.height });
-    const tinted = document.createElement("canvas");
-    tinted.width = original.width;
-    tinted.height = original.height;
-    const pixels = context.getImageData(0, 0, original.width, original.height);
+    capture = { original, tinted: tintedCopy(original) };
+    if (!source.renderRegion) return;
+    const generation = captureGeneration;
+    const view = session.lockedView;
+    const sharp = blankCanvas(original.width, original.height);
+    void renderView(context2d(sharp), view, { width: original.width, height: original.height }).then((complete) => {
+      if (!complete || generation !== captureGeneration) return;
+      capture = { original: sharp, tinted: tintedCopy(sharp) };
+      requestRender();
+    });
+  }
+
+  function tintedCopy(original: HTMLCanvasElement): HTMLCanvasElement {
+    const tinted = blankCanvas(original.width, original.height, false);
+    const pixels = context2d(original).getImageData(0, 0, original.width, original.height);
     const data = pixels.data;
     for (let index = 0; index < data.length; index += 4) {
       const luminance = 0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2];
@@ -291,19 +328,101 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       data[index + 3] = Math.min(255, Math.max(0, ((TINT_PAPER_LEVEL - luminance) / TINT_PAPER_LEVEL) * 255 * 1.4));
     }
     context2d(tinted).putImageData(pixels, 0, 0);
-    capture = { original, tinted };
+    return tinted;
+  }
+
+  /**
+   * Draws `view` sharply into a context `size` px across (no transform), page
+   * part by page part. Resolves false if a render was cancelled. Images draw
+   * directly.
+   */
+  async function renderView(context: CanvasRenderingContext2D, view: View, size: FrameSize): Promise<boolean> {
+    if (!source || !layout) return false;
+    const scale = size.width / view.w;
+    if (!source.renderRegion) {
+      drawDocument(context, view, size, { left: 0, top: 0, right: size.width, bottom: size.height });
+      return true;
+    }
+    const rect = { x: view.x, y: view.y, w: view.w, h: viewHeight(view, size) };
+    for (const tile of pageTiles(layout, rect)) {
+      const width = Math.max(1, Math.round(tile.doc.w * scale));
+      const height = Math.max(1, Math.round(tile.doc.h * scale));
+      const canvas = await source.renderRegion(tile.index, tile.region, width, height);
+      if (!canvas) return false;
+      context.drawImage(canvas, (tile.doc.x - view.x) * scale, (tile.doc.y - view.y) * scale, tile.doc.w * scale, tile.doc.h * scale);
+    }
+    return true;
+  }
+
+  // ----- sharp rendering of the reference pane -----
+
+  /** After the view settles, render what the reference pane shows at device resolution. */
+  function scheduleSharpen(): void {
+    window.clearTimeout(sharpTimer);
+    sharpGeneration += 1;
+    source?.cancelRegions?.();
+    if (!source?.renderRegion || !session?.view || !visible) return;
+    sharpTimer = window.setTimeout(() => void sharpen(), SHARPEN_DELAY_MS);
+  }
+
+  async function sharpen(): Promise<void> {
+    if (!source?.renderRegion || !session?.view || !layout) return;
+    const generation = sharpGeneration;
+    const view = session.view;
+    const scale = frame.width / view.w;
+    const pixelRatio = window.devicePixelRatio || 1;
+    const paneRect = {
+      x: view.x - frame.left / scale,
+      y: view.y - frame.top / scale,
+      w: paneSize.width / scale,
+      h: paneSize.height / scale,
+    };
+    const tiles: SharpTile[] = [];
+    for (const tile of pageTiles(layout, paneRect)) {
+      const width = Math.round(tile.doc.w * scale * pixelRatio);
+      const height = Math.round(tile.doc.h * scale * pixelRatio);
+      if (width < 4 || height < 4) continue;
+      const canvas = await source.renderRegion(tile.index, tile.region, width, height);
+      if (!canvas || generation !== sharpGeneration) {
+        for (const done of tiles) releaseCanvas(done.canvas);
+        return;
+      }
+      tiles.push({ doc: tile.doc, canvas });
+    }
+    for (const old of sharpTiles) releaseCanvas(old.canvas);
+    sharpTiles = tiles;
+    requestRender();
+  }
+
+  function dropSharpTiles(): void {
+    for (const tile of sharpTiles) releaseCanvas(tile.canvas);
+    sharpTiles = [];
   }
 
   // ----- state changes -----
 
   function update(next: CopySession, options: { save?: boolean; rebake?: boolean } = {}): void {
     const lockedBefore = session?.lockedView ?? null;
+    const viewBefore = session?.view ?? null;
     session = next;
     if (session.lockedView !== lockedBefore) rebuildCapture();
+    if (!sameView(viewBefore, session.view)) {
+      scheduleSharpen();
+      scheduleBookSave();
+    }
     if (options.rebake) rebake();
     if (options.save !== false) scheduleSave();
     updateControls();
     requestRender();
+  }
+
+  /** Each book remembers where you were in it. */
+  function scheduleBookSave(): void {
+    window.clearTimeout(bookSaveTimer);
+    const id = bookId;
+    const view = session?.view;
+    if (!id || !view) return;
+    bookSaveTimer = window.setTimeout(() => void updateBook(id, { lastView: view }).catch(() => undefined), AUTOSAVE_DELAY_MS * 2);
   }
 
   function scheduleSave(): void {
@@ -336,11 +455,14 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     elements.emptyState.hidden = source !== null;
     elements.referenceBar.hidden = source === null;
     elements.bookName.textContent = bookName;
+    const pages = source?.pageCount ?? 0;
+    elements.pageButton.hidden = pages < 2;
+    if (pages >= 2) elements.pageButton.textContent = `p. ${currentPage() + 1} / ${pages}`;
     updateStatus();
   }
 
   function updateStatus(): void {
-    if (!source || !session) statusText = "Copy · choose a picture to copy from";
+    if (!source || !session) statusText = "Copy · choose a PDF or a picture to copy from";
     else if (session.compare === "MINE" || session.compare === "REFERENCE") statusText = "Comparing · tap the frame with the Pencil to flip";
     else if (session.compare === "BOTH") statusText = "Comparing · reference under your lines";
     else if (!session.lockedView) statusText = "Copy · frame the reference with a finger, then draw";
@@ -351,31 +473,93 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
 
   // ----- loading -----
 
-  async function openImageBook(id: string): Promise<boolean> {
-    let record = await getBook(id);
-    if (!record) return false;
+  function currentPage(): number {
+    if (!layout || !session?.view) return 0;
+    return pageAt(layout, session.view.y + viewHeight(session.view, frameSize()) / 2);
+  }
+
+  /** Opens a stored book or picture as the reference. Returns its record, or null if it is gone. */
+  async function openBook(id: string): Promise<BookMeta | null> {
+    const record = await getBook(id);
+    if (!record) return null;
+    const reacquire = async () => {
+      const again = await getBook(id);
+      if (!again) throw new Error("The book is no longer stored");
+      return again.file;
+    };
     let next: PageSource;
-    try {
-      next = await imageSource(record.file);
-    } catch {
-      // Safari can lose track of a stored file; a fresh read usually works.
-      record = await getBook(id);
-      if (!record) return false;
-      next = await imageSource(record.file);
+    if (record.kind === "pdf") {
+      const knownSizes = Array.isArray(record.pageSizes) ? record.pageSizes : null;
+      const pdf = await openPdfPageSource(record.file, new URL("./pdfjs/", document.baseURI), {
+        reacquire,
+        knownSizes,
+        onUpdate: requestRender,
+        onStall: (index) => services.showToast(`Page ${index + 1} is taking too long to draw`),
+        onFatal: () => void recoverBook(id),
+      });
+      next = pdf;
+      if (!knownSizes || knownSizes.length !== pdf.sizes.length) void updateBook(id, { pageSizes: pdf.sizes, pageCount: pdf.pageCount }).catch(() => undefined);
+    } else {
+      try {
+        next = await imageSource(record.file);
+      } catch {
+        // Safari can lose track of a stored file; a fresh read usually works.
+        next = await imageSource(await reacquire());
+      }
     }
     source?.dispose();
+    dropSharpTiles();
     source = next;
+    bookId = id;
     bookName = record.name;
-    layout = layoutPages([source.pageSize(0)]);
-    return true;
+    layout = layoutPages(Array.from({ length: next.pageCount }, (_, index) => next.pageSize(index)));
+    const { file: _file, ...meta } = record;
+    void updateBook(id, { lastOpenedAt: Date.now() }).catch(() => undefined);
+    return meta;
+  }
+
+  /**
+   * The book could not be read (Safari lost the stored file). Open it again
+   * under the same copy; give up after a few tries rather than loop.
+   */
+  let recoveries: number[] = [];
+  async function recoverBook(id: string): Promise<void> {
+    if (id !== bookId) return;
+    const now = Date.now();
+    recoveries = recoveries.filter((time) => now - time < 60_000);
+    if (recoveries.length >= 2) {
+      services.showToast("This book can't be read right now. Reopen it from Books…");
+      return;
+    }
+    recoveries.push(now);
+    try {
+      if (!await openBook(id)) throw new Error("gone");
+      rebuildCapture();
+      scheduleSharpen();
+      requestRender();
+    } catch {
+      services.showToast("This book can't be read right now. Reopen it from Books…");
+    }
+  }
+
+  function closeSource(): void {
+    source?.dispose();
+    dropSharpTiles();
+    source = null;
+    layout = null;
+    bookId = null;
+    bookName = "";
+    session = null;
+    capture = null;
   }
 
   async function restore(): Promise<void> {
     loaded = true;
     try {
       const stored = parseSession(await loadCurrentCopy());
-      if (stored?.bookId && await openImageBook(stored.bookId)) {
-        session = stored;
+      if (stored?.bookId && await openBook(stored.bookId)) {
+        // Reopen ready to draw, not mid-compare.
+        session = { ...stored, compare: null };
         measure();
         if (!session.view && layout) session = setView(session, fitPage(layout, frameSize()));
       }
@@ -385,25 +569,143 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     measure();
     updateControls();
     requestRender();
+    scheduleSharpen();
+  }
+
+  /** Starts a copy from a stored book, where you last were in it. */
+  async function startFromBook(id: string): Promise<void> {
+    if (session && session.bookId === id) return;
+    if (session && session.strokes.length > 0 && !window.confirm("Start a new copy from this one? The current copy will be replaced.")) return;
+    let meta: BookMeta | null;
+    try {
+      meta = await openBook(id);
+    } catch {
+      services.showToast("That file could not be opened");
+      return;
+    }
+    if (!meta) {
+      services.showToast("That file is no longer stored");
+      return;
+    }
+    session = newSession(id, naturalAspect(), null);
+    measure();
+    const remembered = isStoredView(meta.lastView) ? clampView(meta.lastView, layout!, frameSize()) : fitPage(layout!, frameSize());
+    update(setView(session, remembered), { rebake: true });
   }
 
   async function chooseFile(file: File): Promise<void> {
-    if (bookKindOf(file) !== "image") {
-      services.showToast("Choose a picture (PDFs come in the next version)");
+    const kind = bookKindOf(file);
+    if (!kind) {
+      services.showToast("Choose a PDF or a picture");
       return;
     }
-    if (session && session.strokes.length > 0 && !window.confirm("Start a new copy from this picture? The current one will be replaced.")) return;
-    let bookId: string;
+    let id: string;
     try {
-      bookId = (await addBook(file, "image")).id;
-      if (!await openImageBook(bookId)) throw new Error("not stored");
+      id = (await addBook(file, kind)).id;
     } catch {
-      services.showToast("That picture could not be opened");
+      services.showToast("That file could not be stored on this device");
       return;
     }
-    session = newSession(bookId, naturalAspect(), null);
-    measure();
-    update(setView(session, fitPage(layout!, frameSize())), { rebake: true });
+    void protectStorage();
+    elements.libraryDialog.close();
+    await startFromBook(id);
+    void refreshLibrary();
+  }
+
+  // ----- library -----
+
+  /** Ask Safari to keep stored books (it may otherwise clear them after weeks unused). */
+  async function protectStorage(): Promise<void> {
+    try { await navigator.storage?.persist?.(); } catch { /* not offered here */ }
+  }
+
+  async function storageNote(): Promise<string> {
+    if (!navigator.storage?.persisted) return "Books are stored on this device only. This connection can't ask Safari to keep them; the app at its usual address can.";
+    try {
+      return (await navigator.storage.persisted())
+        ? "Books are stored on this device only, and Safari will keep them."
+        : "Books are stored on this device only. Safari may clear them if the app goes unused for a few weeks; adding Circle Trainer to the Home Screen keeps them.";
+    } catch {
+      return "Books are stored on this device only.";
+    }
+  }
+
+  async function refreshLibrary(): Promise<void> {
+    let books: BookMeta[];
+    try {
+      books = await listBooks();
+    } catch {
+      elements.libraryList.textContent = "The library could not be read.";
+      return;
+    }
+    elements.libraryNote.textContent = await storageNote();
+    elements.libraryList.replaceChildren();
+    if (books.length === 0) {
+      const empty = document.createElement("li");
+      empty.className = "copy-library-empty";
+      empty.textContent = "Nothing stored yet.";
+      elements.libraryList.append(empty);
+    }
+    for (const book of books) {
+      const item = document.createElement("li");
+      const text = document.createElement("div");
+      text.className = "copy-library-text";
+      const name = document.createElement("strong");
+      name.textContent = book.name;
+      const details = document.createElement("span");
+      const pages = book.kind === "pdf" && book.pageCount ? ` · ${book.pageCount} pages` : book.kind === "image" ? " · picture" : "";
+      details.textContent = `${formatSize(book.size)}${pages} · opened ${formatDate(book.lastOpenedAt)}`;
+      text.append(name, details);
+      const open = document.createElement("button");
+      open.type = "button";
+      open.className = book.id === bookId ? "secondary-button" : "primary-button";
+      open.textContent = book.id === bookId ? "Open now" : "Open";
+      open.disabled = book.id === bookId;
+      open.addEventListener("click", () => { elements.libraryDialog.close(); void startFromBook(book.id); });
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "danger-button";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", () => void removeFromLibrary(book));
+      item.append(text, open, remove);
+      elements.libraryList.append(item);
+    }
+  }
+
+  async function removeFromLibrary(book: BookMeta): Promise<void> {
+    const current = book.id === bookId;
+    const warning = current ? " Your copy from it will be removed too." : "";
+    if (!window.confirm(`Remove “${book.name}” from this device?${warning}`)) return;
+    try {
+      await removeBook(book.id);
+      if (current) {
+        closeSource();
+        await saveCurrentCopy(null);
+        measure();
+        updateControls();
+        requestRender();
+      }
+    } catch {
+      services.showToast("It could not be removed");
+    }
+    await refreshLibrary();
+  }
+
+  function openLibrary(): void {
+    void refreshLibrary();
+    elements.libraryDialog.showModal();
+  }
+
+  function jumpToPage(): void {
+    if (!source || !layout || !session) return;
+    const answer = window.prompt(`Go to page (1–${source.pageCount})`, String(currentPage() + 1));
+    if (answer === null) return;
+    const page = Math.round(Number(answer));
+    if (!Number.isFinite(page) || page < 1 || page > source.pageCount) {
+      services.showToast(`Choose a page from 1 to ${source.pageCount}`);
+      return;
+    }
+    update(setView(session, fitPage(layout, frameSize(), page - 1)));
   }
 
   // ----- reference pane input -----
@@ -456,10 +758,15 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   function onReferenceWheel(event: WheelEvent): void {
     if (!session?.view || !layout) return;
     event.preventDefault();
-    const at = paneToFrame(localPoint(event, elements.referenceCanvas));
-    // Trackpad pinches arrive as wheel events with ctrlKey and small deltas.
-    const ratio = Math.exp(-event.deltaY * (event.ctrlKey ? 0.01 : 0.0015));
-    update(setView(session, zoomAbout(session.view, layout, frameSize(), at, ratio)));
+    const point = localPoint(event, elements.referenceCanvas);
+    if (event.ctrlKey || event.metaKey) {
+      // Trackpad pinches arrive as wheel events with ctrlKey; ⌘ or Ctrl + wheel zooms with a mouse.
+      const ratio = Math.exp(-event.deltaY * (event.ctrlKey && Math.abs(event.deltaY) < 50 ? 0.01 : 0.0015));
+      update(setView(session, zoomAbout(session.view, layout, frameSize(), paneToFrame(point), ratio)));
+    } else {
+      // Scrolling moves through the pages, as dragging does.
+      moveReference(point, { x: point.x - event.deltaX, y: point.y - event.deltaY }, 1);
+    }
   }
 
   // ----- drawing pane input -----
@@ -486,6 +793,8 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     // Fingers do nothing here, so a resting palm is ignored.
     if (event.pointerType === "touch" || !session || !source) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    // Every Pencil touch-down here is ours, so Safari never starts a text selection from it.
+    event.preventDefault();
     const point = paneToFrame(localPoint(event, elements.drawingCanvas));
     if (session.compare) {
       event.preventDefault();
@@ -691,6 +1000,8 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   elements.saveDrawingButton.addEventListener("click", () => shareExport("drawing"));
   elements.saveSideBySideButton.addEventListener("click", () => shareExport("sideBySide"));
   elements.saveDialog.addEventListener("close", hidePreview);
+  elements.libraryButton.addEventListener("click", openLibrary);
+  elements.pageButton.addEventListener("click", jumpToPage);
 
   new ResizeObserver(() => { if (visible && !active) { measure(); requestRender(); } }).observe(elements.stage);
 
@@ -706,6 +1017,8 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     hide() {
       visible = false;
       elements.stage.hidden = true;
+      window.clearTimeout(sharpTimer);
+      source?.cancelRegions?.();
       gestures.clear();
       mouseDrag = null;
       active = null;
@@ -728,6 +1041,36 @@ function context2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas 2D is unavailable in this browser");
   return context;
+}
+
+function blankCanvas(width: number, height: number, white = true): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width));
+  canvas.height = Math.max(1, Math.round(height));
+  if (white) {
+    const context = context2d(canvas);
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  return canvas;
+}
+
+function releaseCanvas(canvas: HTMLCanvasElement): void {
+  canvas.width = 0;
+  canvas.height = 0;
+}
+
+function isStoredView(value: unknown): value is View {
+  const view = value as View | null;
+  return !!view && [view.x, view.y, view.w].every(Number.isFinite) && view.w > 0;
+}
+
+function formatSize(bytes: number): string {
+  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+function formatDate(epochMs: number): string {
+  return new Date(epochMs).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 
 function capturePointer(element: HTMLElement, pointerId: number): void {

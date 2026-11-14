@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampView, docToFrame, fitPage, frameToDoc, layoutPages, MIN_VIEW_WIDTH, moveView, PAGE_GAP, visiblePages, zoomAbout } from "../src/copy/docSpace";
+import { clampView, docToFrame, fitPage, frameToDoc, layoutPages, MIN_VIEW_WIDTH, moveView, PAGE_GAP, pageAt, pageTiles, visiblePages, zoomAbout } from "../src/copy/docSpace";
 
 const frame = { width: 400, height: 500 };
 const layout = layoutPages([{ width: 800, height: 1200 }, { width: 600, height: 600 }, { width: 1000, height: 1500 }]);
@@ -57,5 +57,22 @@ describe("docSpace", () => {
     expect(visiblePages(layout, { x: 0, y: 0, w: 1 }, frame)).toEqual([0]);
     expect(visiblePages(layout, { x: 0, y: 1.2, w: 1 }, frame)).toEqual([0, 1]);
     expect(visiblePages(layout, { x: 0, y: 2.6, w: 0.4 }, frame, 1)).toEqual([1, 2]);
+  });
+
+  it("splits a rectangle into the page parts it covers", () => {
+    const tiles = pageTiles(layout, { x: -0.5, y: 1.0, w: 2, h: 1 });
+    expect(tiles.map((tile) => tile.index)).toEqual([0, 1]);
+    expect(tiles[0].region).toEqual({ u0: 0, v0: 1 / 1.5, u1: 1, v1: 1 });
+    expect(tiles[1].region.v0).toBe(0);
+    expect(tiles[1].region.v1).toBeCloseTo((2.0 - (1.5 + PAGE_GAP)) / 1);
+    expect(tiles[0].doc).toEqual({ x: 0, y: 1.0, w: 1, h: 0.5 });
+    expect(pageTiles(layout, { x: 2, y: 0, w: 1, h: 1 })).toEqual([]);
+  });
+
+  it("finds the page at a height, or the nearest one in a gap", () => {
+    expect(pageAt(layout, 0.2)).toBe(0);
+    expect(pageAt(layout, 1.5 + PAGE_GAP * 0.4)).toBe(0);
+    expect(pageAt(layout, 1.5 + PAGE_GAP * 0.6)).toBe(1);
+    expect(pageAt(layout, 99)).toBe(2);
   });
 });
