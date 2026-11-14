@@ -6,7 +6,7 @@ import { polylineLength } from "./core/geometry";
 import { rawSampleIdentity } from "./core/input";
 import { bestTrialsByExercise } from "./core/trophies";
 import { analyseTargetStroke, versionsForExercise } from "./core/primitiveMetrics";
-import { EXERCISE_LABELS, MODE_LABELS, PracticeScheduler } from "./core/scheduler";
+import { ALL_EXERCISE_TYPES, EXERCISE_LABELS, MODE_LABELS, PracticeScheduler } from "./core/scheduler";
 import { generateTarget, sampleTargetPathCss, targetCheckpointsCss } from "./core/targets";
 import { strokeWidthsMm, taperCheckpointsCss, taperMetricText, taperOutlineCss, targetWidthAtMm } from "./core/taper";
 import type {
@@ -35,6 +35,8 @@ import {
   clearTrials,
   getCalibration,
   getCorrectionGateEnabled,
+  getDailyQueue,
+  getDailyTicks,
   getHandedness,
   getPracticeTime,
   getPracticeMode,
@@ -42,6 +44,8 @@ import {
   getTrials,
   saveCalibration,
   saveCorrectionGateEnabled,
+  saveDailyQueue,
+  saveDailyTicks,
   saveHandedness,
   savePracticeTime,
   savePracticeMode,
@@ -49,13 +53,25 @@ import {
   saveTrial,
 } from "./storage";
 import { createTrophyView } from "./trophyView";
-import { formatClock, formatMinutes, PracticeClock } from "./core/timer";
+import { dayKey, formatClock, formatMinutes, PracticeClock } from "./core/timer";
+import {
+  advanceQueue,
+  currentQueueExercise,
+  DAILY_COUNTS,
+  dailyMinutes,
+  DEFAULT_DAILY_TICKS,
+  ensureTodayQueue,
+  isQueueDone,
+  queueMinutesLeft,
+  queueRemaining,
+  type DailyQueueState,
+} from "./core/dailyQueue";
 
-const APP_VERSION = "0.7.0";
+const APP_VERSION = "0.8.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
-const VALID_MODES: readonly PracticeMode[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE", "TAPER", "BOX", "MIXED_BLOCKED", "MIXED_RANDOM"];
+const VALID_MODES: readonly PracticeMode[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE", "TAPER", "BOX", "MIXED_BLOCKED", "MIXED_RANDOM", "TODAY"];
 /** Box strokes shorter than this (or with fewer samples) are treated as accidental taps and not counted. */
 const BOX_MIN_STROKE_SAMPLES = 8;
 const BOX_MIN_STROKE_PATH_MM = 6;
@@ -104,6 +120,13 @@ const repCount = requiredElement<HTMLElement>("#repCount");
 const streakCount = requiredElement<HTMLElement>("#streakCount");
 const lastScore = requiredElement<HTMLElement>("#lastScore");
 const practiceTime = requiredElement<HTMLElement>("#practiceTime");
+const doneCard = requiredElement<HTMLElement>("#doneCard");
+const doneTitle = requiredElement<HTMLElement>("#doneTitle");
+const doneDetail = requiredElement<HTMLElement>("#doneDetail");
+const doneNote = requiredElement<HTMLElement>("#doneNote");
+const doneSettingsButton = requiredElement<HTMLButtonElement>("#doneSettingsButton");
+const dailyTicksList = requiredElement<HTMLElement>("#dailyTicks");
+const dailyEstimate = requiredElement<HTMLElement>("#dailyEstimate");
 const bestScore = requiredElement<HTMLElement>("#bestScore");
 const feedbackCard = requiredElement<HTMLElement>("#feedbackCard");
 const feedbackResult = requiredElement<HTMLElement>("#feedbackResult");
@@ -174,6 +197,8 @@ let savedStrokeCount = 0;
 let savedTrialCount = 0;
 let toastTimer: number | undefined;
 let practiceClock = new PracticeClock({}, document.visibilityState === "visible");
+let dailyTicks: ExerciseType[] = [...DEFAULT_DAILY_TICKS];
+let dailyQueue: DailyQueueState | null = null;
 let touchNoticeShown = false;
 const introducedExercises = new Set<ExerciseType>();
 
@@ -496,7 +521,100 @@ function drawBoxTrial(box: BoxTarget): void {
 }
 
 function boxProgressText(): string {
-  return `${EXERCISE_LABELS.BOX.replace(/es$/, "")} · ${boxStrokes.length}/${BOX_STROKES_REQUIRED}`;
+  const box = `${EXERCISE_LABELS.BOX.replace(/es$/, "")} · ${boxStrokes.length}/${BOX_STROKES_REQUIRED}`;
+  return selectedMode === "TODAY" && dailyQueue ? `${box} · ${queueRemaining(dailyQueue)} left today` : box;
+}
+
+/* ---------- Today's queue ---------- */
+
+/** Today's queue, rebuilt (and saved) when the practice day has changed since it was made. */
+function todayQueue(): DailyQueueState {
+  const next = ensureTodayQueue(dailyQueue, dailyTicks, Date.now());
+  if (next !== dailyQueue) {
+    dailyQueue = next;
+    void saveDailyQueue(next).catch(() => undefined);
+  }
+  return next;
+}
+
+function todayStatusText(queue: DailyQueueState): string {
+  return `Today · ${queueRemaining(queue)} left · about ${queueMinutesLeft(queue)} min`;
+}
+
+/** Shown instead of a target when today's queue is finished or nothing is ticked. */
+function showDoneCard(queue: DailyQueueState): void {
+  target = null;
+  trialState = "PREPARING";
+  feedbackCard.hidden = true;
+  emptyState.classList.add("hidden");
+  undoStrokeButton.hidden = true;
+  boxTipsButton.hidden = true;
+  boxTipsPanel.hidden = true;
+  const empty = queue.order.length === 0;
+  doneTitle.textContent = empty ? "Nothing ticked for Today" : "Done for today ✓";
+  doneDetail.textContent = empty
+    ? "Choose which modes make up the daily queue."
+    : `${queue.order.length} reps · ${formatMinutes(practiceClock.todayTotalMs(Date.now()))} practised today`;
+  doneNote.textContent = empty
+    ? "Today's queue is built from the ticked modes."
+    : "Pick any mode above for free practice. It doesn't count toward the queue; a new one starts at 4 am.";
+  doneSettingsButton.hidden = !empty;
+  doneCard.hidden = false;
+  statusText.textContent = empty ? "Today · nothing ticked" : "Today · done ✓";
+  redrawAll();
+}
+
+/** Every saved attempt moves the schedule on: the queue in Today, the scheduler otherwise. */
+function advanceSchedule(): void {
+  if (selectedMode !== "TODAY") {
+    scheduler.advance();
+    return;
+  }
+  dailyQueue = advanceQueue(todayQueue());
+  void saveDailyQueue(dailyQueue).catch(() => showToast("Today's progress could not be saved"));
+}
+
+function scheduleContext() {
+  const generationIndex = targetGenerationIndex - 1;
+  if (selectedMode !== "TODAY" || !dailyQueue) return { ...scheduler.context(), generationIndex };
+  return { mode: "TODAY" as const, sessionSeed: `daily:${dailyQueue.dayKey}`, sequenceIndex: dailyQueue.position, cycleIndex: 0, generationIndex };
+}
+
+/** The 4 am rollover while the page is open: start the new day's queue unless a trial is in progress. */
+function checkDayRollover(): void {
+  if (selectedMode !== "TODAY" || !dailyQueue || dailyQueue.dayKey === dayKey(Date.now())) return;
+  const midTrial = trialState === "DRAWING" || trialState === "PROCESSING" || (trialState === "READY" && boxStrokes.length > 0);
+  if (!midTrial) beginNewTrial();
+}
+
+function renderDailyTicks(): void {
+  dailyTicksList.replaceChildren(...ALL_EXERCISE_TYPES.map((type) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = dailyTicks.includes(type);
+    input.addEventListener("change", () => void setDailyTick(type, input.checked));
+    const name = document.createElement("span");
+    name.textContent = EXERCISE_LABELS[type];
+    const count = document.createElement("small");
+    count.textContent = `${DAILY_COUNTS[type]}`;
+    label.append(input, name, count);
+    return label;
+  }));
+  dailyEstimate.textContent = dailyTicks.length === 0 ? "Nothing ticked: Today will be empty." : `About ${dailyMinutes(dailyTicks)} min a day.`;
+}
+
+async function setDailyTick(type: ExerciseType, ticked: boolean): Promise<void> {
+  dailyTicks = ALL_EXERCISE_TYPES.filter((each) => (each === type ? ticked : dailyTicks.includes(each)));
+  renderDailyTicks();
+  void saveDailyTicks(dailyTicks).catch(() => showToast("Today's ticks could not be saved"));
+  const wasEmpty = !dailyQueue || dailyQueue.order.length === 0;
+  if (wasEmpty) {
+    todayQueue();
+    if (selectedMode === "TODAY" && trialState !== "DRAWING") beginNewTrial();
+  } else {
+    showToast("Applies from tomorrow's queue");
+  }
 }
 
 /** Device-local convenience only, so plain localStorage (guarded) rather than IndexedDB. */
@@ -556,6 +674,7 @@ function redrawAll(): void {
 
 function statusForCurrentTrial(): string {
   if (activeExercise === "BOX") return boxProgressText();
+  if (selectedMode === "TODAY" && dailyQueue) return todayStatusText(dailyQueue);
   const exerciseLabel = EXERCISE_LABELS[activeExercise];
   if (selectedMode === "MIXED_BLOCKED") {
     const progress = scheduler.blockProgress()!;
@@ -600,7 +719,18 @@ function beginNewTrial(): void {
   lastAnalysis = null;
   feedbackCard.hidden = true;
   feedbackCard.classList.remove("failed");
-  activeExercise = scheduler.currentExercise();
+  if (selectedMode === "TODAY") {
+    const queue = todayQueue();
+    const next = currentQueueExercise(queue);
+    if (!next) {
+      showDoneCard(queue);
+      return;
+    }
+    activeExercise = next;
+  } else {
+    activeExercise = scheduler.currentExercise();
+  }
+  doneCard.hidden = true;
   const bounds = canvas.getBoundingClientRect();
   target = generateTarget(
     activeExercise,
@@ -815,7 +945,7 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
     const analysis = analyseTargetStroke(stroke, target, cssPxPerMm(), correctionGateEnabled);
     lastAnalysis = analysis;
     const versions = versionsForExercise(activeExercise);
-    const schedule = { ...scheduler.context(), generationIndex: targetGenerationIndex - 1 };
+    const schedule = scheduleContext();
     const trial: SingleStrokeTrialRecord = {
       id: createId(),
       appVersion: APP_VERSION,
@@ -835,7 +965,7 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
     savedStrokeCount += 1;
     savedTrialCount += 1;
     updatePracticeHud(analysis);
-    scheduler.advance();
+    advanceSchedule();
     trialState = "FEEDBACK";
     showFeedback(analysis);
     redrawAll();
@@ -910,7 +1040,7 @@ async function submitBoxTrial(box: BoxTarget): Promise<void> {
       exerciseType: "BOX",
       practiceMode: selectedMode,
       correctionGateEnabled: false,
-      schedule: { ...scheduler.context(), generationIndex: targetGenerationIndex - 1 },
+      schedule: scheduleContext(),
       target: box,
       rawStrokes: strokes,
       calibrationId: calibration?.id ?? null,
@@ -920,7 +1050,7 @@ async function submitBoxTrial(box: BoxTarget): Promise<void> {
     savedStrokeCount += strokes.length;
     savedTrialCount += 1;
     updatePracticeHud(analysis);
-    scheduler.advance();
+    advanceSchedule();
     trialState = "FEEDBACK";
     showFeedback(analysis);
     redrawAll();
@@ -1127,7 +1257,7 @@ function wireControls(): void {
     resetSession(mode);
     void savePracticeMode(mode).catch(() => showToast("Practice mode could not be saved"));
   });
-  requiredElement<HTMLButtonElement>("#settingsButton").addEventListener("click", () => { configureRuler(); calibrationDialog.showModal(); });
+  requiredElement<HTMLButtonElement>("#settingsButton").addEventListener("click", () => { configureRuler(); renderDailyTicks(); calibrationDialog.showModal(); });
   // Diagnostics and practice data open from Settings, replacing it rather than stacking on top.
   requiredElement<HTMLButtonElement>("#diagnosticsButton").addEventListener("click", () => { calibrationDialog.close(); renderDiagnostics(); diagnosticsDialog.showModal(); });
   requiredElement<HTMLButtonElement>("#dataButton").addEventListener("click", () => { calibrationDialog.close(); void showDataDialog(); });
@@ -1153,10 +1283,12 @@ function wireControls(): void {
   document.addEventListener("visibilitychange", () => {
     const visible = document.visibilityState === "visible";
     practiceClock.setVisible(visible, Date.now());
+    if (visible) checkDayRollover();
     if (!visible) persistPracticeTime();
     updatePracticeTime();
   });
   window.addEventListener("pagehide", persistPracticeTime);
+  doneSettingsButton.addEventListener("click", () => { configureRuler(); renderDailyTicks(); calibrationDialog.showModal(); });
   window.setInterval(() => { if (document.visibilityState === "visible") updatePracticeTime(); }, 1000);
   // Saving on pagehide is not reliable (the write may not finish), so also save while time is accruing.
   window.setInterval(() => { if (practiceClock.todayTotalMs(Date.now()) !== lastSavedPracticeMs) persistPracticeTime(); }, 10_000);
@@ -1166,14 +1298,19 @@ async function initialize(): Promise<void> {
   wireControls();
   resizeCanvas();
   try {
-    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, strokes, trials] = await Promise.all([
-      getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getPracticeTime(), getStrokes(), getTrials(),
+    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials] = await Promise.all([
+      getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getPracticeTime(), getDailyTicks(), getDailyQueue(), getStrokes(), getTrials(),
     ]);
+    dailyTicks = storedTicks ?? [...DEFAULT_DAILY_TICKS];
+    dailyQueue = storedQueue;
     practiceClock = new PracticeClock(storedPracticeTime ?? {}, document.visibilityState === "visible");
     calibration = storedCalibration;
     handedness = storedHandedness ?? DEFAULT_HANDEDNESS;
     correctionGateEnabled = storedCorrectionGate ?? false;
     selectedMode = storedMode && VALID_MODES.includes(storedMode) ? storedMode : "LINE";
+    // Open on Today while today's queue has reps left.
+    const queue = todayQueue();
+    if (queue.order.length > 0 && !isQueueDone(queue)) selectedMode = "TODAY";
     savedStrokeCount = strokes.length;
     savedTrialCount = trials.length;
     for (const trial of trials) {

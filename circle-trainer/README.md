@@ -42,7 +42,7 @@ All targets vary in physical size, orientation, and position while remaining ins
 
 ## Practice modes
 
-The mode selector provides seven single-exercise modes (five primitives, Tapers and Boxes) plus:
+The mode selector provides **Today** (the daily queue, below), seven single-exercise modes (five primitives, Tapers and Boxes), and:
 
 - **Mixed — Blocked:** lines, arcs, circles, and ellipses appear as randomized blocks of ten. Each 40-trial cycle contains exactly one block of every included type.
 - **Mixed — Random:** each randomized four-trial bag contains one line, arc, circle, and ellipse.
@@ -50,6 +50,17 @@ The mode selector provides seven single-exercise modes (five primitives, Tapers 
 S curves, Tapers and Boxes remain available as dedicated practice modes but are excluded from both mixed modes.
 
 Neither scheduler repeats the same type at a cycle boundary. Execution failures count as attempts; skips and cancelled pointers do not. The selected mode persists, while a reload begins a fresh seeded sequence.
+
+## Today (daily queue)
+
+**Today** is a finishable set of reps each day, like clearing a flashcard deck. Settings → Today's queue holds a standing tick per mode (Lines, Circles, Ellipses and Boxes by default, about 11 minutes); there is no daily decision. Each practice day's queue is built from the ticks the first time it is needed that day, so changes made in the evening apply tomorrow. The one exception: if today's queue was built with nothing ticked, ticking a mode builds it at once.
+
+- Fixed reps per ticked mode, about 2 minutes of each quick shape and about 5 minutes of boxes: Lines 40, Arcs 30, Circles 24, Ellipses 24, S curves 20, Tapers 24, Boxes 10 (`DAILY_COUNTS` in `src/core/dailyQueue.ts`; provisional, to be checked against real pace).
+- Reps are served shuffled across modes (seeded by the day, using the scheduler's shuffle). Every saved attempt counts, scored or not; skipping with New and interrupted strokes do not.
+- The status line reads e.g. `Today · 12 left · about 4 min` (estimated from rough seconds per rep). At zero a "Done for today" card shows the reps and today's practice time; every other mode stays available for free practice, which never counts toward the queue.
+- The page opens on Today while today's queue has reps left; otherwise it opens on the last mode.
+- Days roll over at 4 am local time, the same day key as the practice timer. The rollover is checked whenever a trial starts and when the page becomes visible (unless a stroke or a box is in progress). Unfinished reps are dropped: there is no backlog.
+- The day's state (day key, the shuffled reps and how many are done) is kept in the settings store, so leaving Today for a free mode and coming back resumes it, as does a reload. Trials served by the queue are saved with practice mode `TODAY`.
 
 ## Trophies
 
@@ -139,6 +150,7 @@ Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw da
 13. Confirm the toolbar fits on one row in both iPad orientations, including Box mode with Undo and Tips.
 14. In Tapers, draw each profile in both directions with the Pencil: the stroke widens with pressure as you draw, the dots read as the wanted widths, and the score and start/mid/end widths feel fair. Note how hard you have to press for the thickest widths.
 15. Draw for a few minutes, pause for over a minute, switch apps and come back, then reload: the session and today's time stop shortly after you stop drawing, ignore time in the background, and today's total survives the reload.
+16. Open the app: it starts on Today with `N left · about M min`. Do a few reps, switch to a free mode and back, and reload: the count resumes. Change the ticks in Settings and confirm the toast says they apply tomorrow. Finish a queue (or tick a single mode) and check the Done card.
 
 ## Privacy
 

@@ -23,6 +23,7 @@
         </div>
         <nav class="toolbar" aria-label="App controls">
           <select id="practiceModeSelect" class="mode-select" aria-label="Practice mode">
+            <option value="TODAY">Today</option>
             <option value="LINE">Lines</option>
             <option value="ARC">Arcs</option>
             <option value="CIRCLE">Circles</option>
@@ -102,6 +103,13 @@
             <p>Hold a phone or matchbox and swing it about one edge while watching that edge’s corners. In the app, try predicting just the far edge (tip 5) before drawing anything.</p>
           </div>
         </aside>
+        <section class="done-card" id="doneCard" aria-live="polite" hidden>
+          <p class="eyebrow">Today</p>
+          <h2 id="doneTitle">Done for today</h2>
+          <p id="doneDetail">—</p>
+          <span id="doneNote">Pick any mode above for free practice. It doesn't count toward the queue.</span>
+          <button type="button" class="secondary-button" id="doneSettingsButton" hidden>Choose modes in Settings</button>
+        </section>
         <aside class="feedback-card" id="feedbackCard" aria-live="polite" hidden>
           <p class="feedback-result" id="feedbackResult">Committed stroke</p>
           <strong id="feedbackScore">Accuracy —</strong>
@@ -145,6 +153,10 @@
           </div>
         </div>
         <p class="setting-note">When on, strokes with substantial correction or backtracking are not scored.</p>
+        <h3 class="setting-heading">Today's queue</h3>
+        <p class="setting-note">Ticked modes make up each day's queue, served shuffled. Changes apply from tomorrow's queue (or today's, if nothing was ticked when it was made).</p>
+        <div class="daily-ticks" id="dailyTicks"></div>
+        <p class="setting-note" id="dailyEstimate">—</p>
         <h3 class="setting-heading">Ruler calibration</h3>
         <p class="sheet-intro">Place a physical ruler against the screen. Adjust the line until it measures exactly 100 mm.</p>
         <div class="ruler-workspace">

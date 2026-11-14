@@ -32,7 +32,8 @@ export type PrimitiveExerciseType = "LINE" | "ARC" | "CIRCLE" | "ELLIPSE" | "S_C
 /** One-stroke exercises: the primitives plus the pressure-width Taper drill (which is not part of the mixed modes). */
 export type SingleStrokeExerciseType = PrimitiveExerciseType | "TAPER";
 export type ExerciseType = SingleStrokeExerciseType | "BOX";
-export type PracticeMode = ExerciseType | "MIXED_BLOCKED" | "MIXED_RANDOM";
+/** "TODAY" serves the daily queue (src/core/dailyQueue.ts). */
+export type PracticeMode = ExerciseType | "MIXED_BLOCKED" | "MIXED_RANDOM" | "TODAY";
 
 /** The hand that holds the Pencil. Side-by-side layouts keep the reference away from it. */
 export type Handedness = "LEFT" | "RIGHT";

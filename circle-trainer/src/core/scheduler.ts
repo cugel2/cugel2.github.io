@@ -20,6 +20,7 @@ export const MODE_LABELS: Record<PracticeMode, string> = {
   ...EXERCISE_LABELS,
   MIXED_BLOCKED: "Mixed — Blocked",
   MIXED_RANDOM: "Mixed — Random",
+  TODAY: "Today",
 };
 
 function isExerciseType(mode: PracticeMode): mode is ExerciseType {

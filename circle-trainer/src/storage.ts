@@ -1,5 +1,6 @@
+import { normalizeTicks, parseQueueState, type DailyQueueState } from "./core/dailyQueue";
 import type { DailyTotals } from "./core/timer";
-import type { Handedness, LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
+import type { ExerciseType, Handedness, LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
 
 const DB_NAME = "circle-trainer";
 const DB_VERSION = 2;
@@ -211,4 +212,45 @@ export async function getPracticeTime(): Promise<DailyTotals | null> {
   });
   database.close();
   return totals;
+}
+
+async function putSetting(key: string, value: unknown): Promise<void> {
+  const database = await openDatabase();
+  const transaction = database.transaction(SETTINGS, "readwrite");
+  transaction.objectStore(SETTINGS).put(value, key);
+  await waitForTransaction(transaction);
+  database.close();
+}
+
+async function getSetting(key: string): Promise<unknown> {
+  const database = await openDatabase();
+  const request = database.transaction(SETTINGS, "readonly").objectStore(SETTINGS).get(key);
+  const value = await new Promise<unknown>((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error(`Could not read ${key}`));
+  });
+  database.close();
+  return value;
+}
+
+const DAILY_TICKS_KEY = "daily-queue-ticks";
+const DAILY_QUEUE_KEY = "daily-queue-state";
+
+/** The standing per-mode ticks for the Today queue. */
+export async function saveDailyTicks(ticks: readonly ExerciseType[]): Promise<void> {
+  await putSetting(DAILY_TICKS_KEY, [...ticks]);
+}
+
+/** Null when never set (the app then uses the defaults). */
+export async function getDailyTicks(): Promise<ExerciseType[] | null> {
+  const value = await getSetting(DAILY_TICKS_KEY);
+  return Array.isArray(value) ? normalizeTicks(value.filter((item): item is string => typeof item === "string")) : null;
+}
+
+export async function saveDailyQueue(state: DailyQueueState): Promise<void> {
+  await putSetting(DAILY_QUEUE_KEY, state);
+}
+
+export async function getDailyQueue(): Promise<DailyQueueState | null> {
+  return parseQueueState(await getSetting(DAILY_QUEUE_KEY));
 }
