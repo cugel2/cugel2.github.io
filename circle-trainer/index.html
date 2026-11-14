@@ -36,11 +36,8 @@
           <button type="button" class="text-button" id="newTrialButton">New</button>
           <button type="button" class="text-button" id="undoStrokeButton" hidden title="Remove the last box edge">Undo</button>
           <button type="button" class="text-button toggle-button" id="boxTipsButton" aria-pressed="false" aria-controls="boxTipsPanel" hidden>Tips</button>
-          <button type="button" class="text-button toggle-button" id="correctionGateButton" aria-pressed="false" title="Reject strokes with substantial correction or backtracking">Corrections: Off</button>
-          <button type="button" class="text-button" id="calibrateButton">Setup</button>
-          <button type="button" class="text-button" id="diagnosticsButton">Diagnostics</button>
           <button type="button" class="text-button" id="trophiesButton">Trophies</button>
-          <button type="button" class="primary-button" id="dataButton">Data</button>
+          <button type="button" class="primary-button" id="settingsButton">Settings</button>
         </nav>
       </header>
 
@@ -126,19 +123,28 @@
       <form method="dialog">
         <div class="sheet-header">
           <div>
-            <p class="eyebrow">Hand and scale</p>
-            <h2>Setup</h2>
+            <p class="eyebrow">Stored on this device</p>
+            <h2>Settings</h2>
           </div>
-          <button class="icon-button" value="cancel" aria-label="Close setup">×</button>
+          <button class="icon-button" value="cancel" aria-label="Close settings">×</button>
         </div>
-        <div class="hand-setting" role="group" aria-labelledby="handSettingLabel">
+        <div class="setting-row hand-setting" role="group" aria-labelledby="handSettingLabel">
           <span id="handSettingLabel">Drawing hand</span>
           <div class="segmented">
             <button type="button" data-hand="LEFT" aria-pressed="true">Left</button>
             <button type="button" data-hand="RIGHT" aria-pressed="false">Right</button>
           </div>
         </div>
-        <p class="hand-note">Side-by-side drills put the reference on the other side, so your hand never covers it.</p>
+        <p class="setting-note">Side-by-side drills put the reference on the other side, so your hand never covers it.</p>
+        <div class="setting-row" role="group" aria-labelledby="correctionSettingLabel">
+          <span id="correctionSettingLabel">Reject corrected strokes</span>
+          <div class="segmented" id="correctionGateSetting">
+            <button type="button" data-corrections="off" aria-pressed="true">Off</button>
+            <button type="button" data-corrections="on" aria-pressed="false">On</button>
+          </div>
+        </div>
+        <p class="setting-note">When on, strokes with substantial correction or backtracking are not scored.</p>
+        <h3 class="setting-heading">Ruler calibration</h3>
         <p class="sheet-intro">Place a physical ruler against the screen. Adjust the line until it measures exactly 100 mm.</p>
         <div class="ruler-workspace">
           <div class="ruler-line" id="rulerLine" aria-hidden="true"><i></i><i></i></div>
@@ -152,6 +158,11 @@
         <div class="sheet-actions">
           <button type="button" class="secondary-button" id="resetCalibrationButton">Reset</button>
           <button type="button" class="primary-button" id="saveCalibrationButton">Save calibration</button>
+        </div>
+        <h3 class="setting-heading">Data and diagnostics</h3>
+        <div class="sheet-actions setting-links">
+          <button type="button" class="secondary-button" id="diagnosticsButton">Diagnostics</button>
+          <button type="button" class="secondary-button" id="dataButton">Practice data: export or delete</button>
         </div>
       </form>
     </dialog>

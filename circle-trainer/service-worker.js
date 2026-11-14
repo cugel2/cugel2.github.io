@@ -1,4 +1,4 @@
-const CACHE_NAME = "circle-trainer-v10";
+const CACHE_NAME = "circle-trainer-v12";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

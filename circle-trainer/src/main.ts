@@ -46,7 +46,7 @@ import {
 } from "./storage";
 import { createTrophyView } from "./trophyView";
 
-const APP_VERSION = "0.5.0";
+const APP_VERSION = "0.5.2";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -97,7 +97,7 @@ const feedbackResult = requiredElement<HTMLElement>("#feedbackResult");
 const feedbackScore = requiredElement<HTMLElement>("#feedbackScore");
 const feedbackDetail = requiredElement<HTMLElement>("#feedbackDetail");
 const modeSelect = requiredElement<HTMLSelectElement>("#practiceModeSelect");
-const correctionGateButton = requiredElement<HTMLButtonElement>("#correctionGateButton");
+const correctionButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#correctionGateSetting button[data-corrections]"));
 const nextTrialButton = requiredElement<HTMLButtonElement>("#nextTrialButton");
 const undoStrokeButton = requiredElement<HTMLButtonElement>("#undoStrokeButton");
 const boxTipsButton = requiredElement<HTMLButtonElement>("#boxTipsButton");
@@ -473,8 +473,7 @@ function setHandedness(next: Handedness): void {
 }
 
 function updateCorrectionGateButton(): void {
-  correctionGateButton.textContent = `Corrections: ${correctionGateEnabled ? "On" : "Off"}`;
-  correctionGateButton.setAttribute("aria-pressed", String(correctionGateEnabled));
+  for (const button of correctionButtons) button.setAttribute("aria-pressed", String((button.dataset.corrections === "on") === correctionGateEnabled));
 }
 
 function beginNewTrial(): void {
@@ -984,8 +983,10 @@ async function copyDiagnostics(): Promise<void> {
 
 function wireControls(): void {
   requiredElement<HTMLButtonElement>("#newTrialButton").addEventListener("click", beginNewTrial);
-  correctionGateButton.addEventListener("click", () => {
-    correctionGateEnabled = !correctionGateEnabled;
+  for (const button of correctionButtons) button.addEventListener("click", () => {
+    const enabled = button.dataset.corrections === "on";
+    if (enabled === correctionGateEnabled) return;
+    correctionGateEnabled = enabled;
     updateCorrectionGateButton();
     showToast(`Correction rejection ${correctionGateEnabled ? "on" : "off"}`);
     void saveCorrectionGateEnabled(correctionGateEnabled).catch(() => showToast("Correction setting could not be saved"));
@@ -1004,9 +1005,10 @@ function wireControls(): void {
     resetSession(mode);
     void savePracticeMode(mode).catch(() => showToast("Practice mode could not be saved"));
   });
-  requiredElement<HTMLButtonElement>("#calibrateButton").addEventListener("click", () => { configureRuler(); calibrationDialog.showModal(); });
-  requiredElement<HTMLButtonElement>("#diagnosticsButton").addEventListener("click", () => { renderDiagnostics(); diagnosticsDialog.showModal(); });
-  requiredElement<HTMLButtonElement>("#dataButton").addEventListener("click", () => void showDataDialog());
+  requiredElement<HTMLButtonElement>("#settingsButton").addEventListener("click", () => { configureRuler(); calibrationDialog.showModal(); });
+  // Diagnostics and practice data open from Settings, replacing it rather than stacking on top.
+  requiredElement<HTMLButtonElement>("#diagnosticsButton").addEventListener("click", () => { calibrationDialog.close(); renderDiagnostics(); diagnosticsDialog.showModal(); });
+  requiredElement<HTMLButtonElement>("#dataButton").addEventListener("click", () => { calibrationDialog.close(); void showDataDialog(); });
   requiredElement<HTMLButtonElement>("#trophiesButton").addEventListener("click", () => void showTrophyDialog());
   requiredElement<HTMLButtonElement>("#trophyBackButton").addEventListener("click", () => trophyView.showGrid());
   requiredElement<HTMLButtonElement>("#saveCalibrationButton").addEventListener("click", () => void persistCalibration());

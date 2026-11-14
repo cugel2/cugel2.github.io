@@ -88,7 +88,11 @@ button { -webkit-tap-highlight-color: transparent; }
   align-items: center;
   gap: 6px;
   max-width: 100%;
-  overflow: hidden;
+  /* No clipping: it used to shave the mode selector's rounded left edge. The slim toolbar fits without it.
+     The padding/negative margin pair leaves room for focus rings without moving anything. */
+  margin: -4px;
+  padding: 4px;
+  overflow: visible;
 }
 
 .mode-select {
@@ -335,11 +339,14 @@ button { -webkit-tap-highlight-color: transparent; }
 .ruler-line i { position: absolute; top: -10px; width: 2px; height: 22px; background: var(--ink); }
 .ruler-line i:first-child { left: 0; }
 .ruler-line i:last-child { right: 0; }
-.hand-setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; font-size: 14px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; font-size: 14px; }
+.setting-heading { margin: 30px 0 0; padding-top: 22px; border-top: 1px solid var(--line); font-size: 15px; font-weight: 600; }
+.setting-heading + .sheet-intro { margin-top: 8px; }
+.setting-links { justify-content: flex-start; flex-wrap: wrap; margin-top: 14px; }
 .segmented { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; }
 .segmented button { min-width: 64px; min-height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
 .segmented button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.hand-note { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.setting-note { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
 .range-label { display: flex; justify-content: space-between; margin: 20px 0 10px; color: var(--muted); font-size: 12px; }
 .range-label output { color: var(--ink); font-variant-numeric: tabular-nums; }
 #rulerSlider { width: 100%; accent-color: var(--accent); }
@@ -425,7 +432,7 @@ button { -webkit-tap-highlight-color: transparent; }
   .brand-block h1 { font-size: 20px; }
   .brand-block p { margin: 0; }
   .brand-block #statusText { max-width: 62vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .toolbar { display: grid; grid-template-columns: minmax(140px, 1fr); grid-auto-flow: column; grid-auto-columns: max-content; width: 100%; overflow-x: auto; overflow-y: visible; scrollbar-width: none; }
+  .toolbar { display: grid; grid-template-columns: minmax(140px, 1fr); grid-auto-flow: column; grid-auto-columns: max-content; width: calc(100% + 8px); overflow: visible; }
   .mode-select { width: 100%; min-width: 0; min-height: 38px; font-size: 12px; }
   .toolbar button { min-height: 38px; padding-right: 10px; padding-left: 10px; font-size: 12px; }
   .hud div { padding: 0 9px; }
@@ -438,7 +445,7 @@ button { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 560px) {
   :root { --bar-height: 172px; }
-  .toolbar { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-flow: row; overflow-x: visible; }
+  .toolbar { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-flow: row; }
   .mode-select { grid-column: 1 / -1; }
   .toolbar button { width: 100%; padding-right: 3px; padding-left: 3px; font-size: 10px; }
   .brand-block #statusText { max-width: 50vw; }
