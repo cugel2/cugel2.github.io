@@ -1,6 +1,6 @@
 # Circle Trainer
 
-Circle Trainer is a local-first Apple Pencil motor-practice tool for iPad Safari. It trains large, committed lines, arcs, circles, ellipses, and S curves without showing a path that can be traced, plus a Box drill for mental rotation of simple forms.
+Circle Trainer is a local-first Apple Pencil motor-practice tool for iPad Safari. It trains large, committed lines, arcs, circles, ellipses, and S curves without showing a path that can be traced, plus a Box drill for mental rotation of simple forms and a scoreless Copy mode for copying from a picture.
 
 The app is self-contained under `/circle-trainer/`. It does not add analytics, create accounts, or upload Pencil data.
 
@@ -98,6 +98,10 @@ npm install
 npm run dev
 ```
 
+## Testing on the iPad
+
+`npm run dev` serves the app over Wi-Fi on port 5173 (plain http). Safari keeps some features for secure pages, notably the share sheet that Save to Photos uses, so `npm run dev:https` serves it on port 5174 with a self-signed certificate (`@vitejs/plugin-basic-ssl`); Safari warns once, then allows it. The two addresses keep separate local data.
+
 ## Tests and production build
 
 ```sh
@@ -110,6 +114,24 @@ The build writes the deployable page, assets, manifest, service worker, and diag
 ```text
 https://johnbraybrooke.com/circle-trainer/
 ```
+
+## Copy mode
+
+The mode picker's **Copy** entry is a scoreless mode for copying from a picture (a photo of a page, a screenshot, a scan). It has no target, score, trial record or trophy, does not count toward Today, and lives in `src/copy/`, outside the trial machinery; `main.ts` only shows and hides it and passes in px-per-mm, the drawing hand, the practice clock and toasts. Drawing time counts toward practice time, shown in the status line because the stats bar is hidden in Copy to give the frames more height.
+
+- **Two panes, one frame size.** The reference and drawing panes each hold a frame of identical size, side by side in both orientations, with the drawing pane on the drawing hand's side (left-handed: drawing left, reference right). Stacking them in portrait made both frames far smaller. Copy's controls sit in the panes, not the main toolbar: the drawing pane has Undo, Clear, Compare and Save; the reference pane has Back to frame, New copy and Picture….
+- **Reference (finger only).** One finger drags, two fingers pinch-zoom; the Pencil does nothing there. With a mouse, drag and wheel stand in. Outside the frame the reference is dimmed. Safari's page pinch-zoom is blocked over the two panes only, so a page that does get zoomed can be pinched back out over the toolbar; double-tap zoom is off app-wide (`touch-action: manipulation`).
+- **Drawing (Pencil only).** Fingers do nothing, so a resting palm is ignored. Lines take their width from pressure in a pencil-like 0.4–1.6 mm range (`COPY_WIDTH_RANGE` in `src/core/strokeRender.ts`, shared with Tapers' renderer). Undo removes the last stroke, Clear removes all of them; there is no eraser.
+- **Framing locks at the first stroke.** That framing is what Compare uses. Moving the reference afterwards dashes the frame and shows **Back to frame**. When no strokes are left (Clear, or undoing the last one) the framing is released, so the reference can be reframed; **New copy** does the same. The frame's shape follows the screen until the first stroke and is fixed after it; on rotation the largest frame of that shape is fitted, and strokes (stored as fractions of the frame width) and the framing (stored in page units) keep their registration.
+- **Compare** shows *Mine*, *Both* or *Reference* in the drawing frame. Tapping the frame with the Pencil flips between Mine and Reference (blink). Both puts the reference under your lines, with an opacity slider and **Blue**, which tints its dark lines blue and makes paper clear. You cannot draw while comparing; **Draw** returns to drawing, and you can compare again later.
+- **Autosave.** The copy in progress is saved after every change and reopens after a reload (Copy reopens if it was the last mode). Pictures are stored in a separate IndexedDB database, `circle-trainer-library` (store `books`; the copy is in store `copy`), so practice data and its schema are untouched. Neither is in the JSON export, and Delete all practice data leaves them.
+- **Save to Photos.** Makes a PNG about 2,000 px on the long side, re-drawn from the stored strokes on white: your drawing alone, or side by side with the reference (on the same sides as in the app). On the iPad it opens the share sheet, where **Save Image** puts it in Photos. Sharing files needs a secure (https) page, so where it is unavailable (the dev server over Wi-Fi, desktop browsers) the picture is shown instead: press and hold it and choose **Save to Photos**, or download it. The app keeps no copy of the image.
+
+## PDF test page (Copy mode, stage 0)
+
+`pdf-test/` is a bare feasibility page for Copy mode's PDF support (stage 2), reached by its URL; its **← Circle Trainer** link returns to the drills. It stores a PDF in its own IndexedDB database (`circle-trainer-library`, separate from practice data), reopens it after a reload and draws pages with PDF.js, showing import, open and per-page times, page count, how much of the file has been read, and any error. A notice appears if the previous visit ended while it was busy, which usually means Safari reloaded the tab for lack of memory.
+
+PDF.js (`pdfjs-dist`, pinned) is loaded only on demand, using its legacy build because PDF.js lists Safari only there. The file is read lazily: PDF.js asks for byte ranges and each is answered with `blob.slice(begin, end).arrayBuffer()`, with auto-fetch and streaming off. Its worker is `assets/pdf.worker.min.mjs`; its image decoders (JPEG 2000, JBIG2), colour profile and standard fonts are copied from `node_modules/pdfjs-dist` into `pdfjs/` by a small plugin in `vite.config.ts` (and served from there by the dev server). Every built file keeps a stable, unhashed name; the main page still loads `assets/app.js` and `assets/app.css`.
 
 ## Practice time
 

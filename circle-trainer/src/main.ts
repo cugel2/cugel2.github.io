@@ -4,6 +4,7 @@ import { arrowLabelCss, BOX_EDGES, BOX_FACES, BOX_STROKES_REQUIRED, boxAreas, bo
 import { analyseBoxStrokes } from "./core/boxMetrics";
 import { polylineLength } from "./core/geometry";
 import { rawSampleIdentity } from "./core/input";
+import { drawVariableWidthStroke } from "./core/strokeRender";
 import { bestTrialsByExercise } from "./core/trophies";
 import { analyseTargetStroke, versionsForExercise } from "./core/primitiveMetrics";
 import { ALL_EXERCISE_TYPES, EXERCISE_LABELS, MODE_LABELS, PracticeScheduler } from "./core/scheduler";
@@ -53,6 +54,7 @@ import {
   saveTrial,
 } from "./storage";
 import { createTrophyView } from "./trophyView";
+import { createCopyView } from "./copy/copyView";
 import { dayKey, formatClock, formatMinutes, PracticeClock } from "./core/timer";
 import {
   advanceQueue,
@@ -67,7 +69,7 @@ import {
   type DailyQueueState,
 } from "./core/dailyQueue";
 
-const APP_VERSION = "0.8.0";
+const APP_VERSION = "0.9.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -163,6 +165,81 @@ const trophyView = createTrophyView({
   detailCanvas: requiredElement<HTMLCanvasElement>("#trophyDetailCanvas"),
 }, (trial) => trialCssPxPerMm(trial));
 
+const appShell = requiredElement<HTMLElement>(".app-shell");
+/** Copy mode is not a practice mode: no target, score or trial. This flag sits beside selectedMode. */
+let copyActive = false;
+const COPY_ACTIVE_KEY = "circle-trainer:copy-active";
+const copyView = createCopyView({
+  stage: requiredElement<HTMLElement>("#copyStage"),
+  referencePane: requiredElement<HTMLElement>("#copyReferencePane"),
+  drawingPane: requiredElement<HTMLElement>("#copyDrawingPane"),
+  referenceCanvas: requiredElement<HTMLCanvasElement>("#copyReferenceCanvas"),
+  drawingCanvas: requiredElement<HTMLCanvasElement>("#copyDrawingCanvas"),
+  fileInput: requiredElement<HTMLInputElement>("#copyFileInput"),
+  emptyState: requiredElement<HTMLElement>("#copyEmpty"),
+  referenceBar: requiredElement<HTMLElement>("#copyReferenceBar"),
+  drawingBar: requiredElement<HTMLElement>("#copyDrawingBar"),
+  drawTools: requiredElement<HTMLElement>("#copyDrawTools"),
+  bookName: requiredElement<HTMLElement>("#copyBookName"),
+  backToFrameButton: requiredElement<HTMLButtonElement>("#copyBackToFrameButton"),
+  compareBar: requiredElement<HTMLElement>("#copyCompareBar"),
+  compareButtons: Array.from(document.querySelectorAll<HTMLButtonElement>("#copyCompareBar button[data-compare]")),
+  opacityInput: requiredElement<HTMLInputElement>("#copyOpacityInput"),
+  tintButton: requiredElement<HTMLButtonElement>("#copyTintButton"),
+  undoButton: requiredElement<HTMLButtonElement>("#copyUndoButton"),
+  clearButton: requiredElement<HTMLButtonElement>("#copyClearButton"),
+  newButton: requiredElement<HTMLButtonElement>("#copyNewButton"),
+  compareButton: requiredElement<HTMLButtonElement>("#copyCompareButton"),
+  saveButton: requiredElement<HTMLButtonElement>("#copySaveButton"),
+  saveDialog: requiredElement<HTMLDialogElement>("#copySaveDialog"),
+  saveDrawingButton: requiredElement<HTMLButtonElement>("#copySaveDrawingButton"),
+  saveSideBySideButton: requiredElement<HTMLButtonElement>("#copySaveSideBySideButton"),
+  saveNote: requiredElement<HTMLElement>("#copySaveNote"),
+  savePreview: requiredElement<HTMLElement>("#copySavePreview"),
+  savePreviewImage: requiredElement<HTMLImageElement>("#copySavePreviewImage"),
+  saveDownloadLink: requiredElement<HTMLAnchorElement>("#copySaveDownloadLink"),
+}, {
+  pxPerMm: () => cssPxPerMm(),
+  handedness: () => handedness,
+  onActivity: (ended) => {
+    practiceClock.recordActivity(Date.now());
+    if (ended) persistPracticeTime();
+    updatePracticeTime();
+  },
+  showToast: (message) => showToast(message),
+  setStatus: (text) => { statusText.textContent = text; },
+});
+
+function rememberCopyActive(value: boolean): void {
+  try {
+    if (value) localStorage.setItem(COPY_ACTIVE_KEY, "1");
+    else localStorage.removeItem(COPY_ACTIVE_KEY);
+  } catch { /* storage blocked: Copy just won't reopen by itself */ }
+}
+
+function readCopyActive(): boolean {
+  try { return localStorage.getItem(COPY_ACTIVE_KEY) === "1"; } catch { return false; }
+}
+
+function enterCopy(): void {
+  copyActive = true;
+  modeSelect.value = "COPY";
+  appShell.classList.add("copy-active");
+  feedbackCard.hidden = true;
+  copyView.show();
+  updatePracticeTime();
+  rememberCopyActive(true);
+}
+
+function leaveCopy(mode: PracticeMode): void {
+  copyActive = false;
+  copyView.hide();
+  appShell.classList.remove("copy-active");
+  rememberCopyActive(false);
+  resizeCanvas();
+  resetSession(mode);
+}
+
 const runtime = {
   pointerEventCount: 0,
   rawSampleCount: 0,
@@ -223,6 +300,7 @@ function getDeviceSnapshot(): DeviceSnapshot {
 function updatePracticeTime(): void {
   const now = Date.now();
   practiceTime.textContent = `${formatClock(practiceClock.sessionTotalMs(now))} · ${formatMinutes(practiceClock.todayTotalMs(now))} today`;
+  if (copyActive) copyView.setTime(practiceTime.textContent);
 }
 
 let lastSavedPracticeMs = -1;
@@ -293,22 +371,7 @@ function drawPressureStroke(stroke: RawStroke): void {
   if (samples.length === 0) return;
   const px = cssPxPerMm();
   const widths = strokeWidthsMm(samples).map((width) => (width === null ? 2.2 : width * px));
-  context.save();
-  context.strokeStyle = "#171717";
-  context.fillStyle = "#171717";
-  context.setLineDash([]);
-  context.lineCap = "round";
-  context.beginPath();
-  context.arc(samples[0].xCss, samples[0].yCss, widths[0] / 2, 0, Math.PI * 2);
-  context.fill();
-  for (let index = 1; index < samples.length; index += 1) {
-    context.lineWidth = (widths[index - 1] + widths[index]) / 2;
-    context.beginPath();
-    context.moveTo(samples[index - 1].xCss, samples[index - 1].yCss);
-    context.lineTo(samples[index].xCss, samples[index].yCss);
-    context.stroke();
-  }
-  context.restore();
+  drawVariableWidthStroke(context, samples.map((sample) => ({ x: sample.xCss, y: sample.yCss })), widths);
 }
 
 /** Cue: a filled dot at the true wanted width, inside a faint ring so even a 0.5 mm dot can be found. */
@@ -699,6 +762,7 @@ function setHandedness(next: Handedness): void {
   if (next === handedness) return;
   handedness = next;
   applyHandedness();
+  copyView.setHandedness();
   void saveHandedness(next).catch(() => showToast("Hand setting could not be saved"));
   // Re-lay out a Box that has not been started; a box in progress keeps its layout until the next one.
   if (activeExercise === "BOX" && trialState === "READY" && boxStrokes.length === 0) beginNewTrial();
@@ -1248,13 +1312,29 @@ function wireControls(): void {
   boxTipsButton.addEventListener("click", () => setBoxTipsOpen(!boxTipsOpen));
   requiredElement<HTMLButtonElement>("#closeBoxTipsButton").addEventListener("click", () => setBoxTipsOpen(false));
   modeSelect.addEventListener("change", () => {
+    if (copyActive && copyView.isDrawing()) {
+      modeSelect.value = "COPY";
+      showToast("Finish the current stroke before changing modes");
+      return;
+    }
+    // Copy is handled before any practice-mode logic: it has no trials.
+    if (modeSelect.value === "COPY") {
+      if (trialState === "DRAWING") {
+        modeSelect.value = selectedMode;
+        showToast("Finish the current stroke before changing modes");
+        return;
+      }
+      enterCopy();
+      return;
+    }
     const mode = modeSelect.value as PracticeMode;
     if (!VALID_MODES.includes(mode) || trialState === "DRAWING") {
-      modeSelect.value = selectedMode;
+      modeSelect.value = copyActive ? "COPY" : selectedMode;
       if (trialState === "DRAWING") showToast("Finish the current stroke before changing modes");
       return;
     }
-    resetSession(mode);
+    if (copyActive) leaveCopy(mode);
+    else resetSession(mode);
     void savePracticeMode(mode).catch(() => showToast("Practice mode could not be saved"));
   });
   requiredElement<HTMLButtonElement>("#settingsButton").addEventListener("click", () => { configureRuler(); renderDailyTicks(); calibrationDialog.showModal(); });
@@ -1279,7 +1359,11 @@ function wireControls(): void {
   canvas.addEventListener("pointerup", (event) => void finishStroke(event, false));
   canvas.addEventListener("pointercancel", (event) => void finishStroke(event, true));
   canvas.addEventListener("contextmenu", (event) => event.preventDefault());
-  window.addEventListener("resize", () => { resizeCanvas(); if (trialState !== "DRAWING") beginNewTrial(); });
+  window.addEventListener("resize", () => {
+    if (copyActive) return; // The Copy view lays itself out.
+    resizeCanvas();
+    if (trialState !== "DRAWING") beginNewTrial();
+  });
   document.addEventListener("visibilitychange", () => {
     const visible = document.visibilityState === "visible";
     practiceClock.setVisible(visible, Date.now());
@@ -1324,6 +1408,7 @@ async function initialize(): Promise<void> {
   applyHandedness();
   configureRuler();
   resetSession(selectedMode);
+  if (readCopyActive()) enterCopy();
   updatePracticeTime();
   if (new URLSearchParams(window.location.search).has("diagnostics") || window.location.hash === "#diagnostics") {
     renderDiagnostics();

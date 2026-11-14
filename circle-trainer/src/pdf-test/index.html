@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>PDF Test</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --paper: #fffefa;
+        --paper-deep: #f3f0e9;
+        --ink: #171717;
+        --muted: #77716a;
+        --line: #ded9cf;
+        --accent: #1557c0;
+        --bad: #b3261e;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--paper); color: var(--ink); font-size: 15px; line-height: 1.4; }
+      main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 48px; }
+      h1 { font-size: 22px; margin: 0 0 2px; }
+      h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 20px 0 8px; }
+      p { margin: 0 0 8px; }
+      a { color: var(--accent); }
+      .muted { color: var(--muted); }
+      .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+      @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+      button, .file-button {
+        font: inherit; font-weight: 600; min-height: 44px; padding: 0 16px; border-radius: 10px;
+        border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      button.primary, .file-button { background: var(--accent); border-color: var(--accent); color: #fff; }
+      button:disabled { opacity: 0.45; cursor: default; }
+      .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+      input[type="number"] { font: inherit; width: 84px; min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; }
+      input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+      table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+      th, td { text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { font-weight: 600; color: var(--muted); width: 44%; }
+      .books li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--line); }
+      .books { list-style: none; margin: 0; padding: 0; }
+      .books .name { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+      .notice { background: #fff4d6; border: 1px solid #e8cf86; border-radius: 10px; padding: 10px 12px; margin: 12px 0; }
+      .notice.bad { background: #fde8e6; border-color: #e9a59f; }
+      .page-frame { background: var(--paper-deep); border: 1px solid var(--line); border-radius: 10px; padding: 8px; min-height: 120px; }
+      .page-frame canvas { display: block; width: 100%; height: auto; background: #fff; }
+      #log { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px; max-height: 320px; overflow: auto; margin: 0; }
+      .error { color: var(--bad); font-weight: 600; }
+    </style>
+    <script type="module" src="./main.ts"></script>
+  </head>
+  <body>
+    <main>
+      <p class="muted"><a href="../">← Circle Trainer</a></p>
+      <h1>PDF test</h1>
+      <p class="muted">Copy mode, stage 0. Stores a PDF on this device, reopens it and draws pages, and shows how long each step takes. Nothing leaves the iPad.</p>
+      <div id="notices"></div>
+
+      <div class="layout">
+        <section>
+          <h2>Books on this device</h2>
+          <div class="row">
+            <label class="file-button" for="fileInput">Choose a PDF…</label>
+            <input type="file" id="fileInput" accept="application/pdf,.pdf" />
+          </div>
+          <ul class="books" id="bookList"><li class="muted">Loading…</li></ul>
+
+          <h2>Results</h2>
+          <table><tbody id="results"></tbody></table>
+
+          <h2>Page times</h2>
+          <table>
+            <thead><tr><th style="width:auto">Page</th><th style="width:auto">Load</th><th style="width:auto">Draw</th><th style="width:auto">Canvas</th></tr></thead>
+            <tbody id="pageTimes"><tr><td colspan="4" class="muted">No pages drawn yet</td></tr></tbody>
+          </table>
+
+          <h2>Log</h2>
+          <pre id="log"></pre>
+
+          <h2>This device</h2>
+          <table><tbody id="device"></tbody></table>
+        </section>
+
+        <section>
+          <h2>Page</h2>
+          <div class="row">
+            <button type="button" id="prevButton" disabled>Previous</button>
+            <input type="number" id="pageInput" min="1" value="1" disabled aria-label="Page number" />
+            <button type="button" id="goButton" disabled>Go</button>
+            <button type="button" id="nextButton" disabled>Next</button>
+          </div>
+          <div class="row">
+            <button type="button" id="detailButton" disabled title="Draw the middle of the page at 3× zoom, the way Copy mode will when you zoom in">Zoom 3×</button>
+            <button type="button" id="runButton" disabled title="Draw the next 10 pages one after another">Draw next 10</button>
+            <button type="button" id="closeButton" disabled>Close book</button>
+          </div>
+          <p class="muted" id="pageCaption">Open a book to draw its pages.</p>
+          <div class="page-frame"><canvas id="pageCanvas" width="0" height="0"></canvas></div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

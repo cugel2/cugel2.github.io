@@ -12,6 +12,7 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
     <script type="module" crossorigin src="./assets/app.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/library.js">
     <link rel="stylesheet" crossorigin href="./assets/app.css">
   </head>
   <body>
@@ -34,10 +35,11 @@
             <option value="BOX">Boxes</option>
             <option value="MIXED_BLOCKED">Mixed — Blocked</option>
             <option value="MIXED_RANDOM">Mixed — Random</option>
+            <option value="COPY">Copy</option>
           </select>
-          <button type="button" class="text-button" id="newTrialButton">New</button>
-          <button type="button" class="text-button" id="undoStrokeButton" hidden title="Remove the last box edge">Undo</button>
-          <button type="button" class="text-button toggle-button" id="boxTipsButton" aria-pressed="false" aria-controls="boxTipsPanel" hidden>Tips</button>
+          <button type="button" class="text-button practice-only" id="newTrialButton">New</button>
+          <button type="button" class="text-button practice-only" id="undoStrokeButton" hidden title="Remove the last box edge">Undo</button>
+          <button type="button" class="text-button toggle-button practice-only" id="boxTipsButton" aria-pressed="false" aria-controls="boxTipsPanel" hidden>Tips</button>
           <button type="button" class="text-button" id="trophiesButton">Trophies</button>
           <button type="button" class="primary-button" id="settingsButton">Settings</button>
         </nav>
@@ -118,6 +120,46 @@
           <button type="button" class="primary-button" id="nextTrialButton">Next</button>
         </aside>
         <div class="corner-note" id="scaleStatus">Scale not calibrated</div>
+      </section>
+
+      <section class="copy-stage" id="copyStage" data-hand="left" aria-label="Copy from a reference" hidden>
+        <div class="copy-pane copy-reference" id="copyReferencePane">
+          <canvas id="copyReferenceCanvas" aria-label="Reference: drag with a finger to move, pinch to zoom"></canvas>
+          <div class="copy-bar" id="copyReferenceBar" hidden>
+            <span class="copy-book" id="copyBookName"></span>
+            <button type="button" class="pill-button" id="copyBackToFrameButton" hidden>Back to frame</button>
+            <button type="button" class="pill-button" id="copyNewButton" title="Start again: clear the drawing and reframe">New copy</button>
+            <label class="pill-button" for="copyFileInput" title="Copy from a different picture">Picture…</label>
+          </div>
+          <div class="copy-empty" id="copyEmpty">
+            <p class="eyebrow">Copy</p>
+            <p>Copy from a picture: a photo of a page, a screenshot, a scan.</p>
+            <label class="primary-button" for="copyFileInput">Choose a picture…</label>
+            <span>Move it with a finger and pinch to zoom. Your first stroke fixes the framing that Compare uses.</span>
+          </div>
+          <input type="file" id="copyFileInput" class="visually-hidden" accept="image/*" />
+        </div>
+        <div class="copy-pane copy-drawing" id="copyDrawingPane">
+          <canvas id="copyDrawingCanvas" aria-label="Drawing frame: draw with Apple Pencil"></canvas>
+          <div class="copy-bar" id="copyDrawingBar" hidden>
+            <div class="copy-tools" id="copyDrawTools">
+              <button type="button" class="pill-button" id="copyUndoButton" title="Remove the last stroke">Undo</button>
+              <button type="button" class="pill-button" id="copyClearButton" title="Remove every stroke; you can then reframe">Clear</button>
+            </div>
+            <div class="copy-tools" id="copyCompareBar" hidden>
+              <div class="segmented" role="group" aria-label="Compare view">
+                <button type="button" data-compare="MINE" aria-pressed="false">Mine</button>
+                <button type="button" data-compare="BOTH" aria-pressed="false">Both</button>
+                <button type="button" data-compare="REFERENCE" aria-pressed="false">Ref</button>
+              </div>
+              <input type="range" class="copy-opacity" id="copyOpacityInput" min="10" max="100" step="5" value="50" aria-label="Reference opacity" />
+              <button type="button" class="pill-button toggle-button" id="copyTintButton" aria-pressed="true" title="Show the reference's dark lines in blue">Blue</button>
+            </div>
+            <span class="copy-spacer"></span>
+            <button type="button" class="pill-button toggle-button" id="copyCompareButton" aria-pressed="false">Compare</button>
+            <button type="button" class="pill-button" id="copySaveButton" title="Save the copy to Photos">Save</button>
+          </div>
+        </div>
       </section>
 
       <footer class="hud" aria-label="Current session information">
@@ -241,6 +283,24 @@
           <button type="button" class="danger-button" id="deleteDataButton">Delete all data</button>
           <button type="button" class="primary-button" id="exportDataButton">Export JSON</button>
         </div>
+      </form>
+    </dialog>
+
+    <dialog id="copySaveDialog" class="sheet copy-save-sheet">
+      <form method="dialog">
+        <div class="sheet-header">
+          <h2>Save to Photos</h2>
+          <button class="icon-button" value="close" aria-label="Close">×</button>
+        </div>
+        <p class="sheet-intro" id="copySaveNote">Preparing the image…</p>
+        <div class="copy-save-choices">
+          <button type="button" class="primary-button" id="copySaveDrawingButton">My drawing</button>
+          <button type="button" class="secondary-button" id="copySaveSideBySideButton">Side by side with the reference</button>
+        </div>
+        <figure class="copy-save-preview" id="copySavePreview" hidden>
+          <img id="copySavePreviewImage" alt="The picture to save" />
+          <figcaption>Press and hold the picture, then choose “Save to Photos”. <a id="copySaveDownloadLink" href="#">Download it instead</a></figcaption>
+        </figure>
       </form>
     </dialog>
 
