@@ -1,5 +1,6 @@
 import { BOX_EDGES, generateBoxTarget } from "./box";
 import { randomBetween, seededRandom, type RandomSource } from "./random";
+import { generateTaperTarget, taperCheckpointsCss } from "./taper";
 import type { EllipseTarget, ExerciseType, Handedness, Point2, PrimitiveExerciseType, PrimitiveTargetDefinition, TargetDefinition } from "./types";
 
 export interface ViewportSize {
@@ -33,7 +34,7 @@ export function sampleTargetPathCss(target: TargetDefinition, cssPxPerMm: number
   const samples = Math.max(2, count);
   for (let index = 0; index < samples; index += 1) {
     const t = index / (samples - 1);
-    if (target.kind === "LINE") {
+    if (target.kind === "LINE" || target.kind === "TAPER") {
       points.push({
         x: target.aCss.x + (target.bCss.x - target.aCss.x) * t,
         y: target.aCss.y + (target.bCss.y - target.aCss.y) * t,
@@ -61,6 +62,7 @@ export function sampleTargetPathCss(target: TargetDefinition, cssPxPerMm: number
 export function targetCheckpointsCss(target: TargetDefinition, cssPxPerMm: number): Point2[] {
   if (target.kind === "BOX") return [];
   if (target.kind === "LINE") return [target.aCss, target.bCss];
+  if (target.kind === "TAPER") return taperCheckpointsCss(target);
   if (target.kind === "ARC") return [0, 0.5, 1].map((t) => sampleTargetPathCss(target, cssPxPerMm, 3)[Math.round(t * 2)]);
   if (target.kind === "CIRCLE") return [0, 0.25, 0.5, 0.75].map((t) => {
     const phase = target.landmarkPhaseRad + Math.PI * 2 * t;
@@ -180,6 +182,7 @@ export function generateTarget(
   handedness?: Handedness,
 ): TargetDefinition {
   if (type === "BOX") return generateBoxTarget(viewport, cssPxPerMm, sessionSeed, sequenceIndex, handedness);
+  if (type === "TAPER") return generateTaperTarget(viewport, cssPxPerMm, sessionSeed, sequenceIndex);
   const random = seededRandom(`${sessionSeed}:target:${sequenceIndex}:${type}`);
   const margin = Math.min(72, Math.max(34, Math.min(viewport.width, viewport.height) * 0.08));
   for (let attempt = 0; attempt < 220; attempt += 1) {

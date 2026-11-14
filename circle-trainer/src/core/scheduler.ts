@@ -3,8 +3,8 @@ import type { ExerciseType, PracticeMode, PrimitiveExerciseType, ScheduleContext
 
 export const EXERCISE_TYPES: readonly PrimitiveExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE"];
 export const MIXED_EXERCISE_TYPES: readonly ExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE"];
-/** Every single-exercise mode, including the multi-stroke Box drill (which is never part of a mixed mode). */
-export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [...EXERCISE_TYPES, "BOX"];
+/** Every single-exercise mode, including the Taper and Box drills (which are never part of a mixed mode). */
+export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [...EXERCISE_TYPES, "TAPER", "BOX"];
 
 export const EXERCISE_LABELS: Record<ExerciseType, string> = {
   LINE: "Lines",
@@ -12,6 +12,7 @@ export const EXERCISE_LABELS: Record<ExerciseType, string> = {
   CIRCLE: "Circles",
   ELLIPSE: "Ellipses",
   S_CURVE: "S Curves",
+  TAPER: "Tapers",
   BOX: "Boxes",
 };
 

@@ -1,5 +1,6 @@
 import { BOX_EDGES, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
 import { EXERCISE_LABELS, MODE_LABELS } from "./core/scheduler";
+import { strokeWidthsMm, taperMetricText, taperOutlineCss } from "./core/taper";
 import { sampleTargetPathCss } from "./core/targets";
 import { TROPHY_ORDER, type TrophyCase } from "./core/trophies";
 import type { ExerciseType, Point2, TrialRecord } from "./core/types";
@@ -8,7 +9,7 @@ const INK = "#171717";
 const IDEAL_BLUE = "#1557c0";
 const BOX_ACCENT = "#d2691e";
 const BOX_REFERENCE_GREY = "#9a968d";
-const SINGULAR: Record<ExerciseType, string> = { LINE: "line", ARC: "arc", CIRCLE: "circle", ELLIPSE: "ellipse", S_CURVE: "S curve", BOX: "box" };
+const SINGULAR: Record<ExerciseType, string> = { LINE: "line", ARC: "arc", CIRCLE: "circle", ELLIPSE: "ellipse", S_CURVE: "S curve", TAPER: "taper", BOX: "box" };
 
 interface Mark {
   points: Point2[];
@@ -17,6 +18,8 @@ interface Mark {
   dash?: number[];
   /** Draw a small arrowhead at the last point and a dot at the first. */
   arrow?: boolean;
+  /** Per-point stroke widths in the trial's CSS px; these scale with the drawing (a physical width), unlike `width`. */
+  widths?: Array<number | null>;
 }
 
 /** Everything the feedback screen showed for this trial, in the trial's original canvas coordinates. */
@@ -38,6 +41,12 @@ function trialMarks(trial: TrialRecord, cssPxPerMm: number): Mark[] {
     }
     const [ha, hb] = BOX_EDGES[box.hingeEdgeIndex];
     for (const corners of [box.referenceCornersCss, box.answerCornersCss]) marks.push({ points: [corners[ha], corners[hb]], color: BOX_ACCENT, width: 3 });
+    return marks;
+  }
+  if (trial.target.kind === "TAPER") {
+    const widths = strokeWidthsMm(trial.rawStroke.samples).map((width) => (width === null ? null : width * cssPxPerMm));
+    marks.push({ ...strokeMark(trial.rawStroke.samples), widths });
+    marks.push({ points: taperOutlineCss(trial.target, cssPxPerMm), color: IDEAL_BLUE, width: 1.2, dash: [5, 4] });
     return marks;
   }
   marks.push(strokeMark(trial.rawStroke.samples));
@@ -78,6 +87,19 @@ export function drawTrialThumbnail(canvas: HTMLCanvasElement, trial: TrialRecord
     context.fillStyle = mark.color;
     context.lineWidth = mark.width * lineScale;
     context.setLineDash((mark.dash ?? []).map((value) => value * lineScale));
+    if (mark.widths) {
+      const widths = mark.widths;
+      for (let index = 1; index < points.length; index += 1) {
+        const a = widths[index - 1];
+        const b = widths[index];
+        context.lineWidth = a === null || b === null ? mark.width * lineScale : Math.max(0.6, ((a + b) / 2) * scale);
+        context.beginPath();
+        context.moveTo(points[index - 1].x, points[index - 1].y);
+        context.lineTo(points[index].x, points[index].y);
+        context.stroke();
+      }
+      continue;
+    }
     context.beginPath();
     context.moveTo(points[0].x, points[0].y);
     for (let index = 1; index < points.length; index += 1) context.lineTo(points[index].x, points[index].y);
@@ -108,6 +130,7 @@ function formatDate(epochMs: number): string {
 /** One line of the measurements behind the score. */
 export function trophyMetricText(trial: TrialRecord): string {
   const metrics = trial.derived.metrics;
+  if ("widthRmsErrorMm" in metrics) return taperMetricText(metrics);
   if ("fittedSwingDeg" in metrics) {
     const fitted = Math.round(Math.abs(metrics.fittedSwingDeg));
     const wrongWay = fitted >= 1 && Math.sign(metrics.fittedSwingDeg) !== Math.sign(metrics.targetSwingDeg);

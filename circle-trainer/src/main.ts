@@ -8,6 +8,7 @@ import { bestTrialsByExercise } from "./core/trophies";
 import { analyseTargetStroke, versionsForExercise } from "./core/primitiveMetrics";
 import { EXERCISE_LABELS, MODE_LABELS, PracticeScheduler } from "./core/scheduler";
 import { generateTarget, sampleTargetPathCss, targetCheckpointsCss } from "./core/targets";
+import { strokeWidthsMm, taperCheckpointsCss, taperMetricText, taperOutlineCss, targetWidthAtMm } from "./core/taper";
 import type {
   AnalysisResult,
   BoxMetrics,
@@ -18,12 +19,13 @@ import type {
   ExportBundle,
   PhysicalCalibration,
   PracticeMode,
-  PrimitiveExerciseType,
+  SingleStrokeExerciseType,
   PrimitiveMetrics,
   RawSample,
   RawStroke,
   SingleStrokeTrialRecord,
   StrokeEventType,
+  TaperTarget,
   TargetDefinition,
   TrialRecord,
 } from "./core/types";
@@ -46,11 +48,11 @@ import {
 } from "./storage";
 import { createTrophyView } from "./trophyView";
 
-const APP_VERSION = "0.5.2";
+const APP_VERSION = "0.6.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
-const VALID_MODES: readonly PracticeMode[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE", "BOX", "MIXED_BLOCKED", "MIXED_RANDOM"];
+const VALID_MODES: readonly PracticeMode[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE", "TAPER", "BOX", "MIXED_BLOCKED", "MIXED_RANDOM"];
 /** Box strokes shorter than this (or with fewer samples) are treated as accidental taps and not counted. */
 const BOX_MIN_STROKE_SAMPLES = 8;
 const BOX_MIN_STROKE_PATH_MM = 6;
@@ -65,6 +67,7 @@ const INSTRUCTIONS: Record<ExerciseType, { kicker: string; prompt: string }> = {
   CIRCLE: { kicker: "Circle practice", prompt: "Draw one full circle through the four points." },
   ELLIPSE: { kicker: "Ellipse practice", prompt: "Draw one full ellipse through the four points." },
   S_CURVE: { kicker: "S-curve practice", prompt: "Draw one smooth S curve through the four points." },
+  TAPER: { kicker: "Taper practice", prompt: "Draw one straight stroke through the three dots, pressing so its width matches each dot." },
   BOX: { kicker: "Box practice", prompt: "Swing the box about the orange edge by the angle shown, then draw its other 11 edges from the lone orange edge — one stroke each." },
 };
 
@@ -232,6 +235,62 @@ function drawRawStroke(stroke: RawStroke): void {
   context.moveTo(stroke.samples[0].xCss, stroke.samples[0].yCss);
   for (let index = 1; index < stroke.samples.length; index += 1) context.lineTo(stroke.samples[index].xCss, stroke.samples[index].yCss);
   context.stroke();
+}
+
+/** Taper strokes are drawn at their pressure-driven width (mm from pressure, so physical size, not screen px). */
+function drawPressureStroke(stroke: RawStroke): void {
+  const samples = stroke.samples;
+  if (samples.length === 0) return;
+  const px = cssPxPerMm();
+  const widths = strokeWidthsMm(samples).map((width) => (width === null ? 2.2 : width * px));
+  context.save();
+  context.strokeStyle = "#171717";
+  context.fillStyle = "#171717";
+  context.setLineDash([]);
+  context.lineCap = "round";
+  context.beginPath();
+  context.arc(samples[0].xCss, samples[0].yCss, widths[0] / 2, 0, Math.PI * 2);
+  context.fill();
+  for (let index = 1; index < samples.length; index += 1) {
+    context.lineWidth = (widths[index - 1] + widths[index]) / 2;
+    context.beginPath();
+    context.moveTo(samples[index - 1].xCss, samples[index - 1].yCss);
+    context.lineTo(samples[index].xCss, samples[index].yCss);
+    context.stroke();
+  }
+  context.restore();
+}
+
+/** Cue: a filled dot at the true wanted width, inside a faint ring so even a 0.5 mm dot can be found. */
+function drawTaperCue(taper: TaperTarget): void {
+  const px = cssPxPerMm();
+  taperCheckpointsCss(taper).forEach((point, index) => {
+    context.save();
+    context.beginPath();
+    context.arc(point.x, point.y, 11, 0, Math.PI * 2);
+    context.strokeStyle = "rgba(23, 23, 23, 0.22)";
+    context.lineWidth = 1;
+    context.setLineDash([]);
+    context.stroke();
+    context.beginPath();
+    context.arc(point.x, point.y, (targetWidthAtMm(taper, index / 2) * px) / 2, 0, Math.PI * 2);
+    context.fillStyle = "#171717";
+    context.fill();
+    context.restore();
+  });
+}
+
+function drawTaperOutline(taper: TaperTarget): void {
+  const outline = taperOutlineCss(taper, cssPxPerMm());
+  context.save();
+  context.beginPath();
+  context.moveTo(outline[0].x, outline[0].y);
+  for (let index = 1; index < outline.length; index += 1) context.lineTo(outline[index].x, outline[index].y);
+  context.strokeStyle = "#1557c0";
+  context.lineWidth = 1.4;
+  context.setLineDash([6, 4]);
+  context.stroke();
+  context.restore();
 }
 
 function drawIdealTarget(targetDefinition: TargetDefinition): void {
@@ -434,6 +493,14 @@ function redrawAll(): void {
     drawBoxTrial(target);
     return;
   }
+  if (target.kind === "TAPER") {
+    // Cue first so the stroke covers it; the outline goes on top after lift.
+    drawTaperCue(target);
+    const stroke = activeStroke ?? completedStroke;
+    if (stroke) drawPressureStroke(stroke);
+    if (trialState === "FEEDBACK") drawTaperOutline(target);
+    return;
+  }
   if (activeStroke) drawRawStroke(activeStroke);
   else if (completedStroke) drawRawStroke(completedStroke);
   if (trialState === "FEEDBACK") drawIdealTarget(target);
@@ -500,8 +567,10 @@ function beginNewTrial(): void {
   const instruction = INSTRUCTIONS[activeExercise];
   instructionType.textContent = instruction.kicker;
   instructionText.textContent = instruction.prompt;
-  instructionNote.textContent = activeExercise === "BOX" ? "The true box appears in blue after the 11th edge." : DEFAULT_INSTRUCTION_NOTE;
-  emptyState.classList.toggle("box-mode", activeExercise === "BOX");
+  instructionNote.textContent = activeExercise === "BOX"
+    ? "The true box appears in blue after the 11th edge."
+    : activeExercise === "TAPER" ? "The ideal outline appears in blue after you lift the Pencil." : DEFAULT_INSTRUCTION_NOTE;
+  emptyState.classList.toggle("compact", activeExercise === "BOX" || activeExercise === "TAPER");
   nextTrialButton.textContent = `Next ${singularLabel(activeExercise)}`;
   trialState = "READY";
   statusText.textContent = statusForCurrentTrial();
@@ -632,6 +701,7 @@ function boxFeedbackDetail(metrics: BoxMetrics): string {
 function feedbackDetails(analysis: AnalysisResult): string {
   const metrics = analysis.metrics;
   if ("fittedSwingDeg" in metrics) return boxFeedbackDetail(metrics);
+  if ("widthRmsErrorMm" in metrics) return taperMetricText(metrics);
   if (activeExercise === "LINE" && "rmsOrthogonalDeviationMm" in metrics) {
     return `RMS error ${metrics.rmsOrthogonalDeviationMm.toFixed(1)} mm · endpoints ${metrics.endpointMeanErrorMm.toFixed(1)} mm`;
   }
@@ -701,7 +771,7 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
       metricVersion: versions.metric,
       scoringVersion: versions.scoring,
       createdAtEpochMs: Date.now(),
-      exerciseType: activeExercise as PrimitiveExerciseType,
+      exerciseType: activeExercise as SingleStrokeExerciseType,
       practiceMode: selectedMode,
       correctionGateEnabled,
       schedule,

@@ -1,6 +1,7 @@
 import { pointCssPxToMm, polylineLength, resampleByArcLength, wrapAngleRad } from "./geometry";
 import { BOX_METRIC_VERSION, BOX_SCORING_VERSION } from "./boxMetrics";
 import { analyseLineStroke, METRIC_VERSION as LINE_METRIC_VERSION, SCORING_VERSION as LINE_SCORING_VERSION } from "./lineMetrics";
+import { analyseTaperStroke, TAPER_METRIC_VERSION, TAPER_SCORING_VERSION } from "./taper";
 import { sampleTargetPathCss, targetPathLengthMm } from "./targets";
 import type {
   AnalysisResult,
@@ -25,6 +26,7 @@ const VERSIONS: Record<ExerciseType, { metric: string; scoring: string }> = {
   CIRCLE: { metric: "circle-1", scoring: "circle-1" },
   ELLIPSE: { metric: "ellipse-1", scoring: "ellipse-1" },
   S_CURVE: { metric: "s-curve-2", scoring: "s-curve-1" },
+  TAPER: { metric: TAPER_METRIC_VERSION, scoring: TAPER_SCORING_VERSION },
   BOX: { metric: BOX_METRIC_VERSION, scoring: BOX_SCORING_VERSION },
 };
 
@@ -330,6 +332,7 @@ export function analyseTargetStroke(
   if (stroke.samples.length === 0) throw new Error("Cannot analyse an empty stroke");
   if (target.kind === "BOX") throw new Error("Box trials are scored from all strokes with analyseBoxStrokes");
   if (target.kind === "LINE") return analyseLineStroke(stroke, target, cssPxPerMm, correctionGateEnabled);
+  if (target.kind === "TAPER") return analyseTaperStroke(stroke, target, cssPxPerMm, correctionGateEnabled);
   if (target.kind === "ARC") return analyseArc(stroke, target, cssPxPerMm, correctionGateEnabled);
   if (target.kind === "CIRCLE") return analyseCircle(stroke, target, cssPxPerMm, correctionGateEnabled);
   if (target.kind === "ELLIPSE") return analyseEllipse(stroke, target, cssPxPerMm, correctionGateEnabled);

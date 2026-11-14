@@ -29,7 +29,9 @@ export interface RawStroke {
 }
 
 export type PrimitiveExerciseType = "LINE" | "ARC" | "CIRCLE" | "ELLIPSE" | "S_CURVE";
-export type ExerciseType = PrimitiveExerciseType | "BOX";
+/** One-stroke exercises: the primitives plus the pressure-width Taper drill (which is not part of the mixed modes). */
+export type SingleStrokeExerciseType = PrimitiveExerciseType | "TAPER";
+export type ExerciseType = SingleStrokeExerciseType | "BOX";
 export type PracticeMode = ExerciseType | "MIXED_BLOCKED" | "MIXED_RANDOM";
 
 /** The hand that holds the Pencil. Side-by-side layouts keep the reference away from it. */
@@ -75,6 +77,19 @@ export interface SCurveTarget {
   thetaRad: number;
 }
 
+export type TaperProfile = "EVEN" | "THIN_TO_THICK" | "THICK_TO_THIN" | "THIN_THICK_THIN";
+
+/** A straight line drawn with pressure: the wanted stroke width varies linearly between start, middle and end. */
+export interface TaperTarget {
+  kind: "TAPER";
+  aCss: Point2;
+  bCss: Point2;
+  lengthMm: number;
+  profile: TaperProfile;
+  /** Wanted stroke width at the start (a), middle and end (b). */
+  widthsMm: [number, number, number];
+}
+
 /**
  * Hinge-swing box drill. The parameters fully determine the 3D scene; the projected corners (CSS px,
  * corner i has x/y/z sign from bits 0/1/2) are stored too so saved records are self-contained.
@@ -95,7 +110,7 @@ export interface BoxTarget {
 }
 
 export type PrimitiveTargetDefinition = LineTarget | ArcTarget | CircleTarget | EllipseTarget | SCurveTarget;
-export type TargetDefinition = PrimitiveTargetDefinition | BoxTarget;
+export type TargetDefinition = PrimitiveTargetDefinition | TaperTarget | BoxTarget;
 
 export interface CommonMetrics {
   durationMs: number;
@@ -181,7 +196,24 @@ export interface BoxMetrics {
   strokeCount: number;
 }
 
-export type PrimitiveMetrics = LineMetrics | ArcMetrics | CircleMetrics | EllipseMetrics | SCurveMetrics | BoxMetrics;
+export interface TaperMetrics {
+  /** RMS of (drawn width − wanted width) by position along the line, in mm. */
+  widthRmsErrorMm: number;
+  /** widthRmsErrorMm divided by the 2.5 mm width range. */
+  normalizedError: number;
+  /** Mean drawn width near the start, middle and end, in mm (null where the stroke left no width samples). */
+  drawnWidthsMm: [number | null, number | null, number | null];
+  targetWidthsMm: [number, number, number];
+  /** Fraction of the line's length the stroke's width samples cover. */
+  coverage: number;
+  widthSampleCount: number;
+  pathRmsMm: number;
+  pathEndpointMeanErrorMm: number;
+  pathLengthMm: number;
+  durationMs: number;
+}
+
+export type PrimitiveMetrics = LineMetrics | ArcMetrics | CircleMetrics | EllipseMetrics | SCurveMetrics | TaperMetrics | BoxMetrics;
 
 export interface AnalysisResult<M extends PrimitiveMetrics = PrimitiveMetrics> {
   metrics: M;
@@ -213,7 +245,7 @@ interface TrialRecordBase {
 }
 
 export interface SingleStrokeTrialRecord extends TrialRecordBase {
-  exerciseType: PrimitiveExerciseType;
+  exerciseType: SingleStrokeExerciseType;
   target: TargetDefinition;
   rawStroke: RawStroke;
   derived: AnalysisResult;
