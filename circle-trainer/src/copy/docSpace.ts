@@ -166,27 +166,3 @@ export function viewRect(view: View, frame: FrameSize): DocRect {
 }
 
 export interface Area { width: number; height: number }
-
-/** Area of the largest frame of `aspect` (width / height) that fits in `space`. */
-export function fittedArea(aspect: number, space: Area): number {
-  const width = Math.min(space.width, space.height * aspect);
-  return width * (width / aspect);
-}
-
-/**
- * One frame shape for both orientations, so rotating mid-copy changes
- * nothing: the aspect whose smaller fitted area, across the two spaces, is
- * as large as possible. The best lies at one space's own shape or where one
- * space's width limit meets the other's height limit.
- */
-export function sharedFrameAspect(a: Area, b: Area): number {
-  const candidates = [a.width / a.height, b.width / b.height, a.width / b.height, b.width / a.height]
-    .filter((value) => Number.isFinite(value) && value > 0);
-  let best = candidates[0] ?? 1;
-  let bestArea = -1;
-  for (const aspect of candidates) {
-    const area = Math.min(fittedArea(aspect, a), fittedArea(aspect, b));
-    if (area > bestArea + 1e-9) { best = aspect; bestArea = area; }
-  }
-  return best;
-}

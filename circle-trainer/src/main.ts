@@ -69,7 +69,7 @@ import {
   type DailyQueueState,
 } from "./core/dailyQueue";
 
-const APP_VERSION = "0.11.4";
+const APP_VERSION = "0.11.5";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;

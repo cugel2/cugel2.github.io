@@ -12,7 +12,7 @@ import {
   toFrameUnits, undoStroke, type CompareView, type CopyPoint, type CopySession, type CopyStroke,
 } from "./copySession";
 import {
-  clampView, fitPage, layoutPages, moveView, pageAt, pageTiles, sameView, sharedFrameAspect, viewHeight, zoomAbout,
+  clampView, fitPage, layoutPages, moveView, pageAt, pageTiles, sameView, viewHeight, zoomAbout,
   type Area, type DocLayout, type DocRect, type FrameSize, type Point, type View,
 } from "./docSpace";
 import { GestureTracker } from "./gestures";
@@ -153,40 +153,13 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   }
 
   /**
-   * The frame shape for a new copy, set once when the copy starts: one shape
-   * for both orientations, so rotating only scales the frame. The space in
-   * each orientation is remembered once seen (see rememberSpaceSoon); until
-   * then the other one is estimated by turning this layout on its side.
+   * The frame shape that fills the panes as laid out now. A copy with no
+   * strokes takes it on every layout, so it fills whichever orientation you
+   * are in; the first stroke fixes it.
    */
   function naturalAspect(): number {
-    const stage = elements.stage.getBoundingClientRect();
-    const landscape = stage.width >= stage.height;
-    const here = frameSpace();
-    const spaces = readFrameSpaces();
-    const estimate: Area = {
-      width: Math.max(1, stage.height / 2 - 2 * PANE_PAD),
-      height: Math.max(1, stage.width - PANE_TOP - PANE_PAD),
-    };
-    const other = spaces[landscape ? "portrait" : "landscape"] ?? estimate;
-    return clampAspect(sharedFrameAspect(here, other));
-  }
-
-  /**
-   * Remember this orientation's space only once the screen has settled:
-   * while the iPad rotates, Safari reports in-between sizes.
-   */
-  let spaceTimer: number | undefined;
-  function rememberSpaceSoon(): void {
-    window.clearTimeout(spaceTimer);
-    spaceTimer = window.setTimeout(() => {
-      if (!visible) return;
-      const stage = elements.stage.getBoundingClientRect();
-      const here = frameSpace();
-      if (here.width < 150 || here.height < 150) return;
-      const spaces = readFrameSpaces();
-      spaces[stage.width >= stage.height ? "landscape" : "portrait"] = here;
-      writeFrameSpaces(spaces);
-    }, 1000);
+    const space = frameSpace();
+    return clampAspect(space.width / space.height);
   }
 
   function measure(): void {
@@ -199,11 +172,12 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       canvas.width = Math.max(1, Math.round(rect.width * pixelRatio));
       canvas.height = Math.max(1, Math.round(rect.height * pixelRatio));
     }
-    // A copy keeps the frame shape it started with; rotating only fits the
-    // largest frame of that shape. (A shape saved by an older version that
-    // is out of range is replaced while nothing depends on it.)
-    if (session && !session.lockedView && clampAspect(session.frameAspect) !== session.frameAspect) session = { ...session, frameAspect: naturalAspect() };
-    rememberSpaceSoon();
+    // An empty copy fills the panes in whatever orientation they are now;
+    // once there are strokes the copy keeps its shape and is only fitted.
+    const empty = session !== null && !session.lockedView && session.strokes.length === 0;
+    const space = frameSpace();
+    if (session && empty && space.width >= 150 && space.height >= 150) session = { ...session, frameAspect: naturalAspect() };
+    const previous = frame;
     const aspect = session?.frameAspect ?? naturalAspect();
     const availableWidth = Math.max(1, paneSize.width - 2 * PANE_PAD);
     const availableHeight = Math.max(1, paneSize.height - PANE_TOP - PANE_PAD);
@@ -215,6 +189,16 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       width,
       height,
     };
+    // An empty copy that changed shape keeps the reference the same size on
+    // screen, centred: the frame just shows more or less around it.
+    if (session?.view && layout && empty && previous.width > 1 && (previous.width !== frame.width || previous.height !== frame.height)) {
+      const view = session.view;
+      const centreX = view.x + view.w / 2;
+      const centreY = view.y + (view.w * previous.height) / previous.width / 2;
+      const w = (view.w * frame.width) / previous.width;
+      const h = (w * frame.height) / frame.width;
+      session = setView(session, { x: centreX - w / 2, y: centreY - h / 2, w });
+    }
     // Keep the view within the zoom limits for this frame (e.g. after rotating).
     if (session?.view && layout && !session.lockedView) session = setView(session, clampView(session.view, layout, frameSize()));
     rebuildCapture();
@@ -1182,29 +1166,12 @@ function context2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
   return context;
 }
 
-const FRAME_SPACE_KEY = "circle-trainer:copy-frame-space";
-/** Frame shapes outside this range (width / height) come only from odd layouts, e.g. mid-rotation. */
-const MIN_FRAME_ASPECT = 0.45;
-const MAX_FRAME_ASPECT = 1.6;
+/** A guard against shapes from odd layouts (width / height); portrait panes on an iPad are about 0.4. */
+const MIN_FRAME_ASPECT = 0.3;
+const MAX_FRAME_ASPECT = 2.5;
 
 function clampAspect(aspect: number): number {
   return Number.isFinite(aspect) ? Math.min(MAX_FRAME_ASPECT, Math.max(MIN_FRAME_ASPECT, aspect)) : 1;
-}
-
-interface FrameSpaces { landscape?: Area; portrait?: Area }
-
-function readFrameSpaces(): FrameSpaces {
-  try {
-    const value = JSON.parse(localStorage.getItem(FRAME_SPACE_KEY) ?? "{}") as FrameSpaces;
-    const valid = (area: Area | undefined) => area && area.width > 0 && area.height > 0 ? area : undefined;
-    return { landscape: valid(value.landscape), portrait: valid(value.portrait) };
-  } catch {
-    return {};
-  }
-}
-
-function writeFrameSpaces(spaces: FrameSpaces): void {
-  try { localStorage.setItem(FRAME_SPACE_KEY, JSON.stringify(spaces)); } catch { /* storage blocked: estimate instead */ }
 }
 
 function blankCanvas(width: number, height: number, white = true): HTMLCanvasElement {
