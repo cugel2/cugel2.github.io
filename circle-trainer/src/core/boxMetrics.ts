@@ -3,10 +3,16 @@ import { pointCssPxToMm, polylineLength, resampleByArcLength } from "./geometry"
 import type { AnalysisResult, BoxEdgeMetric, BoxMetrics, BoxTarget, Point2, RawStroke } from "./types";
 
 export const BOX_METRIC_VERSION = "box-1";
-export const BOX_SCORING_VERSION = "box-1";
+export const BOX_SCORING_VERSION = "box-2";
 
-/** Provisional: normalized error at which the score falls to 100·e^-1 ≈ 37. Tune on device. */
-export const BOX_SCORE_SIGMA = 0.15;
+/**
+ * Normalized error at which the score falls to 100·e^-1 ≈ 37 (`box-2`, 0.13.1). Set from John's
+ * 20 Pencil boxes (2026-11-14 export): perfect strokes turned 10° / 20° / 30° wrong score about
+ * 76 / 49 / 29, and his rough boxes 1–57 instead of 0–12.
+ */
+export const BOX_SCORE_SIGMA = 0.4;
+/** `box-1` (0.4.0–0.13.0) used 0.15. Kept for reference only; stored scores are never recomputed. */
+export const BOX_1_SCORE_SIGMA = 0.15;
 const SCORE_EXPONENT = 1.35;
 const ENDPOINT_WEIGHT = 0.6;
 const RESAMPLE_COUNT = 64;
@@ -159,6 +165,12 @@ export function fitSwingDeg(strokesMm: readonly Point2[][], target: BoxTarget, c
   return objective(refined) <= bestValue ? refined : bestSwing;
 }
 
+/** 0–100 score for a pooled normalized error: `100 · exp(-(error / sigma)^1.35)`, rounded and clamped. */
+export function boxScoreFromError(normalizedError: number, sigma = BOX_SCORE_SIGMA): number {
+  const score = Math.round(100 * Math.exp(-Math.pow(Math.max(0, normalizedError) / sigma, SCORE_EXPONENT)));
+  return Math.max(0, Math.min(100, score));
+}
+
 export function analyseBoxStrokes(strokes: readonly RawStroke[], target: BoxTarget, cssPxPerMm: number): BoxAnalysis {
   if (strokes.length === 0 || strokes.some((stroke) => stroke.samples.length === 0)) throw new Error("Cannot analyse empty box strokes");
   const rawMm = strokes.map((stroke) => stroke.samples.map((sample) => pointCssPxToMm({ x: sample.xCss, y: sample.yCss }, cssPxPerMm)));
@@ -199,6 +211,5 @@ export function analyseBoxStrokes(strokes: readonly RawStroke[], target: BoxTarg
     pathLengthMm: rawMm.reduce((sum, points) => sum + polylineLength(points), 0),
     strokeCount: strokes.length,
   };
-  const score = Math.round(100 * Math.exp(-Math.pow(normalizedError / BOX_SCORE_SIGMA, SCORE_EXPONENT)));
-  return { metrics, executionPassed: true, accuracyScore: Math.max(0, Math.min(100, score)) };
+  return { metrics, executionPassed: true, accuracyScore: boxScoreFromError(normalizedError) };
 }
