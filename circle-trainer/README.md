@@ -12,6 +12,7 @@ The app is self-contained under `/circle-trainer/`. It does not add analytics, c
 4. The execution gate rejects incomplete or implausible movements. Optional correction rejection can also reject substantial backtracking; it defaults off.
 5. Passing strokes receive a versioned 0–100 accuracy score.
 6. The target, raw samples, schedule context, metrics, gate result, and score are saved locally.
+7. While the feedback shows, a Pencil tap anywhere on the drawing canvas starts the next rep, as does the **Next** button. A tap lasts at most 350 ms and strays at most 2 mm (calibrated) from where it touched down (`isTap` in `src/core/tap.ts`). Nothing is drawn or recorded during feedback: a longer touch is ignored with a "Not counted" toast, so it is never scored against the next target. Taps on the feedback card, the Tips panel or any button do not count. In Box mode this applies once the 11th edge has been scored; between edges the Pencil draws as usual. A finger tap also counts during feedback only (nothing is drawn then); a long finger touch is ignored silently, and a second contact landing during the touch (a palm, a pinch) cancels it. Fingers still never draw.
 
 ### Box drill (hinge swing)
 
@@ -79,7 +80,7 @@ The **Trophies** sheet shows one card per exercise with the highest-scoring atte
 ## Input capture
 
 - Apple Pencil is accepted as `pointerType === "pen"`; mouse input is accepted for desktop development.
-- Finger input on the drawing surface is ignored.
+- Finger input on the drawing surface never draws; during feedback a finger tap starts the next rep.
 - Safari coalesced Pointer Events are read when available.
 - Overlapping Safari event windows are deduplicated by exact coordinate and timestamp identity.
 - Raw samples retain coordinates, timestamp, pressure, tilt, twist, contact size, and source event type.
@@ -191,6 +192,7 @@ Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw da
 15. Draw for a few minutes, pause for over a minute, switch apps and come back, then reload: the session and today's time stop shortly after you stop drawing, ignore time in the background, and today's total survives the reload.
 16. Open the app: it starts on Today with `N left · about M min`. Do a few reps, switch to a free mode and back, and reload: the count resumes. Before the first rep, change the ticks in Settings: the queue and the current target update at once. After a rep, the toast says changes apply tomorrow. Finish a queue (or tick a single mode) and check the Done card.
 17. Daily flow: finish Today's queue and check the handoff card (drill time, Start copy with the minutes left, Finish for today). Start copy returns to the book and copy as left; the status line counts down while you draw and while a finger moves the reference, and pauses after a minute idle or with the app in the background. Set Copy time to 15 to reach zero sooner: the status line says time is up, the next Compare shows the Done card once, and Keep going leaves Copy as usual. Try Copy before the drills too: the card offers Go to Today.
+18. After a drill stroke, tap the canvas with the Pencil, then (next rep) with a finger: the next rep starts, with nothing drawn on it. Draw a longer stroke during feedback instead: it is ignored with a toast. Tapping the feedback card (away from Next) or the Tips panel does nothing. Check in Today, a free mode and Box (after the 11th edge).
 
 ## Privacy
 

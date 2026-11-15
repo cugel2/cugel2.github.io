@@ -4,6 +4,7 @@ import { arrowLabelCss, BOX_EDGES, BOX_FACES, BOX_STROKES_REQUIRED, boxAreas, bo
 import { analyseBoxStrokes } from "./core/boxMetrics";
 import { polylineLength } from "./core/geometry";
 import { rawSampleIdentity } from "./core/input";
+import { isTap, type TapPoint } from "./core/tap";
 import { drawVariableWidthStroke } from "./core/strokeRender";
 import { bestTrialsByExercise } from "./core/trophies";
 import { analyseTargetStroke, versionsForExercise } from "./core/primitiveMetrics";
@@ -89,7 +90,7 @@ import {
   type DayMarks,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.12.0";
+const APP_VERSION = "0.13.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -316,6 +317,11 @@ let activeExercise: ExerciseType = "LINE";
 let trialState: TrialState = "PREPARING";
 let target: TargetDefinition | null = null;
 let activePointerId: number | null = null;
+/**
+ * A Pencil or finger touch on the canvas during feedback, followed until it lifts to see whether it
+ * was a tap. `spoiled` is set when another contact lands meanwhile (a palm, a pinch): then it is not a tap.
+ */
+let feedbackTap: { pointerId: number; pen: boolean; spoiled: boolean; points: TapPoint[] } | null = null;
 let activeStroke: RawStroke | null = null;
 let activeSampleKeys = new Set<string>();
 let completedStroke: RawStroke | null = null;
@@ -920,6 +926,7 @@ function updateCorrectionGateButton(): void {
 function beginNewTrial(): void {
   trialState = "PREPARING";
   activePointerId = null;
+  feedbackTap = null;
   activeStroke = null;
   activeSampleKeys = new Set<string>();
   completedStroke = null;
@@ -1029,6 +1036,11 @@ function appendPointerSamples(event: PointerEvent, sourceEventType: StrokeEventT
 }
 
 function handlePointerDown(event: PointerEvent): void {
+  // During feedback nothing is drawn, so a finger may tap on too; palm rejection while drawing is unchanged.
+  if (trialState === "FEEDBACK") {
+    startFeedbackTap(event);
+    return;
+  }
   if (event.pointerType !== "pen" && event.pointerType !== "mouse") {
     runtime.ignoredTouchCount += 1;
     if (!touchNoticeShown) {
@@ -1052,7 +1064,42 @@ function handlePointerDown(event: PointerEvent): void {
   appendPointerSamples(event, "pointerdown");
 }
 
+function tapPoint(event: PointerEvent): TapPoint {
+  const bounds = canvas.getBoundingClientRect();
+  return { xCss: event.clientX - bounds.left, yCss: event.clientY - bounds.top, tMs: event.timeStamp };
+}
+
+/** During feedback the canvas draws nothing: a touch is followed only to see whether it is a tap. */
+function startFeedbackTap(event: PointerEvent): void {
+  event.preventDefault();
+  if (feedbackTap !== null) {
+    feedbackTap.spoiled = true;
+    return;
+  }
+  feedbackTap = { pointerId: event.pointerId, pen: event.pointerType !== "touch", spoiled: false, points: [tapPoint(event)] };
+  try { canvas.setPointerCapture(event.pointerId); } catch { /* Pointer already ended. */ }
+}
+
+/** Ends a feedback touch. A tap starts the next rep; a longer touch is ignored. Returns false if the pointer is not one. */
+function endFeedbackTap(event: PointerEvent, cancelled: boolean): boolean {
+  if (!feedbackTap || event.pointerId !== feedbackTap.pointerId) return false;
+  event.preventDefault();
+  const { pen, spoiled } = feedbackTap;
+  const points = [...feedbackTap.points, tapPoint(event)];
+  feedbackTap = null;
+  if (cancelled || spoiled || trialState !== "FEEDBACK") return true;
+  practiceClock.recordActivity(Date.now());
+  if (isTap(points, cssPxPerMm())) beginNewTrial();
+  else if (pen) showToast("Not counted — tap to go on"); // A long finger touch is likely a resting hand: say nothing.
+  return true;
+}
+
 function handlePointerMove(event: PointerEvent): void {
+  if (feedbackTap && event.pointerId === feedbackTap.pointerId) {
+    event.preventDefault();
+    for (const sourceEvent of sourceEvents(event)) feedbackTap.points.push(tapPoint(sourceEvent));
+    return;
+  }
   if (event.pointerId !== activePointerId || trialState !== "DRAWING") return;
   event.preventDefault();
   appendPointerSamples(event, "pointermove");
@@ -1501,8 +1548,8 @@ function wireControls(): void {
   for (const button of handButtons) button.addEventListener("click", () => setHandedness(button.dataset.hand === "RIGHT" ? "RIGHT" : "LEFT"));
   canvas.addEventListener("pointerdown", handlePointerDown);
   canvas.addEventListener("pointermove", handlePointerMove);
-  canvas.addEventListener("pointerup", (event) => void finishStroke(event, false));
-  canvas.addEventListener("pointercancel", (event) => void finishStroke(event, true));
+  canvas.addEventListener("pointerup", (event) => { if (!endFeedbackTap(event, false)) void finishStroke(event, false); });
+  canvas.addEventListener("pointercancel", (event) => { if (!endFeedbackTap(event, true)) void finishStroke(event, true); });
   canvas.addEventListener("contextmenu", (event) => event.preventDefault());
   window.addEventListener("resize", () => {
     if (copyActive) return; // The Copy view lays itself out.
