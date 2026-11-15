@@ -43,6 +43,7 @@ import {
   getDailyTicks,
   getDayMarks,
   getFinishedDays,
+  getLastExport,
   getHandedness,
   getPracticeTime,
   getPracticeMode,
@@ -56,12 +57,14 @@ import {
   saveDailyTicks,
   saveDayMarks,
   saveFinishedDays,
+  saveLastExport,
   saveHandedness,
   savePracticeTime,
   savePracticeMode,
   saveStroke,
   saveTrial,
 } from "./storage";
+import { backupReminder } from "./core/backup";
 import { createTrophyView } from "./trophyView";
 import { createCopyView } from "./copy/copyView";
 import { dayKey, formatClock, formatMinutes, PracticeClock } from "./core/timer";
@@ -97,7 +100,7 @@ import {
   startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.14.1";
+const APP_VERSION = "0.14.2";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -163,6 +166,8 @@ const dayDoneDialog = requiredElement<HTMLDialogElement>("#dayDoneDialog");
 const dayDoneTitle = requiredElement<HTMLElement>("#dayDoneTitle");
 const dayDoneDetail = requiredElement<HTMLElement>("#dayDoneDetail");
 const dayDoneWeekDots = requiredElement<HTMLElement>("#dayDoneWeekDots");
+const doneBackup = requiredElement<HTMLElement>("#doneBackup");
+const dayDoneBackup = requiredElement<HTMLElement>("#dayDoneBackup");
 const dayDoneTodayButton = requiredElement<HTMLButtonElement>("#dayDoneTodayButton");
 const dailyTicksList = requiredElement<HTMLElement>("#dailyTicks");
 const dailyEstimate = requiredElement<HTMLElement>("#dailyEstimate");
@@ -368,6 +373,8 @@ let dayMarks: DayMarks | null = null;
 let finishedDays: string[] = [];
 /** Set once stored settings have loaded, so the 1 s check cannot overwrite the stored finished days with an empty list. */
 let finishedDaysLoaded = false;
+/** When practice data was last exported; undefined until the stored value has loaded. */
+let lastExportMs: number | null | undefined;
 let dailyTicks: ExerciseType[] = [...DEFAULT_DAILY_TICKS];
 let dailyQueue: DailyQueueState | null = null;
 let touchNoticeShown = false;
@@ -731,6 +738,7 @@ function showDoneCard(queue: DailyQueueState): void {
   }
   recordFinishedDay(now);
   renderWeekDots(doneWeekDots, card === "DONE");
+  renderBackupNote(doneBackup, card === "DONE");
   doneSettingsButton.hidden = card !== "NOTHING_TICKED";
   doneCopyButton.hidden = card !== "HANDOFF";
   doneFinishButton.hidden = card !== "HANDOFF";
@@ -775,6 +783,16 @@ function renderWeekDots(container: HTMLElement, show: boolean): void {
   container.setAttribute("aria-label", `Finished on ${dots.filter((dot) => dot.finished).length} of the last seven days`);
 }
 
+/** "Last export N days ago" with an Export now button, only when a backup is due. */
+function renderBackupNote(container: HTMLElement, show: boolean): void {
+  const now = Date.now();
+  const practiceDays = Object.values(practiceClock.snapshot(now)).filter((ms) => ms > 0).length;
+  const text = show && lastExportMs !== undefined ? backupReminder(lastExportMs, practiceDays, now) : null;
+  container.hidden = text === null;
+  const label = container.querySelector("span");
+  if (label && text) label.textContent = `${text} ·`;
+}
+
 function setDayMark(mark: "handoffDeclined" | "doneCardShown"): void {
   dayMarks = { ...marksForToday(dayMarks, Date.now()), [mark]: true };
   void saveDayMarks(dayMarks).catch(() => undefined);
@@ -803,6 +821,7 @@ function showDayDoneDialog(card: CopyCard): void {
   }
   recordFinishedDay(now);
   renderWeekDots(dayDoneWeekDots, card === "DAY_DONE");
+  renderBackupNote(dayDoneBackup, card === "DAY_DONE");
   dayDoneTodayButton.hidden = card !== "DRILLS_LEFT";
   dayDoneDialog.dataset.hand = handedness === "LEFT" ? "left" : "right";
   dayDoneDialog.showModal();
@@ -1501,6 +1520,10 @@ async function exportAllData(): Promise<void> {
       finishedDays,
     };
     downloadJson(`circle-trainer-${dateStamp()}.json`, bundle);
+    lastExportMs = bundle.exportedAt;
+    void saveLastExport(bundle.exportedAt).catch(() => undefined);
+    doneBackup.hidden = true;
+    dayDoneBackup.hidden = true;
     showToast("JSON export created");
   } catch { showToast("Data export failed"); }
 }
@@ -1640,6 +1663,7 @@ function wireControls(): void {
   window.addEventListener("pagehide", persistPracticeTime);
   doneSettingsButton.addEventListener("click", () => { configureRuler(); renderDailyTicks(); renderCopyBudget(); calibrationDialog.showModal(); });
   doneCopyButton.addEventListener("click", () => { if (trialState !== "DRAWING") enterCopy(); });
+  for (const note of [doneBackup, dayDoneBackup]) note.querySelector("button")?.addEventListener("click", () => void exportAllData());
   doneFinishButton.addEventListener("click", () => { setDayMark("handoffDeclined"); showDoneCard(todayQueue()); });
   dayDoneTodayButton.addEventListener("click", goToToday);
   for (const button of copyBudgetButtons) button.addEventListener("click", () => setCopyBudget(Number(button.dataset.copyBudget)));
@@ -1688,15 +1712,16 @@ async function initialize(): Promise<void> {
   wireControls();
   resizeCanvas();
   try {
-    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials, storedCopyTime, storedCopyBudget, storedMarks, storedFinishedDays] = await Promise.all([
+    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials, storedCopyTime, storedCopyBudget, storedMarks, storedFinishedDays, storedLastExport] = await Promise.all([
       getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getPracticeTime(), getDailyTicks(), getDailyQueue(), getStrokes(), getTrials(),
-      getCopyTime(), getCopyBudget(), getDayMarks(), getFinishedDays(),
+      getCopyTime(), getCopyBudget(), getDayMarks(), getFinishedDays(), getLastExport(),
     ]);
     copyClock = new PracticeClock(storedCopyTime ?? {}, false);
     copyBudgetMin = storedCopyBudget ?? DEFAULT_COPY_BUDGET_MIN;
     dayMarks = storedMarks;
     finishedDays = storedFinishedDays;
     finishedDaysLoaded = true;
+    lastExportMs = storedLastExport;
     dailyTicks = storedTicks ?? [...DEFAULT_DAILY_TICKS];
     dailyQueue = storedQueue;
     practiceClock = new PracticeClock(storedPracticeTime ?? {}, document.visibilityState === "visible");

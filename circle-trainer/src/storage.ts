@@ -1,4 +1,5 @@
 import { normalizeTicks, parseQueueState, type DailyQueueState } from "./core/dailyQueue";
+import { parseLastExport } from "./core/backup";
 import { parseCopyBudget, parseFinishedDays, parseMarks, type DayMarks } from "./core/dailyFlow";
 import type { DailyTotals } from "./core/timer";
 import type { ExerciseType, Handedness, LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
@@ -299,4 +300,15 @@ export async function saveFinishedDays(days: readonly string[]): Promise<void> {
 
 export async function getFinishedDays(): Promise<string[]> {
   return parseFinishedDays(await getSetting(FINISHED_DAYS_KEY));
+}
+
+/** When practice data was last exported (epoch ms), for the backup reminder on the Done card. */
+const LAST_EXPORT_KEY = "last-export";
+
+export async function saveLastExport(epochMs: number): Promise<void> {
+  await putSetting(LAST_EXPORT_KEY, epochMs);
+}
+
+export async function getLastExport(): Promise<number | null> {
+  return parseLastExport(await getSetting(LAST_EXPORT_KEY));
 }

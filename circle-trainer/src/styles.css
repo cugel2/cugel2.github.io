@@ -673,3 +673,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .week-dot small { color: var(--muted); font-size: 10px; line-height: 1; }
 .week-dot.today small { color: var(--ink); font-weight: 600; }
 .day-done-sheet .week-dots { margin: -6px 0 18px; }
+.backup-note { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin: 0; color: var(--muted); font-size: 13px; }
+.backup-note[hidden] { display: none; }
+.backup-note .text-button { margin: 0; padding: 4px 2px; color: var(--ink); font-size: 13px; text-decoration: underline; }
+.day-done-sheet .backup-note { margin: -8px 0 18px; }
