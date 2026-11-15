@@ -140,6 +140,10 @@ PDF.js (`pdfjs-dist`, pinned) is loaded only on demand, using its legacy build b
 
 The last cell of the bottom bar shows the current session and today's total, e.g. `12:34 · 41 min today`, for logging by hand (for example in Toggl). Time is counted from timestamps, never from timer ticks (`src/core/timer.ts`): it accrues only while the page is visible and a stroke started or ended within the last minute (`IDLE_MS`), so reading feedback between strokes counts but walking away does not. A break of 15 minutes or more (`SESSION_BREAK_MS`) starts a new session. Days roll over at 4 am local time (`DAY_ROLLOVER_HOUR`), and time across the rollover is split between the two days. Per-day totals are kept in the settings store (`practice-time-by-day`), saved after every stroke, every 10 seconds while time is accruing, and when the page is hidden, and included in JSON exports as `practiceTimeByDay`. There is no network or Toggl integration. Delete all data removes strokes and trials but keeps the time totals.
 
+## Home Screen app height
+
+In the Home Screen app, iPadOS can keep the portrait height after rotating to landscape, so a layout sized with `height: 100%` runs off the screen. The app shell's height is therefore set from the window (`--app-height`, the smaller of `innerHeight` and the visual viewport's height) on resize, orientation change and page size changes, rechecked shortly after each and once a second as a backstop.
+
 ## Toolbar and Settings
 
 The toolbar holds only what is used while practising: the mode picker, New, Undo and Tips (Box only), Trophies and Settings. Everything set once lives in the **Settings** sheet: drawing hand, the reject-corrected-strokes option, ruler calibration, and buttons that open Diagnostics and Practice data (export or delete). Diagnostics also opens directly from `?diagnostics` or `#diagnostics`.

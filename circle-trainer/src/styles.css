@@ -37,7 +37,9 @@ button { -webkit-tap-highlight-color: transparent; }
   display: grid;
   grid-template-rows: var(--bar-height) minmax(0, 1fr) var(--hud-height);
   width: 100%;
-  height: 100%;
+  /* Set from the window's real height by main.ts: in the Home Screen app iPadOS can keep the
+     portrait height after rotating to landscape, so 100% alone left the layout too tall. */
+  height: var(--app-height, 100%);
   min-height: 0;
   padding-top: env(safe-area-inset-top);
   padding-right: env(safe-area-inset-right);
