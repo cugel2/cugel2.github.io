@@ -1,4 +1,5 @@
 import { normalizeTicks, parseQueueState, type DailyQueueState } from "./core/dailyQueue";
+import { parseCopyBudget, parseMarks, type DayMarks } from "./core/dailyFlow";
 import type { DailyTotals } from "./core/timer";
 import type { ExerciseType, Handedness, LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
 
@@ -253,4 +254,38 @@ export async function saveDailyQueue(state: DailyQueueState): Promise<void> {
 
 export async function getDailyQueue(): Promise<DailyQueueState | null> {
   return parseQueueState(await getSetting(DAILY_QUEUE_KEY));
+}
+
+/* ---------- Daily flow (drills, then a timed stretch of Copy) ---------- */
+
+const COPY_TIME_KEY = "copy-time-by-day";
+const COPY_BUDGET_KEY = "copy-budget-minutes";
+const DAY_MARKS_KEY = "daily-flow-marks";
+
+/** Active Copy milliseconds per practice day, kept like practice-time-by-day. */
+export async function saveCopyTime(totals: DailyTotals): Promise<void> {
+  await putSetting(COPY_TIME_KEY, totals);
+}
+
+export async function getCopyTime(): Promise<DailyTotals | null> {
+  const value = await getSetting(COPY_TIME_KEY);
+  if (!value || typeof value !== "object") return null;
+  return Object.fromEntries(Object.entries(value).filter(([key, ms]) => /^\d{4}-\d{2}-\d{2}$/.test(key) && typeof ms === "number" && Number.isFinite(ms) && ms >= 0));
+}
+
+/** Copy time per day in minutes; 0 is Off. */
+export async function saveCopyBudget(minutes: number): Promise<void> {
+  await putSetting(COPY_BUDGET_KEY, minutes);
+}
+
+export async function getCopyBudget(): Promise<number | null> {
+  return parseCopyBudget(await getSetting(COPY_BUDGET_KEY));
+}
+
+export async function saveDayMarks(marks: DayMarks): Promise<void> {
+  await putSetting(DAY_MARKS_KEY, marks);
+}
+
+export async function getDayMarks(): Promise<DayMarks | null> {
+  return parseMarks(await getSetting(DAY_MARKS_KEY));
 }

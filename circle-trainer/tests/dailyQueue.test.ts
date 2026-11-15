@@ -12,8 +12,12 @@ import {
   parseQueueState,
   queueMinutesLeft,
   queueRemaining,
+  interleave,
+  requeueForTicks,
   type DailyQueueState,
 } from "../src/core/dailyQueue";
+import { ALL_EXERCISE_TYPES } from "../src/core/scheduler";
+import { seededRandom } from "../src/core/random";
 import type { ExerciseType } from "../src/core/types";
 
 /** Local time, so the tests hold in any time zone. */
@@ -89,5 +93,60 @@ describe("daily queue", () => {
     expect(parseQueueState({ dayKey: "x", order: ["LINE"], position: 9 })?.position).toBe(1);
     expect(parseQueueState(null)).toBeNull();
     expect(normalizeTicks(["BOX", "LINE", "LINE", "MIXED_RANDOM"])).toEqual(["LINE", "BOX"]);
+  });
+
+  it("rebuilds today's queue from changed ticks until its first rep is done", () => {
+    const morning = buildDailyQueue("2026-11-14", ["LINE", "CIRCLE"]);
+    const changed = requeueForTicks(morning, ["LINE"], at(14, 9));
+    expect(changed.rebuilt).toBe(true);
+    expect(changed.queue.position).toBe(0);
+    expect(new Set(changed.queue.order)).toEqual(new Set<ExerciseType>(["LINE"]));
+    expect(changed.queue.order).toHaveLength(DAILY_COUNTS.LINE);
+
+    const started = advanceQueue(morning);
+    const kept = requeueForTicks(started, ["LINE"], at(14, 9));
+    expect(kept.rebuilt).toBe(false);
+    expect(kept.queue).toBe(started);
+
+    // An empty queue, a missing one, or yesterday's is always rebuilt.
+    expect(requeueForTicks(buildDailyQueue("2026-11-14", []), ["BOX"], at(14, 9)).queue.order).toHaveLength(DAILY_COUNTS.BOX);
+    expect(requeueForTicks(null, ["BOX"], at(14, 9)).rebuilt).toBe(true);
+    expect(requeueForTicks(drain(buildDailyQueue("2026-11-13", ["LINE"]), 5), ["BOX"], at(14, 9)).queue.dayKey).toBe("2026-11-14");
+  });
+
+  it("interleaves the day's reps: no mode twice in a row when the counts allow it", () => {
+    const longestRun = (order: readonly unknown[]) => {
+      let longest = 0;
+      let run = 0;
+      order.forEach((type, index) => { run = index > 0 && order[index - 1] === type ? run + 1 : 1; longest = Math.max(longest, run); });
+      return longest;
+    };
+    // Longest run the counts force: 40 lines against 24 circles cannot avoid pairs.
+    const tickSets: [ExerciseType[], number][] = [[[...DEFAULT_DAILY_TICKS], 1], [["CIRCLE", "ELLIPSE", "BOX"], 1], [[...ALL_EXERCISE_TYPES], 1], [["LINE", "CIRCLE"], 2]];
+    for (const [ticks, cap] of tickSets) {
+      for (let day = 1; day <= 28; day += 1) {
+        const queue = buildDailyQueue(`2026-02-${String(day).padStart(2, "0")}`, ticks);
+        expect(longestRun(queue.order)).toBe(cap);
+        for (const type of ticks) expect(queue.order.filter((each) => each === type)).toHaveLength(DAILY_COUNTS[type]);
+      }
+    }
+    // 40 lines against 34 others need only 5 pairs (40 - 34 - 1), and they are not bunched at the end.
+    for (let day = 1; day <= 28; day += 1) {
+      const order = buildDailyQueue(`2026-02-${String(day).padStart(2, "0")}`, ["LINE", "ELLIPSE", "BOX"]).order;
+      const repeats = order.flatMap((type, index) => (index > 0 && order[index - 1] === type ? [index] : []));
+      expect(longestRun(order)).toBe(2);
+      expect(repeats).toHaveLength(5);
+      expect(repeats[0]).toBeLessThan(order.length * 0.75);
+    }
+    // 40 lines and 10 boxes cannot avoid repeats: the lines come in runs of at most 4, one box between each.
+    for (let day = 1; day <= 28; day += 1) {
+      const order = buildDailyQueue(`2026-02-${String(day).padStart(2, "0")}`, ["LINE", "BOX"]).order;
+      expect(longestRun(order)).toBeLessThanOrEqual(4);
+      expect(order.filter((type, index) => index > 0 && order[index - 1] === type)).toHaveLength(29);
+      expect(order.filter((type) => type === "BOX")).toHaveLength(10);
+    }
+    // One mode alone is all repeats, in its fixed count.
+    expect(buildDailyQueue("2026-02-01", ["TAPER"]).order).toEqual(Array(DAILY_COUNTS.TAPER).fill("TAPER"));
+    expect(interleave(new Map([["A", 3], ["B", 0]]), seededRandom("x"))).toEqual(["A", "A", "A"]);
   });
 });

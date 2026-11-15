@@ -36,17 +36,23 @@ import {
   clearTrials,
   getCalibration,
   getCorrectionGateEnabled,
+  getCopyBudget,
+  getCopyTime,
   getDailyQueue,
   getDailyTicks,
+  getDayMarks,
   getHandedness,
   getPracticeTime,
   getPracticeMode,
   getStrokes,
   getTrials,
   saveCalibration,
+  saveCopyBudget,
+  saveCopyTime,
   saveCorrectionGateEnabled,
   saveDailyQueue,
   saveDailyTicks,
+  saveDayMarks,
   saveHandedness,
   savePracticeTime,
   savePracticeMode,
@@ -66,10 +72,24 @@ import {
   isQueueDone,
   queueMinutesLeft,
   queueRemaining,
+  requeueForTicks,
   type DailyQueueState,
 } from "./core/dailyQueue";
+import {
+  copyCardAtCheckpoint,
+  copyClockState,
+  copyLeftMs,
+  copyTimeText,
+  DEFAULT_COPY_BUDGET_MIN,
+  drillMs,
+  marksForToday,
+  todayCard,
+  type CopyCard,
+  type DayInput,
+  type DayMarks,
+} from "./core/dailyFlow";
 
-const APP_VERSION = "0.11.5";
+const APP_VERSION = "0.12.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -127,6 +147,13 @@ const doneTitle = requiredElement<HTMLElement>("#doneTitle");
 const doneDetail = requiredElement<HTMLElement>("#doneDetail");
 const doneNote = requiredElement<HTMLElement>("#doneNote");
 const doneSettingsButton = requiredElement<HTMLButtonElement>("#doneSettingsButton");
+const doneCopyButton = requiredElement<HTMLButtonElement>("#doneCopyButton");
+const doneFinishButton = requiredElement<HTMLButtonElement>("#doneFinishButton");
+const copyBudgetButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#copyBudgetSetting button[data-copy-budget]"));
+const dayDoneDialog = requiredElement<HTMLDialogElement>("#dayDoneDialog");
+const dayDoneTitle = requiredElement<HTMLElement>("#dayDoneTitle");
+const dayDoneDetail = requiredElement<HTMLElement>("#dayDoneDetail");
+const dayDoneTodayButton = requiredElement<HTMLButtonElement>("#dayDoneTodayButton");
 const dailyTicksList = requiredElement<HTMLElement>("#dailyTicks");
 const dailyEstimate = requiredElement<HTMLElement>("#dailyEstimate");
 const bestScore = requiredElement<HTMLElement>("#bestScore");
@@ -213,23 +240,37 @@ const copyView = createCopyView({
   pxPerMm: () => cssPxPerMm(),
   handedness: () => handedness,
   onActivity: (ended) => {
-    practiceClock.recordActivity(Date.now());
+    const now = Date.now();
+    practiceClock.recordActivity(now);
+    copyClock.recordActivity(now);
     if (ended) persistPracticeTime();
     updatePracticeTime();
   },
+  // Moving or zooming the reference is part of copying. Recording activity is only arithmetic, so it can run per move.
+  onGesture: () => {
+    const now = Date.now();
+    practiceClock.recordActivity(now);
+    copyClock.recordActivity(now);
+  },
+  onCheckpoint: () => copyCheckpoint(),
   showToast: (message) => showToast(message),
   setStatus: (text) => { statusText.textContent = text; },
 });
 
+/** Stores the practice day Copy was open on, so a reload reopens Copy that day but a new day opens on Today. */
 function rememberCopyActive(value: boolean): void {
   try {
-    if (value) localStorage.setItem(COPY_ACTIVE_KEY, "1");
+    if (value) localStorage.setItem(COPY_ACTIVE_KEY, dayKey(Date.now()));
     else localStorage.removeItem(COPY_ACTIVE_KEY);
   } catch { /* storage blocked: Copy just won't reopen by itself */ }
 }
 
-function readCopyActive(): boolean {
-  try { return localStorage.getItem(COPY_ACTIVE_KEY) === "1"; } catch { return false; }
+/** Copy was open when the page was last left. "today" when that was today (older versions stored "1"). */
+function readCopyActive(): "today" | "earlier" | null {
+  try {
+    const value = localStorage.getItem(COPY_ACTIVE_KEY);
+    return value === null ? null : value === dayKey(Date.now()) ? "today" : "earlier";
+  } catch { return null; }
 }
 
 function enterCopy(): void {
@@ -238,12 +279,16 @@ function enterCopy(): void {
   appShell.classList.add("copy-active");
   feedbackCard.hidden = true;
   copyView.show();
+  copyClock.setVisible(document.visibilityState === "visible", Date.now());
   updatePracticeTime();
   rememberCopyActive(true);
 }
 
 function leaveCopy(mode: PracticeMode): void {
   copyActive = false;
+  copyClock.setVisible(false, Date.now());
+  persistPracticeTime();
+  if (dayDoneDialog.open) dayDoneDialog.close();
   copyView.hide();
   appShell.classList.remove("copy-active");
   rememberCopyActive(false);
@@ -285,6 +330,10 @@ let savedStrokeCount = 0;
 let savedTrialCount = 0;
 let toastTimer: number | undefined;
 let practiceClock = new PracticeClock({}, document.visibilityState === "visible");
+/** Copy time only: runs while Copy is open and the page is visible, with the practice clock's idle rule. */
+let copyClock = new PracticeClock({}, false);
+let copyBudgetMin = DEFAULT_COPY_BUDGET_MIN;
+let dayMarks: DayMarks | null = null;
 let dailyTicks: ExerciseType[] = [...DEFAULT_DAILY_TICKS];
 let dailyQueue: DailyQueueState | null = null;
 let touchNoticeShown = false;
@@ -311,7 +360,7 @@ function getDeviceSnapshot(): DeviceSnapshot {
 function updatePracticeTime(): void {
   const now = Date.now();
   practiceTime.textContent = `${formatClock(practiceClock.sessionTotalMs(now))} · ${formatMinutes(practiceClock.todayTotalMs(now))} today`;
-  if (copyActive) copyView.setTime(practiceTime.textContent);
+  if (copyActive) copyView.setTime(copyTimeText(copyClockState(dayInput(now))) ?? practiceTime.textContent);
 }
 
 let lastSavedPracticeMs = -1;
@@ -320,6 +369,7 @@ function persistPracticeTime(): void {
   const now = Date.now();
   lastSavedPracticeMs = practiceClock.todayTotalMs(now);
   void savePracticeTime(practiceClock.snapshot(now)).catch(() => undefined);
+  void saveCopyTime(copyClock.snapshot(now)).catch(() => undefined);
 }
 
 function showToast(message: string): void {
@@ -624,18 +674,96 @@ function showDoneCard(queue: DailyQueueState): void {
   undoStrokeButton.hidden = true;
   boxTipsButton.hidden = true;
   boxTipsPanel.hidden = true;
-  const empty = queue.order.length === 0;
-  doneTitle.textContent = empty ? "Nothing ticked for Today" : "Done for today ✓";
-  doneDetail.textContent = empty
-    ? "Choose which modes make up the daily queue."
-    : `${queue.order.length} reps · ${formatMinutes(practiceClock.todayTotalMs(Date.now()))} practised today`;
-  doneNote.textContent = empty
-    ? "Today's queue is built from the ticked modes."
-    : "Pick any mode above for free practice. It doesn't count toward the queue; a new one starts at 4 am.";
-  doneSettingsButton.hidden = !empty;
+  const now = Date.now();
+  const day = dayInput(now, queue);
+  const card = todayCard(day) ?? "DONE";
+  const totalMs = practiceClock.todayTotalMs(now);
+  if (card === "NOTHING_TICKED") {
+    doneTitle.textContent = "Nothing ticked for Today";
+    doneDetail.textContent = "Choose which modes make up the daily queue.";
+    doneNote.textContent = "Today's queue is built from the ticked modes.";
+  } else if (card === "HANDOFF") {
+    doneTitle.textContent = `Drills done · ${formatMinutes(drillMs(totalMs, day.copyMs))}`;
+    doneDetail.textContent = `${queue.order.length} reps. Next, a stretch of copying.`;
+    doneNote.textContent = "Copy carries on where you left it.";
+    doneCopyButton.textContent = `Start copy · ${Math.ceil(copyLeftMs(day) / 60_000)} min`;
+  } else {
+    doneTitle.textContent = `Done for today · ${formatMinutes(totalMs)}`;
+    doneDetail.textContent = day.copyMs >= 60_000
+      ? `${queue.order.length} reps · ${formatMinutes(drillMs(totalMs, day.copyMs))} drills · ${formatMinutes(day.copyMs)} copying`
+      : `${queue.order.length} reps`;
+    doneNote.textContent = "Pick any mode above for free practice. It doesn't count toward the queue; a new one starts at 4 am.";
+  }
+  doneSettingsButton.hidden = card !== "NOTHING_TICKED";
+  doneCopyButton.hidden = card !== "HANDOFF";
+  doneFinishButton.hidden = card !== "HANDOFF";
   doneCard.hidden = false;
-  statusText.textContent = empty ? "Today · nothing ticked" : "Today · done ✓";
+  statusText.textContent = card === "NOTHING_TICKED" ? "Today · nothing ticked" : card === "HANDOFF" ? "Today · drills done ✓" : "Today · done ✓";
   redrawAll();
+}
+
+/* ---------- Daily flow: drills, then a timed stretch of Copy ---------- */
+
+/** Everything the day's cards and Copy's countdown are worked out from. */
+function dayInput(nowMs: number, queue: DailyQueueState = todayQueue()): DayInput {
+  return {
+    drillReps: queue.order.length,
+    drillRepsLeft: queueRemaining(queue),
+    copyMs: copyClock.todayTotalMs(nowMs),
+    copyBudgetMin,
+    marks: marksForToday(dayMarks, nowMs),
+  };
+}
+
+function setDayMark(mark: "handoffDeclined" | "doneCardShown"): void {
+  dayMarks = { ...marksForToday(dayMarks, Date.now()), [mark]: true };
+  void saveDayMarks(dayMarks).catch(() => undefined);
+}
+
+/** Compare, Save or New copy in Copy: once Copy time is up, say so, once a day. */
+function copyCheckpoint(): void {
+  if (!copyActive || dayDoneDialog.open) return;
+  const card = copyCardAtCheckpoint(dayInput(Date.now()));
+  if (!card) return;
+  setDayMark("doneCardShown");
+  showDayDoneDialog(card);
+  updatePracticeTime();
+}
+
+function showDayDoneDialog(card: CopyCard): void {
+  const now = Date.now();
+  const queue = todayQueue();
+  const copyMs = copyClock.todayTotalMs(now);
+  if (card === "DAY_DONE") {
+    dayDoneTitle.textContent = `Done for today · ${formatMinutes(practiceClock.todayTotalMs(now))}`;
+    dayDoneDetail.textContent = `${formatMinutes(copyMs)} copying today. Finish this one if you like; Copy works as usual from here.`;
+  } else {
+    dayDoneTitle.textContent = `Copy time's up · ${formatMinutes(copyMs)}`;
+    dayDoneDetail.textContent = `Today's drills aren't done yet: ${queueRemaining(queue)} left · about ${queueMinutesLeft(queue)} min.`;
+  }
+  dayDoneTodayButton.hidden = card !== "DRILLS_LEFT";
+  dayDoneDialog.dataset.hand = handedness === "LEFT" ? "left" : "right";
+  dayDoneDialog.showModal();
+}
+
+function goToToday(): void {
+  if (dayDoneDialog.open) dayDoneDialog.close();
+  modeSelect.value = "TODAY";
+  if (copyActive) leaveCopy("TODAY");
+  else resetSession("TODAY");
+  void savePracticeMode("TODAY").catch(() => showToast("Practice mode could not be saved"));
+}
+
+function renderCopyBudget(): void {
+  for (const button of copyBudgetButtons) button.setAttribute("aria-pressed", String(Number(button.dataset.copyBudget) === copyBudgetMin));
+}
+
+function setCopyBudget(minutes: number): void {
+  copyBudgetMin = minutes;
+  renderCopyBudget();
+  void saveCopyBudget(minutes).catch(() => showToast("Copy time setting could not be saved"));
+  if (!copyActive && !doneCard.hidden) showDoneCard(todayQueue());
+  updatePracticeTime();
 }
 
 /** Every saved attempt moves the schedule on: the queue in Today, the scheduler otherwise. */
@@ -682,13 +810,18 @@ async function setDailyTick(type: ExerciseType, ticked: boolean): Promise<void> 
   dailyTicks = ALL_EXERCISE_TYPES.filter((each) => (each === type ? ticked : dailyTicks.includes(each)));
   renderDailyTicks();
   void saveDailyTicks(dailyTicks).catch(() => showToast("Today's ticks could not be saved"));
-  const wasEmpty = !dailyQueue || dailyQueue.order.length === 0;
-  if (wasEmpty) {
-    todayQueue();
-    if (selectedMode === "TODAY" && trialState !== "DRAWING") beginNewTrial();
-  } else {
-    showToast("Applies from tomorrow's queue");
+  // A Today rep in progress (a stroke, or a box partly drawn) counts as started: keep it.
+  const midTrial = selectedMode === "TODAY" && !copyActive
+    && (trialState === "DRAWING" || trialState === "PROCESSING" || (trialState === "READY" && boxStrokes.length > 0));
+  const { queue, rebuilt } = midTrial ? { queue: todayQueue(), rebuilt: false } : requeueForTicks(dailyQueue, dailyTicks, Date.now());
+  if (!rebuilt) {
+    showToast("Today's queue has started: applies from tomorrow");
+    return;
   }
+  dailyQueue = queue;
+  void saveDailyQueue(queue).catch(() => undefined);
+  if (selectedMode === "TODAY" && !copyActive) beginNewTrial();
+  showToast(queue.order.length === 0 ? "Today's queue is empty" : `Today's queue updated · ${queue.order.length} reps`);
 }
 
 /** Device-local convenience only, so plain localStorage (guarded) rather than IndexedDB. */
@@ -1246,6 +1379,7 @@ async function exportAllData(): Promise<void> {
       schemaVersion: SCHEMA_VERSION, appVersion: APP_VERSION, exportedAt: Date.now(), calibration,
       selectedMode, correctionGateEnabled, device: getDeviceSnapshot(), strokes, trials,
       practiceTimeByDay: practiceClock.snapshot(Date.now()),
+      copyTimeByDay: copyClock.snapshot(Date.now()),
     };
     downloadJson(`circle-trainer-${dateStamp()}.json`, bundle);
     showToast("JSON export created");
@@ -1348,7 +1482,7 @@ function wireControls(): void {
     else resetSession(mode);
     void savePracticeMode(mode).catch(() => showToast("Practice mode could not be saved"));
   });
-  requiredElement<HTMLButtonElement>("#settingsButton").addEventListener("click", () => { configureRuler(); renderDailyTicks(); calibrationDialog.showModal(); });
+  requiredElement<HTMLButtonElement>("#settingsButton").addEventListener("click", () => { configureRuler(); renderDailyTicks(); renderCopyBudget(); calibrationDialog.showModal(); });
   // Diagnostics and practice data open from Settings, replacing it rather than stacking on top.
   requiredElement<HTMLButtonElement>("#diagnosticsButton").addEventListener("click", () => { calibrationDialog.close(); renderDiagnostics(); diagnosticsDialog.showModal(); });
   requiredElement<HTMLButtonElement>("#dataButton").addEventListener("click", () => { calibrationDialog.close(); void showDataDialog(); });
@@ -1378,12 +1512,17 @@ function wireControls(): void {
   document.addEventListener("visibilitychange", () => {
     const visible = document.visibilityState === "visible";
     practiceClock.setVisible(visible, Date.now());
+    copyClock.setVisible(visible && copyActive, Date.now());
     if (visible) checkDayRollover();
     if (!visible) persistPracticeTime();
     updatePracticeTime();
   });
   window.addEventListener("pagehide", persistPracticeTime);
-  doneSettingsButton.addEventListener("click", () => { configureRuler(); renderDailyTicks(); calibrationDialog.showModal(); });
+  doneSettingsButton.addEventListener("click", () => { configureRuler(); renderDailyTicks(); renderCopyBudget(); calibrationDialog.showModal(); });
+  doneCopyButton.addEventListener("click", () => { if (trialState !== "DRAWING") enterCopy(); });
+  doneFinishButton.addEventListener("click", () => { setDayMark("handoffDeclined"); showDoneCard(todayQueue()); });
+  dayDoneTodayButton.addEventListener("click", goToToday);
+  for (const button of copyBudgetButtons) button.addEventListener("click", () => setCopyBudget(Number(button.dataset.copyBudget)));
   window.setInterval(() => { if (document.visibilityState === "visible") updatePracticeTime(); }, 1000);
   // Saving on pagehide is not reliable (the write may not finish), so also save while time is accruing.
   window.setInterval(() => { if (practiceClock.todayTotalMs(Date.now()) !== lastSavedPracticeMs) persistPracticeTime(); }, 10_000);
@@ -1425,9 +1564,13 @@ async function initialize(): Promise<void> {
   wireControls();
   resizeCanvas();
   try {
-    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials] = await Promise.all([
+    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials, storedCopyTime, storedCopyBudget, storedMarks] = await Promise.all([
       getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getPracticeTime(), getDailyTicks(), getDailyQueue(), getStrokes(), getTrials(),
+      getCopyTime(), getCopyBudget(), getDayMarks(),
     ]);
+    copyClock = new PracticeClock(storedCopyTime ?? {}, false);
+    copyBudgetMin = storedCopyBudget ?? DEFAULT_COPY_BUDGET_MIN;
+    dayMarks = storedMarks;
     dailyTicks = storedTicks ?? [...DEFAULT_DAILY_TICKS];
     dailyQueue = storedQueue;
     practiceClock = new PracticeClock(storedPracticeTime ?? {}, document.visibilityState === "visible");
@@ -1451,7 +1594,11 @@ async function initialize(): Promise<void> {
   applyHandedness();
   configureRuler();
   resetSession(selectedMode);
-  if (readCopyActive()) enterCopy();
+  // Copy reopens after a reload the same day; a new day opens on Today while it has reps left.
+  const copyWasOpen = readCopyActive();
+  const repsLeft = dailyQueue !== null && queueRemaining(dailyQueue) > 0;
+  if (copyWasOpen === "today" || (copyWasOpen === "earlier" && !repsLeft)) enterCopy();
+  else if (copyWasOpen === "earlier") rememberCopyActive(false);
   updatePracticeTime();
   if (new URLSearchParams(window.location.search).has("diagnostics") || window.location.hash === "#diagnostics") {
     renderDiagnostics();

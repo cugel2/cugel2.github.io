@@ -110,6 +110,8 @@
           <p id="doneDetail">—</p>
           <span id="doneNote">Pick any mode above for free practice. It doesn't count toward the queue.</span>
           <button type="button" class="secondary-button" id="doneSettingsButton" hidden>Choose modes in Settings</button>
+          <button type="button" class="primary-button done-copy-button" id="doneCopyButton" hidden>Start copy</button>
+          <button type="button" class="text-button" id="doneFinishButton" hidden>Finish for today</button>
         </section>
         <aside class="feedback-card" id="feedbackCard" aria-live="polite" hidden>
           <p class="feedback-result" id="feedbackResult">Committed stroke</p>
@@ -208,9 +210,20 @@
         </div>
         <p class="setting-note">When on, strokes with substantial correction or backtracking are not scored.</p>
         <h3 class="setting-heading">Today's queue</h3>
-        <p class="setting-note">Ticked modes make up each day's queue, served shuffled. Changes apply from tomorrow's queue (or today's, if nothing was ticked when it was made).</p>
+        <p class="setting-note">Ticked modes make up each day's queue, interleaved so the same mode rarely comes twice in a row. Changes apply to today's queue until its first rep is done, and from tomorrow after that.</p>
         <div class="daily-ticks" id="dailyTicks"></div>
         <p class="setting-note" id="dailyEstimate">—</p>
+        <div class="setting-row copy-budget-setting" role="group" aria-labelledby="copyBudgetLabel">
+          <span id="copyBudgetLabel">Copy time per day</span>
+          <div class="segmented" id="copyBudgetSetting">
+            <button type="button" data-copy-budget="0" aria-pressed="false">Off</button>
+            <button type="button" data-copy-budget="15" aria-pressed="false">15</button>
+            <button type="button" data-copy-budget="30" aria-pressed="true">30</button>
+            <button type="button" data-copy-budget="45" aria-pressed="false">45</button>
+            <button type="button" data-copy-budget="60" aria-pressed="false">60</button>
+          </div>
+        </div>
+        <p class="setting-note">Minutes of Copy after the drills. Any Copy time today counts; Copy counts down, and says when you're done.</p>
         <h3 class="setting-heading">Ruler calibration</h3>
         <p class="sheet-intro">Place a physical ruler against the screen. Adjust the line until it measures exactly 100 mm.</p>
         <div class="ruler-workspace">
@@ -313,6 +326,18 @@
           <img id="copySavePreviewImage" alt="The picture to save" />
           <figcaption>Press and hold the picture, then choose “Save to Photos”. <a id="copySaveDownloadLink" href="#">Download it instead</a></figcaption>
         </figure>
+      </form>
+    </dialog>
+
+    <dialog id="dayDoneDialog" class="sheet day-done-sheet" data-hand="left">
+      <form method="dialog">
+        <p class="eyebrow">Today</p>
+        <h2 id="dayDoneTitle">Done for today</h2>
+        <p class="sheet-intro" id="dayDoneDetail">—</p>
+        <div class="day-done-actions">
+          <button type="button" class="primary-button" id="dayDoneTodayButton" hidden>Go to Today</button>
+          <button class="secondary-button" value="close" id="dayDoneKeepButton">Keep going</button>
+        </div>
       </form>
     </dialog>
 

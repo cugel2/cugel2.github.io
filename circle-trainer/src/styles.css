@@ -640,3 +640,18 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* Daily flow: the handoff to Copy on Today's card, and Copy's end-of-time card. */
+.done-card .done-copy-button { min-width: 200px; margin-top: 12px; font-size: 16px; }
+.done-card .text-button { margin-top: 0; color: var(--muted); font-size: 13px; }
+.copy-budget-setting { flex-wrap: wrap; }
+.copy-budget-setting .segmented button { min-width: 48px; }
+/* Over the reference pane, away from the drawing hand (the drawing stays in view). */
+.day-done-sheet { width: min(380px, calc(100% - 32px)); text-align: center; }
+.day-done-sheet[data-hand="left"] { margin-right: max(16px, calc(25% - 190px)); }
+.day-done-sheet[data-hand="right"] { margin-left: max(16px, calc(25% - 190px)); }
+.day-done-sheet .eyebrow { margin: 0; }
+.day-done-sheet h2 { margin: 6px 0 0; font-size: 24px; font-weight: 500; letter-spacing: -0.02em; }
+.day-done-sheet .sheet-intro { margin: 10px 0 20px; }
+.day-done-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.day-done-actions [hidden] { display: none; }

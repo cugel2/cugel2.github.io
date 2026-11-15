@@ -304,4 +304,6 @@ export interface ExportBundle {
   trials: TrialRecord[];
   /** Practice milliseconds per practice day ("YYYY-MM-DD", rolling over at 4 am). Added in 0.7.0. */
   practiceTimeByDay?: Record<string, number>;
+  /** Active Copy milliseconds per practice day (0.12.0+). */
+  copyTimeByDay?: Record<string, number>;
 }

@@ -67,6 +67,10 @@ export interface CopyServices {
   handedness(): Handedness;
   /** A stroke started (ended = false) or ended (true): counts toward practice time. */
   onActivity(ended: boolean): void;
+  /** A finger moved or zoomed the reference: counts toward practice time like a stroke. Called often; keep it cheap. */
+  onGesture(): void;
+  /** Compare was turned on, a new copy started, or the Save sheet closed: a natural place to say time is up. */
+  onCheckpoint(): void;
   showToast(message: string): void;
   setStatus(text: string): void;
 }
@@ -814,6 +818,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
 
   function moveReference(from: Point, to: Point, ratio: number): void {
     if (!session?.view || !layout) return;
+    services.onGesture();
     update(setView(session, moveView(session.view, layout, frameSize(), paneToFrame(from), paneToFrame(to), ratio)));
   }
 
@@ -855,6 +860,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     const point = localPoint(event, elements.referenceCanvas);
     if (event.ctrlKey || event.metaKey) {
       // Trackpad pinches arrive as wheel events with ctrlKey; ⌘ or Ctrl + wheel zooms with a mouse.
+      services.onGesture();
       const ratio = Math.exp(-event.deltaY * (event.ctrlKey && Math.abs(event.deltaY) < 50 ? 0.01 : 0.0015));
       update(setView(session, zoomAbout(session.view, layout, frameSize(), paneToFrame(point), ratio)));
     } else {
@@ -948,11 +954,14 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     session = newCopy(session, naturalAspect());
     measure();
     update(session, { rebake: true });
+    services.onCheckpoint();
   }
 
   function toggleCompare(): void {
     if (!session) return;
+    const turningOn = !session.compare;
     update(setCompare(session, session.compare ? null : "BOTH"), { save: false });
+    if (turningOn) services.onCheckpoint();
   }
 
   // ----- Save to Photos -----
@@ -1110,7 +1119,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   elements.saveDrawingButton.addEventListener("click", () => shareExport("drawing"));
   elements.saveSideBySideButton.addEventListener("click", () => shareExport("sideBySide"));
   elements.saveOverlayButton.addEventListener("click", () => shareExport("overlay"));
-  elements.saveDialog.addEventListener("close", hidePreview);
+  elements.saveDialog.addEventListener("close", () => { hidePreview(); services.onCheckpoint(); });
   elements.libraryButton.addEventListener("click", openLibrary);
   elements.memorySelect.addEventListener("change", () => {
     if (!session) return;
