@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  startupMode,
   copyCardAtCheckpoint,
   copyClockState,
   copyLeftMs,
@@ -140,5 +141,24 @@ describe("daily flow", () => {
     expect(parseMarks({ dayKey: DAY, doneCardShown: "yes" })).toEqual(emptyMarks(DAY));
     expect(parseMarks(null)).toBeNull();
     expect(parseMarks({ handoffDeclined: true })).toBeNull();
+  });
+});
+
+describe("startupMode", () => {
+  const today = "2026-11-14";
+  it("opens on Today while reps are left and no free mode was picked today", () => {
+    expect(startupMode("BOX", null, today, true)).toBe("TODAY");
+    expect(startupMode("BOX", "2026-11-13", today, true)).toBe("TODAY");
+  });
+  it("keeps a free mode picked earlier the same day across a reload", () => {
+    expect(startupMode("BOX", today, today, true)).toBe("BOX");
+    expect(startupMode("LINE", today, today, true)).toBe("LINE");
+  });
+  it("opens on the stored mode once the queue is done", () => {
+    expect(startupMode("BOX", "2026-11-13", today, false)).toBe("BOX");
+    expect(startupMode("TODAY", null, today, false)).toBe("TODAY");
+  });
+  it("stays on Today when Today was the last mode", () => {
+    expect(startupMode("TODAY", today, today, true)).toBe("TODAY");
   });
 });

@@ -88,9 +88,10 @@ import {
   type CopyCard,
   type DayInput,
   type DayMarks,
+  startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.13.1";
+const APP_VERSION = "0.13.2";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -197,6 +198,16 @@ const appShell = requiredElement<HTMLElement>(".app-shell");
 /** Copy mode is not a practice mode: no target, score or trial. This flag sits beside selectedMode. */
 let copyActive = false;
 const COPY_ACTIVE_KEY = "circle-trainer:copy-active";
+/** Practice day a mode was last picked from the menu, so a same-day reload keeps a free mode instead of jumping to Today. */
+const MODE_DAY_KEY = "circle-trainer:mode-day";
+
+function rememberModeDay(): void {
+  try { localStorage.setItem(MODE_DAY_KEY, dayKey(Date.now())); } catch { /* storage blocked: reloads open on Today */ }
+}
+
+function readModeDay(): string | null {
+  try { return localStorage.getItem(MODE_DAY_KEY); } catch { return null; }
+}
 const copyView = createCopyView({
   stage: requiredElement<HTMLElement>("#copyStage"),
   referencePane: requiredElement<HTMLElement>("#copyReferencePane"),
@@ -1527,6 +1538,7 @@ function wireControls(): void {
     }
     if (copyActive) leaveCopy(mode);
     else resetSession(mode);
+    rememberModeDay();
     void savePracticeMode(mode).catch(() => showToast("Practice mode could not be saved"));
   });
   requiredElement<HTMLButtonElement>("#settingsButton").addEventListener("click", () => { configureRuler(); renderDailyTicks(); renderCopyBudget(); calibrationDialog.showModal(); });
@@ -1625,9 +1637,9 @@ async function initialize(): Promise<void> {
     handedness = storedHandedness ?? DEFAULT_HANDEDNESS;
     correctionGateEnabled = storedCorrectionGate ?? false;
     selectedMode = storedMode && VALID_MODES.includes(storedMode) ? storedMode : "LINE";
-    // Open on Today while today's queue has reps left.
+    // Open on Today while today's queue has reps left, unless a free mode was picked earlier today.
     const queue = todayQueue();
-    if (queue.order.length > 0 && !isQueueDone(queue)) selectedMode = "TODAY";
+    selectedMode = startupMode(selectedMode, readModeDay(), dayKey(Date.now()), queue.order.length > 0 && !isQueueDone(queue));
     savedStrokeCount = strokes.length;
     savedTrialCount = trials.length;
     for (const trial of trials) {

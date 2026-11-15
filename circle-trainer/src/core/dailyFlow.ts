@@ -1,4 +1,5 @@
 import { dayKey, formatClock, formatMinutes } from "./timer";
+import type { PracticeMode } from "./types";
 
 /**
  * The daily flow: drills (Today's queue) as the warm-up, then a timed stretch of Copy, then "done for today".
@@ -119,4 +120,15 @@ export function copyCardAtCheckpoint(input: DayInput): CopyCard | null {
 /** Drill time today: all practice time less Copy time (both clocks count Copy activity). */
 export function drillMs(totalMs: number, copyMs: number): number {
   return Math.max(0, totalMs - copyMs);
+}
+
+/**
+ * The mode the page opens on. Today while its queue has reps left, unless a free mode was picked
+ * from the menu earlier the same practice day: then a reload (Safari dropping the tab, a dev-server
+ * reload) keeps you in it. A new day, or a mode picked on an earlier day, opens on Today.
+ */
+export function startupMode(stored: PracticeMode, storedModeDay: string | null, today: string, repsLeft: boolean): PracticeMode {
+  if (!repsLeft) return stored;
+  if (stored !== "TODAY" && storedModeDay === today) return stored;
+  return "TODAY";
 }
