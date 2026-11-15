@@ -176,10 +176,14 @@
       </section>
 
       <footer class="hud" aria-label="Current session information">
-        <div><span>Reps</span><strong id="repCount">0</strong></div>
-        <div><span>Streak</span><strong id="streakCount">0</strong></div>
-        <div><span>Last</span><strong id="lastScore">—</strong></div>
-        <div><span>Best</span><strong id="bestScore">—</strong></div>
+        <div class="hud-stat"><span>Reps</span><strong id="repCount">0</strong></div>
+        <div class="hud-stat"><span>Streak</span><strong id="streakCount">0</strong></div>
+        <div class="hud-stat"><span>Last</span><strong id="lastScore">—</strong></div>
+        <div class="hud-stat"><span>Best</span><strong id="bestScore">—</strong></div>
+        <div class="hud-today" hidden>
+          <span class="today-progress" role="progressbar" aria-label="Today's reps done" aria-valuemin="0" id="todayProgress"><span class="today-progress-fill" id="todayProgressFill"></span></span>
+          <strong id="todayLeft">—</strong>
+        </div>
         <div class="hud-time"><span>Time</span><strong id="practiceTime" title="This session · today's total (counts while drawing; pauses after a minute without a stroke or when the app is in the background)">0:00 · 0 min today</strong></div>
       </footer>
     </main>

@@ -152,6 +152,15 @@ export function isQueueDone(state: DailyQueueState): boolean {
   return state.order.length > 0 && state.position >= state.order.length;
 }
 
+/** What Today's bottom bar shows: the share of the day's reps done and a short label. */
+export function queueProgress(state: DailyQueueState): { done: number; total: number; fraction: number; label: string } {
+  const total = state.order.length;
+  const done = Math.min(total, Math.max(0, state.position));
+  const left = total - done;
+  const label = total === 0 ? "No reps today" : left === 0 ? "All done" : `${left} left`;
+  return { done, total, fraction: total === 0 ? 0 : done / total, label };
+}
+
 /** Whole minutes left, rounded up; 0 when done. */
 export function queueMinutesLeft(state: DailyQueueState): number {
   const seconds = state.order.slice(state.position).reduce((sum, type) => sum + SECONDS_PER_REP[type], 0);

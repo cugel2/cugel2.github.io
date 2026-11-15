@@ -72,6 +72,7 @@ import {
   ensureTodayQueue,
   isQueueDone,
   queueMinutesLeft,
+  queueProgress,
   queueRemaining,
   requeueForTicks,
   type DailyQueueState,
@@ -91,7 +92,7 @@ import {
   startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.13.3";
+const APP_VERSION = "0.14.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -175,6 +176,11 @@ const toast = requiredElement<HTMLElement>("#toast");
 const calibrationDialog = requiredElement<HTMLDialogElement>("#calibrationDialog");
 const handButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".hand-setting button[data-hand]"));
 const drawingStage = requiredElement<HTMLElement>(".drawing-stage");
+const hud = requiredElement<HTMLElement>(".hud");
+const todayHud = requiredElement<HTMLElement>(".hud-today");
+const todayProgress = requiredElement<HTMLElement>("#todayProgress");
+const todayProgressFill = requiredElement<HTMLElement>("#todayProgressFill");
+const todayLeft = requiredElement<HTMLElement>("#todayLeft");
 const rulerLine = requiredElement<HTMLElement>("#rulerLine");
 const rulerSlider = requiredElement<HTMLInputElement>("#rulerSlider");
 const rulerOutput = requiredElement<HTMLOutputElement>("#rulerOutput");
@@ -684,6 +690,7 @@ function todayStatusText(queue: DailyQueueState): string {
 
 /** Shown instead of a target when today's queue is finished or nothing is ticked. */
 function showDoneCard(queue: DailyQueueState): void {
+  updateTodayHud();
   target = null;
   trialState = "PREPARING";
   feedbackCard.hidden = true;
@@ -791,6 +798,7 @@ function advanceSchedule(): void {
   }
   dailyQueue = advanceQueue(todayQueue());
   void saveDailyQueue(dailyQueue).catch(() => showToast("Today's progress could not be saved"));
+  updateTodayHud();
 }
 
 function scheduleContext() {
@@ -911,6 +919,20 @@ function statusForCurrentTrial(): string {
 function updateBestHud(): void {
   const best = bestByExercise[activeExercise];
   bestScore.textContent = best === undefined ? "—" : String(best);
+  updateTodayHud();
+}
+
+/** In Today the bottom bar shows the day's progress instead of the per-session stats; free modes keep the stats. */
+function updateTodayHud(): void {
+  const inToday = selectedMode === "TODAY" && dailyQueue !== null;
+  hud.classList.toggle("today", inToday);
+  todayHud.hidden = !inToday;
+  if (!inToday || !dailyQueue) return;
+  const progress = queueProgress(dailyQueue);
+  todayProgressFill.style.width = `${(progress.fraction * 100).toFixed(1)}%`;
+  todayProgress.setAttribute("aria-valuemax", String(progress.total));
+  todayProgress.setAttribute("aria-valuenow", String(progress.done));
+  todayLeft.textContent = progress.label;
 }
 
 /** Overlays (feedback card, tips) sit on the side away from the drawing hand; Box layout reads the same setting. */

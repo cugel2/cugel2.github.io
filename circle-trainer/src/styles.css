@@ -329,6 +329,14 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 
 .hud div:last-child { border-right: 0; }
+/* Today: a thin progress bar and "12 left" in place of the per-session stats (which mix modes). */
+.hud.today .hud-stat { display: none; }
+.hud .hud-today[hidden] { display: none; }
+.hud.today .hud-today { grid-column: span 4; gap: 16px; }
+.today-progress { flex: 1; height: 4px; overflow: hidden; border-radius: 2px; background: var(--line); }
+.today-progress-fill { display: block; width: 0; height: 100%; border-radius: 2px; background: var(--ink); transition: width 0.3s ease; }
+/* Narrow screens hide the hud labels (.hud span); the bar is a span too, so keep it shown. */
+.hud .today-progress, .hud .today-progress-fill { display: block; }
 .hud span { overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .hud strong { font-size: 13px; font-variant-numeric: tabular-nums; }
 

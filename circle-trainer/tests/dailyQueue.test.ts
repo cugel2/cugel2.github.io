@@ -11,6 +11,7 @@ import {
   normalizeTicks,
   parseQueueState,
   queueMinutesLeft,
+  queueProgress,
   queueRemaining,
   interleave,
   requeueForTicks,
@@ -148,5 +149,21 @@ describe("daily queue", () => {
     // One mode alone is all repeats, in its fixed count.
     expect(buildDailyQueue("2026-02-01", ["TAPER"]).order).toEqual(Array(DAILY_COUNTS.TAPER).fill("TAPER"));
     expect(interleave(new Map([["A", 3], ["B", 0]]), seededRandom("x"))).toEqual(["A", "A", "A"]);
+  });
+});
+
+describe("queueProgress", () => {
+  const order = ["LINE", "BOX", "LINE", "CIRCLE"] as const;
+  const state = (position: number) => ({ dayKey: "2026-11-14", order: [...order], position });
+  it("counts reps left and the share done", () => {
+    expect(queueProgress(state(0))).toEqual({ done: 0, total: 4, fraction: 0, label: "4 left" });
+    expect(queueProgress(state(3))).toEqual({ done: 3, total: 4, fraction: 0.75, label: "1 left" });
+  });
+  it("is full and says so when the queue is done", () => {
+    expect(queueProgress(state(4))).toEqual({ done: 4, total: 4, fraction: 1, label: "All done" });
+    expect(queueProgress(state(9)).fraction).toBe(1);
+  });
+  it("handles an empty queue (no modes ticked)", () => {
+    expect(queueProgress({ dayKey: "2026-11-14", order: [], position: 0 })).toEqual({ done: 0, total: 0, fraction: 0, label: "No reps today" });
   });
 });
