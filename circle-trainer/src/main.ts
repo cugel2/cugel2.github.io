@@ -42,6 +42,7 @@ import {
   getDailyQueue,
   getDailyTicks,
   getDayMarks,
+  getFinishedDays,
   getHandedness,
   getPracticeTime,
   getPracticeMode,
@@ -54,6 +55,7 @@ import {
   saveDailyQueue,
   saveDailyTicks,
   saveDayMarks,
+  saveFinishedDays,
   saveHandedness,
   savePracticeTime,
   savePracticeMode,
@@ -79,7 +81,10 @@ import {
 } from "./core/dailyQueue";
 import {
   copyCardAtCheckpoint,
+  addFinishedDay,
   copyClockState,
+  dayFinished,
+  lastSevenDays,
   copyLeftMs,
   copyTimeText,
   DEFAULT_COPY_BUDGET_MIN,
@@ -92,7 +97,7 @@ import {
   startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.14.0";
+const APP_VERSION = "0.14.1";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -149,6 +154,7 @@ const doneCard = requiredElement<HTMLElement>("#doneCard");
 const doneTitle = requiredElement<HTMLElement>("#doneTitle");
 const doneDetail = requiredElement<HTMLElement>("#doneDetail");
 const doneNote = requiredElement<HTMLElement>("#doneNote");
+const doneWeekDots = requiredElement<HTMLElement>("#doneWeekDots");
 const doneSettingsButton = requiredElement<HTMLButtonElement>("#doneSettingsButton");
 const doneCopyButton = requiredElement<HTMLButtonElement>("#doneCopyButton");
 const doneFinishButton = requiredElement<HTMLButtonElement>("#doneFinishButton");
@@ -156,6 +162,7 @@ const copyBudgetButtons = Array.from(document.querySelectorAll<HTMLButtonElement
 const dayDoneDialog = requiredElement<HTMLDialogElement>("#dayDoneDialog");
 const dayDoneTitle = requiredElement<HTMLElement>("#dayDoneTitle");
 const dayDoneDetail = requiredElement<HTMLElement>("#dayDoneDetail");
+const dayDoneWeekDots = requiredElement<HTMLElement>("#dayDoneWeekDots");
 const dayDoneTodayButton = requiredElement<HTMLButtonElement>("#dayDoneTodayButton");
 const dailyTicksList = requiredElement<HTMLElement>("#dailyTicks");
 const dailyEstimate = requiredElement<HTMLElement>("#dailyEstimate");
@@ -357,6 +364,10 @@ let practiceClock = new PracticeClock({}, document.visibilityState === "visible"
 let copyClock = new PracticeClock({}, false);
 let copyBudgetMin = DEFAULT_COPY_BUDGET_MIN;
 let dayMarks: DayMarks | null = null;
+/** Days whose flow was finished (sorted day keys), shown as the seven-dot row on the Done cards. */
+let finishedDays: string[] = [];
+/** Set once stored settings have loaded, so the 1 s check cannot overwrite the stored finished days with an empty list. */
+let finishedDaysLoaded = false;
 let dailyTicks: ExerciseType[] = [...DEFAULT_DAILY_TICKS];
 let dailyQueue: DailyQueueState | null = null;
 let touchNoticeShown = false;
@@ -718,6 +729,8 @@ function showDoneCard(queue: DailyQueueState): void {
       : `${queue.order.length} reps`;
     doneNote.textContent = "Pick any mode above for free practice. It doesn't count toward the queue; a new one starts at 4 am.";
   }
+  recordFinishedDay(now);
+  renderWeekDots(doneWeekDots, card === "DONE");
   doneSettingsButton.hidden = card !== "NOTHING_TICKED";
   doneCopyButton.hidden = card !== "HANDOFF";
   doneFinishButton.hidden = card !== "HANDOFF";
@@ -737,6 +750,29 @@ function dayInput(nowMs: number, queue: DailyQueueState = todayQueue()): DayInpu
     copyBudgetMin,
     marks: marksForToday(dayMarks, nowMs),
   };
+}
+
+/** Records today as finished once the flow is done (checked every second and when a Done card shows). */
+function recordFinishedDay(nowMs = Date.now()): void {
+  if (!finishedDaysLoaded) return;
+  const today = dayKey(nowMs);
+  if (finishedDays.includes(today) || !dayFinished(dayInput(nowMs))) return;
+  finishedDays = addFinishedDay(finishedDays, today);
+  void saveFinishedDays(finishedDays).catch(() => undefined);
+}
+
+function renderWeekDots(container: HTMLElement, show: boolean): void {
+  container.hidden = !show;
+  if (!show) return;
+  const dots = lastSevenDays(finishedDays, dayKey(Date.now()));
+  container.replaceChildren(...dots.map((dot) => {
+    const item = document.createElement("span");
+    item.className = `week-dot${dot.finished ? " finished" : ""}${dot.isToday ? " today" : ""}`;
+    item.title = `${dot.dayKey}${dot.finished ? " · finished" : ""}`;
+    item.append(document.createElement("i"), Object.assign(document.createElement("small"), { textContent: dot.weekday }));
+    return item;
+  }));
+  container.setAttribute("aria-label", `Finished on ${dots.filter((dot) => dot.finished).length} of the last seven days`);
 }
 
 function setDayMark(mark: "handoffDeclined" | "doneCardShown"): void {
@@ -765,6 +801,8 @@ function showDayDoneDialog(card: CopyCard): void {
     dayDoneTitle.textContent = `Copy time's up · ${formatMinutes(copyMs)}`;
     dayDoneDetail.textContent = `Today's drills aren't done yet: ${queueRemaining(queue)} left · about ${queueMinutesLeft(queue)} min.`;
   }
+  recordFinishedDay(now);
+  renderWeekDots(dayDoneWeekDots, card === "DAY_DONE");
   dayDoneTodayButton.hidden = card !== "DRILLS_LEFT";
   dayDoneDialog.dataset.hand = handedness === "LEFT" ? "left" : "right";
   dayDoneDialog.showModal();
@@ -1460,6 +1498,7 @@ async function exportAllData(): Promise<void> {
       selectedMode, correctionGateEnabled, device: getDeviceSnapshot(), strokes, trials,
       practiceTimeByDay: practiceClock.snapshot(Date.now()),
       copyTimeByDay: copyClock.snapshot(Date.now()),
+      finishedDays,
     };
     downloadJson(`circle-trainer-${dateStamp()}.json`, bundle);
     showToast("JSON export created");
@@ -1604,7 +1643,11 @@ function wireControls(): void {
   doneFinishButton.addEventListener("click", () => { setDayMark("handoffDeclined"); showDoneCard(todayQueue()); });
   dayDoneTodayButton.addEventListener("click", goToToday);
   for (const button of copyBudgetButtons) button.addEventListener("click", () => setCopyBudget(Number(button.dataset.copyBudget)));
-  window.setInterval(() => { if (document.visibilityState === "visible") updatePracticeTime(); }, 1000);
+  window.setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    updatePracticeTime();
+    recordFinishedDay();
+  }, 1000);
   // Saving on pagehide is not reliable (the write may not finish), so also save while time is accruing.
   window.setInterval(() => { if (practiceClock.todayTotalMs(Date.now()) !== lastSavedPracticeMs) persistPracticeTime(); }, 10_000);
 }
@@ -1645,13 +1688,15 @@ async function initialize(): Promise<void> {
   wireControls();
   resizeCanvas();
   try {
-    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials, storedCopyTime, storedCopyBudget, storedMarks] = await Promise.all([
+    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials, storedCopyTime, storedCopyBudget, storedMarks, storedFinishedDays] = await Promise.all([
       getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getPracticeTime(), getDailyTicks(), getDailyQueue(), getStrokes(), getTrials(),
-      getCopyTime(), getCopyBudget(), getDayMarks(),
+      getCopyTime(), getCopyBudget(), getDayMarks(), getFinishedDays(),
     ]);
     copyClock = new PracticeClock(storedCopyTime ?? {}, false);
     copyBudgetMin = storedCopyBudget ?? DEFAULT_COPY_BUDGET_MIN;
     dayMarks = storedMarks;
+    finishedDays = storedFinishedDays;
+    finishedDaysLoaded = true;
     dailyTicks = storedTicks ?? [...DEFAULT_DAILY_TICKS];
     dailyQueue = storedQueue;
     practiceClock = new PracticeClock(storedPracticeTime ?? {}, document.visibilityState === "visible");

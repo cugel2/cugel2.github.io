@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  addFinishedDay,
+  dayFinished,
+  FINISHED_DAYS_KEPT,
+  lastSevenDays,
+  parseFinishedDays,
+  shiftDayKey,
   startupMode,
   copyCardAtCheckpoint,
   copyClockState,
@@ -160,5 +166,50 @@ describe("startupMode", () => {
   });
   it("stays on Today when Today was the last mode", () => {
     expect(startupMode("TODAY", today, today, true)).toBe("TODAY");
+  });
+});
+
+describe("finished days", () => {
+  const base = { drillReps: 40, drillRepsLeft: 0, copyMs: 30 * 60_000, copyBudgetMin: 30, marks: { dayKey: "2026-11-14", handoffDeclined: false, doneCardShown: false } };
+  it("counts a day finished when drills are done and Copy is used up", () => {
+    expect(dayFinished(base)).toBe(true);
+  });
+  it("is not finished while drills or Copy time are left", () => {
+    expect(dayFinished({ ...base, drillRepsLeft: 3 })).toBe(false);
+    expect(dayFinished({ ...base, copyMs: 10 * 60_000 })).toBe(false);
+  });
+  it("counts Finish for today, and Copy set to Off", () => {
+    expect(dayFinished({ ...base, copyMs: 0, marks: { ...base.marks, handoffDeclined: true } })).toBe(true);
+    expect(dayFinished({ ...base, copyMs: 0, copyBudgetMin: 0 })).toBe(true);
+  });
+  it("counts a Copy-only day, but never a day with nothing to do", () => {
+    expect(dayFinished({ ...base, drillReps: 0 })).toBe(true);
+    expect(dayFinished({ ...base, drillReps: 0, copyBudgetMin: 0, copyMs: 0 })).toBe(false);
+  });
+  it("keeps a sorted list without repeats, trimmed to the newest", () => {
+    expect(addFinishedDay(["2026-11-12"], "2026-11-10")).toEqual(["2026-11-10", "2026-11-12"]);
+    expect(addFinishedDay(["2026-11-12"], "2026-11-12")).toEqual(["2026-11-12"]);
+    const many = Array.from({ length: FINISHED_DAYS_KEPT }, (_, index) => shiftDayKey("2026-01-01", index));
+    const added = addFinishedDay(many, "2026-12-31");
+    expect(added).toHaveLength(FINISHED_DAYS_KEPT);
+    expect(added[0]).toBe("2026-01-02");
+  });
+  it("parses only day keys", () => {
+    expect(parseFinishedDays(["2026-11-14", 3, "x", "2026-11-13", "2026-11-14"])).toEqual(["2026-11-13", "2026-11-14"]);
+    expect(parseFinishedDays(null)).toEqual([]);
+  });
+  it("shifts day keys across months, years and daylight saving", () => {
+    expect(shiftDayKey("2026-11-01", -1)).toBe("2026-10-31");
+    expect(shiftDayKey("2026-01-01", -1)).toBe("2025-12-31");
+    expect(shiftDayKey("2026-03-08", 1)).toBe("2026-03-09");
+    expect(shiftDayKey("2028-02-28", 1)).toBe("2028-02-29");
+  });
+  it("shows the last seven days, oldest first, ending today", () => {
+    const dots = lastSevenDays(["2026-11-08", "2026-11-12", "2026-11-14", "2026-11-01"], "2026-11-14");
+    expect(dots.map((dot) => dot.dayKey)).toEqual(["2026-11-08", "2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14"]);
+    expect(dots.map((dot) => dot.finished)).toEqual([true, false, false, false, true, false, true]);
+    // 14 November 2026 is a Saturday.
+    expect(dots.map((dot) => dot.weekday).join("")).toBe("SMTWTFS");
+    expect(dots.map((dot) => dot.isToday)).toEqual([false, false, false, false, false, false, true]);
   });
 });

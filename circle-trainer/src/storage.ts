@@ -1,5 +1,5 @@
 import { normalizeTicks, parseQueueState, type DailyQueueState } from "./core/dailyQueue";
-import { parseCopyBudget, parseMarks, type DayMarks } from "./core/dailyFlow";
+import { parseCopyBudget, parseFinishedDays, parseMarks, type DayMarks } from "./core/dailyFlow";
 import type { DailyTotals } from "./core/timer";
 import type { ExerciseType, Handedness, LegacyLineTrialRecord, PhysicalCalibration, PracticeMode, RawStroke, TrialRecord } from "./core/types";
 
@@ -288,4 +288,15 @@ export async function saveDayMarks(marks: DayMarks): Promise<void> {
 
 export async function getDayMarks(): Promise<DayMarks | null> {
   return parseMarks(await getSetting(DAY_MARKS_KEY));
+}
+
+/** Practice days (4 am day keys) whose daily flow was finished, for the seven-dot row on the Done card. */
+const FINISHED_DAYS_KEY = "finished-days";
+
+export async function saveFinishedDays(days: readonly string[]): Promise<void> {
+  await putSetting(FINISHED_DAYS_KEY, [...days]);
+}
+
+export async function getFinishedDays(): Promise<string[]> {
+  return parseFinishedDays(await getSetting(FINISHED_DAYS_KEY));
 }

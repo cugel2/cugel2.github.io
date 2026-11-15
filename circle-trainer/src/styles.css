@@ -663,3 +663,13 @@ button { -webkit-tap-highlight-color: transparent; }
 .day-done-sheet .sheet-intro { margin: 10px 0 20px; }
 .day-done-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .day-done-actions [hidden] { display: none; }
+
+/* The last seven days on the Done cards: a filled dot for each day the flow was finished. No streak count. */
+.week-dots { display: flex; justify-content: center; gap: 10px; margin: 6px 0 4px; }
+.week-dots[hidden] { display: none; }
+.week-dot { display: grid; justify-items: center; gap: 4px; }
+.week-dot i { display: block; width: 14px; height: 14px; border: 1.5px solid var(--muted); border-radius: 50%; }
+.week-dot.finished i { border-color: var(--ink); background: var(--ink); }
+.week-dot small { color: var(--muted); font-size: 10px; line-height: 1; }
+.week-dot.today small { color: var(--ink); font-weight: 600; }
+.day-done-sheet .week-dots { margin: -6px 0 18px; }

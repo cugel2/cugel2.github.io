@@ -306,4 +306,6 @@ export interface ExportBundle {
   practiceTimeByDay?: Record<string, number>;
   /** Active Copy milliseconds per practice day (0.12.0+). */
   copyTimeByDay?: Record<string, number>;
+  /** Practice days whose daily flow was finished (0.14.1+). */
+  finishedDays?: string[];
 }

@@ -132,3 +132,55 @@ export function startupMode(stored: PracticeMode, storedModeDay: string | null, 
   if (stored !== "TODAY" && storedModeDay === today) return stored;
   return "TODAY";
 }
+
+/* ---------- Finished days: the seven-dot row on the Done card ---------- */
+
+/**
+ * The day's flow is finished: the drills are done and Copy is used up, Off, or declined ("Finish for today").
+ * There must have been something to do: a day with nothing ticked and Copy Off never counts.
+ */
+export function dayFinished(input: DayInput): boolean {
+  if (input.drillReps === 0 && input.copyBudgetMin <= 0) return false;
+  return drillsDone(input) && (copyLeftMs(input) === 0 || input.marks.handoffDeclined);
+}
+
+/** Finished days kept; the row shows seven, the rest is a little history for exports. */
+export const FINISHED_DAYS_KEPT = 120;
+
+export function parseFinishedDays(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((day): day is string => typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day)))].sort();
+}
+
+/** The list with `day` added (sorted, no repeats, newest FINISHED_DAYS_KEPT). Returns the same list if already there. */
+export function addFinishedDay(days: readonly string[], day: string): string[] {
+  if (days.includes(day)) return [...days];
+  return [...days, day].sort().slice(-FINISHED_DAYS_KEPT);
+}
+
+/** A day key moved by whole calendar days (works on the date alone, so daylight saving cannot shift it). */
+export function shiftDayKey(day: string, deltaDays: number): string {
+  const [year, month, date] = day.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, date + deltaDays));
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())}`;
+}
+
+export interface WeekDot {
+  dayKey: string;
+  /** One-letter weekday: M T W T F S S. */
+  weekday: string;
+  finished: boolean;
+  isToday: boolean;
+}
+
+/** The last seven practice days, oldest first, ending with today. */
+export function lastSevenDays(finished: readonly string[], today: string): WeekDot[] {
+  const done = new Set(finished);
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = shiftDayKey(today, index - 6);
+    const [year, month, date] = day.split("-").map(Number);
+    const weekday = "SMTWTFS"[new Date(Date.UTC(year, month - 1, date)).getUTCDay()];
+    return { dayKey: day, weekday, finished: done.has(day), isToday: index === 6 };
+  });
+}
