@@ -6,6 +6,7 @@ import {
   boxAreas,
   boxShading,
   edgeFaceIndices,
+  FALLBACK_BOX_PARAMETERS,
   faceVisibility,
   hiddenEdgeIndices,
   boxTargetRejection,
@@ -251,5 +252,29 @@ describe("box record storage", () => {
     const normalized = normalizeStoredTrial(record, 0);
     expect(normalized).toEqual(record);
     expect(normalized.exerciseType === "BOX" && normalized.rawStrokes).toHaveLength(11);
+  });
+});
+
+describe("cube stage (0.13.3)", () => {
+  it("generates cubes of 30–55 mm, almost never needing the fallback", () => {
+    let fallbacks = 0;
+    for (const viewport of VIEWPORTS) {
+      for (let index = 0; index < 60; index += 1) {
+        const target = generateBoxTarget(viewport, PX, "cube-seed", index);
+        const [a, b, c] = target.dimensionsMm;
+        expect(b).toBeCloseTo(a, 9);
+        expect(c).toBeCloseTo(a, 9);
+        if (a === 28) fallbacks += 1;
+        else {
+          expect(a).toBeGreaterThanOrEqual(30);
+          expect(a).toBeLessThanOrEqual(55);
+        }
+      }
+    }
+    expect(fallbacks).toBeLessThanOrEqual(2);
+  });
+
+  it("uses a cube for the fallback pose too", () => {
+    expect(new Set(FALLBACK_BOX_PARAMETERS.dimensionsMm).size).toBe(1);
   });
 });

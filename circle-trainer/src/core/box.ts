@@ -37,7 +37,12 @@ export interface BoxParameters {
 export const CAMERA_DISTANCE_FACTOR = 4;
 export const SWING_MAGNITUDES_DEG: readonly number[] = [30, 45, 60];
 export const LONGEST_EDGE_RANGE_MM = { minimum: 30, maximum: 55 } as const;
-export const SHORTER_EDGE_RATIO_RANGE = { minimum: 0.4, maximum: 1 } as const;
+/**
+ * Other edges as a share of the longest. 1–1 makes every box a cube (0.13.3): the drill trains rotation
+ * alone first. Planned stages, judged from exports: 0.7–1 once the last 10 boxes have a middle score of
+ * about 50, then the original 0.4–1 (0.4.0–0.13.2).
+ */
+export const SHORTER_EDGE_RATIO_RANGE = { minimum: 1, maximum: 1 } as const;
 /** Every projected edge of both boxes must be at least this long. */
 export const MIN_PROJECTED_EDGE_MM = 10;
 /** Reject hinges tilted more than this out of the picture plane: the swing would read as a flat turn. */
@@ -528,7 +533,7 @@ function candidateParameters(random: RandomSource): BoxParameters {
 
 /** A known-good pose used only if every seeded candidate is rejected (e.g. a tiny viewport). */
 export const FALLBACK_BOX_PARAMETERS: BoxParameters = {
-  dimensionsMm: [34, 26, 20],
+  dimensionsMm: [28, 28, 28],
   // Roughly 30° about x then 35° about y: a three-quarter view with a near-vertical hinge.
   referenceRotation: (() => {
     const qx: Quaternion = [Math.cos(Math.PI / 12), Math.sin(Math.PI / 12), 0, 0];
