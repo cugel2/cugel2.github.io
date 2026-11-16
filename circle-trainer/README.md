@@ -43,12 +43,12 @@ All targets vary in physical size, orientation, and position while remaining ins
 
 ## Practice modes
 
-The mode selector provides **Today** (the daily queue, below), seven single-exercise modes (five primitives, Tapers and Boxes), and:
+The toolbar's mode switch has two buttons, **Today** (the daily queue, below) and **Copy**, and a **Drills** menu beside them with the seven single-exercise modes (five primitives, Tapers and Boxes). The menu reads "Drills" while Today or Copy is on and shows the drill's name while one is.
+
+Two mixed modes left the menu in 0.15.0, since Today interleaves the drills; their code and records stay, and a stored Mixed mode opens on Today:
 
 - **Mixed — Blocked:** lines, arcs, circles, and ellipses appear as randomized blocks of ten. Each 40-trial cycle contains exactly one block of every included type.
 - **Mixed — Random:** each randomized four-trial bag contains one line, arc, circle, and ellipse.
-
-S curves, Tapers and Boxes remain available as dedicated practice modes but are excluded from both mixed modes.
 
 Neither scheduler repeats the same type at a cycle boundary. Execution failures count as attempts; skips and cancelled pointers do not. The selected mode persists, while a reload begins a fresh seeded sequence.
 
@@ -69,7 +69,7 @@ Neither scheduler repeats the same type at a cycle boundary. Execution failures 
 The day runs like clearing a flashcard deck: open the app, do Today's drills as the warm-up, then a timed stretch of Copy, and the app says you are done. There is no start button and no "flow in progress" state: everything is worked out from the day's drill queue, the day's active Copy time and two per-day marks, all under the same 4 am day key, so reloads and mode switches cannot break it. The rules are pure functions in `src/core/dailyFlow.ts`.
 
 - **Copy time per day** (Settings, under Today's queue): Off, 15, 30, 45 or 60 minutes, default 30 (`copy-budget-minutes` in the settings store). A fixed number, not tied to drill time.
-- **Copy time** is a second practice clock (`copy-time-by-day`, also in JSON exports as `copyTimeByDay`) with the same rules as the practice timer, running only while Copy is open and the page visible. Any Copy time that day counts, from the card or the mode menu, before or after the drills. Pencil strokes and finger moves and pinches of the reference both count as activity, for Copy time and for the practice timer. Drill time is today's practice time less Copy time.
+- **Copy time** is a second practice clock (`copy-time-by-day`, also in JSON exports as `copyTimeByDay`) with the same rules as the practice timer, running only while Copy is open and the page visible. Any Copy time that day counts, from the card or the Copy button, before or after the drills. Pencil strokes and finger moves and pinches of the reference both count as activity, for Copy time and for the practice timer. Drill time is today's practice time less Copy time.
 - **Handoff.** When Today's queue reaches zero and Copy time is left, its card reads `Drills done · 9 min` with **Start copy · 30 min** (the Copy time still left today) and a small **Finish for today**. Start copy opens Copy as it was left: the same book and place, or the copy in progress. Finish for today, a used-up Copy budget, or Copy set to Off show the "Done for today" card instead.
 - **Countdown.** While Copy time is left, Copy's status line ends `12:40 left`. At zero nothing interrupts: it reads `Time's up · finish this one`. The next tap on Compare (turning it on), New copy, or closing the Save sheet shows a card once that day: **Done for today · 41 min** (the day's total time) with **Keep going**; or, if the drills are not finished, **Copy time's up** with the reps left, **Go to Today** and **Keep going**. After that Copy works as usual and the status line shows time copied, e.g. `34 min copied`. With Copy Off, Copy shows the practice timer as before.
 - **Last seven days.** The Done for today cards (Today's and Copy's) show a row of seven dots, oldest first and ending today, each with its weekday letter: filled for a day whose flow was finished, hollow otherwise. No streak count. A day counts as finished once the drills are done and Copy time is used up, set to Off, or declined with Finish for today (a day with nothing ticked and Copy Off never counts). The check runs every second and when a Done card shows, and the finished days are kept in the settings store (`finished-days`, newest 120) and in JSON exports as `finishedDays` (`dayFinished`, `lastSevenDays` in `src/core/dailyFlow.ts`). History starts with 0.14.1: earlier days show hollow.
@@ -131,7 +131,7 @@ https://johnbraybrooke.com/circle-trainer/
 
 ## Copy mode
 
-The mode picker's **Copy** entry is a scoreless mode for copying from a book (PDF) or a picture (a photo of a page, a screenshot, a scan). It has no target, score, trial record or trophy, does not count toward Today, and lives in `src/copy/`, outside the trial machinery; `main.ts` only shows and hides it and passes in px-per-mm, the drawing hand, the practice clock and toasts. Drawing time counts toward practice time, shown in the status line because the stats bar is hidden in Copy to give the frames more height.
+The mode switch's **Copy** button is a scoreless mode for copying from a book (PDF) or a picture (a photo of a page, a screenshot, a scan). It has no target, score, trial record or trophy, does not count toward Today, and lives in `src/copy/`, outside the trial machinery; `main.ts` only shows and hides it and passes in px-per-mm, the drawing hand, the practice clock and toasts. Drawing time counts toward practice time, shown in the status line because the stats bar is hidden in Copy to give the frames more height.
 
 - **Two panes, one frame size.** The reference and drawing panes each hold a frame of identical size, side by side in both orientations, with the drawing pane on the drawing hand's side (left-handed: drawing left, reference right). Stacking them in portrait made both frames far smaller. Copy's controls sit in the panes, not the main toolbar: the drawing pane has Undo, Clear, Compare and Save (while comparing, Undo and Clear give way to the compare controls; Compare, which becomes Draw, and Save stay where they are); the reference pane has the page number, the Memory setting, New copy and Books…, plus a small bar at its foot for Back to frame and the memory controls.
 - **Reference (finger only).** One finger drags, two fingers pinch-zoom; the Pencil does nothing there. With a mouse, drag and wheel stand in. Outside the frame the reference is dimmed. Safari's page pinch-zoom is blocked over the two panes only, so a page that does get zoomed can be pinched back out over the toolbar; double-tap zoom is off app-wide (`touch-action: manipulation`).
@@ -160,7 +160,7 @@ In the Home Screen app, iPadOS can keep the portrait height after rotating to la
 
 ## Toolbar and Settings
 
-The toolbar holds only what is used while practising: the mode picker, New, Undo and Tips (Box only), Trophies and Settings. Everything set once lives in the **Settings** sheet: drawing hand, the reject-corrected-strokes option, ruler calibration, and buttons that open Diagnostics and Practice data (export or delete). Diagnostics also opens directly from `?diagnostics` or `#diagnostics`.
+The toolbar holds only what is used while practising: the mode switch (Today, Copy, Drills), New, Undo and Tips (Box only), Trophies and Settings. Everything set once lives in the **Settings** sheet: drawing hand, the reject-corrected-strokes option, ruler calibration, and buttons that open Diagnostics and Practice data (export or delete). Diagnostics also opens directly from `?diagnostics` or `#diagnostics`.
 
 ## Drawing hand
 
@@ -183,8 +183,8 @@ Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw da
 3. Confirm only hollow checkpoints are visible before Pencil lift.
 4. Confirm the raw black stroke stays visible and the ideal blue path appears afterward.
 5. Deliberately make partial and backtracked strokes; verify that accuracy is withheld.
-6. Complete at least 40 Mixed — Blocked trials and verify ten-trial block transitions without S curves.
-7. Complete at least 20 Mixed — Random trials and verify balanced four-item bags without S curves.
+6. (Mixed modes are no longer in the menu; their scheduler tests still run.)
+7. Switch between Today, Copy and a drill from the toolbar, and check the pressed button and the Drills menu's label.
 8. Rotate or background the app, resume, and confirm drawing remains stable.
 9. Confirm finger movement does not draw or scroll the canvas.
 10. Export JSON and inspect the saved target, mode, schedule, metrics, and raw samples.

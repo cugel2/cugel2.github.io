@@ -112,6 +112,14 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .mode-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* Mode switch: Today and Copy as buttons, the single drills in a menu beside them. */
+.mode-switch { display: flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, 0.55); }
+.mode-tab { min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+.mode-tab[aria-pressed="true"] { background: var(--ink); color: white; font-weight: 650; }
+.mode-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mode-switch .mode-select { min-width: 0; min-height: 36px; padding: 0 30px 0 12px; border-color: transparent; background-color: transparent; color: var(--muted); }
+.mode-switch .mode-select.active { border-color: var(--ink); background-color: white; color: var(--ink); font-weight: 650; }
+
 .text-button,
 .primary-button,
 .secondary-button,
@@ -627,7 +635,9 @@ button { -webkit-tap-highlight-color: transparent; }
   .brand-block p { margin: 0; }
   .brand-block #statusText { max-width: 62vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .toolbar { display: grid; grid-template-columns: minmax(140px, 1fr); grid-auto-flow: column; grid-auto-columns: max-content; width: calc(100% + 8px); overflow: visible; }
-  .mode-select { width: 100%; min-width: 0; min-height: 38px; font-size: 12px; }
+  .mode-switch { justify-self: start; min-width: 0; padding: 2px; }
+  .toolbar .mode-tab { min-height: 34px; padding: 0 12px; font-size: 12px; }
+  .mode-switch .mode-select { width: auto; min-height: 34px; font-size: 12px; }
   .toolbar button { min-height: 38px; padding-right: 10px; padding-left: 10px; font-size: 12px; }
   .hud div { padding: 0 9px; }
   .hud span { display: none; }
@@ -640,7 +650,8 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (max-width: 560px) {
   :root { --bar-height: 172px; }
   .toolbar { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-flow: row; }
-  .mode-select { grid-column: 1 / -1; }
+  .mode-switch { grid-column: 1 / -1; }
+  .toolbar .mode-tab { width: auto; padding: 0 14px; font-size: 12px; }
   .toolbar button { width: 100%; padding-right: 3px; padding-left: 3px; font-size: 10px; }
   .brand-block #statusText { max-width: 50vw; }
 }

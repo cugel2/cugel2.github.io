@@ -22,19 +22,20 @@
           <p id="statusText" aria-live="polite">Preparing a line</p>
         </div>
         <nav class="toolbar" aria-label="App controls">
-          <select id="practiceModeSelect" class="mode-select" aria-label="Practice mode">
-            <option value="TODAY">Today</option>
-            <option value="LINE">Lines</option>
-            <option value="ARC">Arcs</option>
-            <option value="CIRCLE">Circles</option>
-            <option value="ELLIPSE">Ellipses</option>
-            <option value="S_CURVE">S Curves</option>
-            <option value="TAPER">Tapers</option>
-            <option value="BOX">Boxes</option>
-            <option value="MIXED_BLOCKED">Mixed — Blocked</option>
-            <option value="MIXED_RANDOM">Mixed — Random</option>
-            <option value="COPY">Copy</option>
-          </select>
+          <div class="mode-switch" role="group" aria-label="Practice mode">
+            <button type="button" class="mode-tab" id="todayModeButton" aria-pressed="true">Today</button>
+            <button type="button" class="mode-tab" id="copyModeButton" aria-pressed="false">Copy</button>
+            <select id="practiceModeSelect" class="mode-select" aria-label="Single drill">
+              <option value="" disabled>Drills</option>
+              <option value="LINE">Lines</option>
+              <option value="ARC">Arcs</option>
+              <option value="CIRCLE">Circles</option>
+              <option value="ELLIPSE">Ellipses</option>
+              <option value="S_CURVE">S Curves</option>
+              <option value="TAPER">Tapers</option>
+              <option value="BOX">Boxes</option>
+            </select>
+          </div>
           <button type="button" class="text-button practice-only" id="newTrialButton">New</button>
           <button type="button" class="text-button practice-only" id="undoStrokeButton" hidden title="Remove the last box edge">Undo</button>
           <button type="button" class="text-button toggle-button practice-only" id="boxTipsButton" aria-pressed="false" aria-controls="boxTipsPanel" hidden>Tips</button>

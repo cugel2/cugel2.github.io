@@ -100,7 +100,7 @@ import {
   startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.14.2";
+const APP_VERSION = "0.15.0";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -177,6 +177,8 @@ const feedbackResult = requiredElement<HTMLElement>("#feedbackResult");
 const feedbackScore = requiredElement<HTMLElement>("#feedbackScore");
 const feedbackDetail = requiredElement<HTMLElement>("#feedbackDetail");
 const modeSelect = requiredElement<HTMLSelectElement>("#practiceModeSelect");
+const todayModeButton = requiredElement<HTMLButtonElement>("#todayModeButton");
+const copyModeButton = requiredElement<HTMLButtonElement>("#copyModeButton");
 const correctionButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#correctionGateSetting button[data-corrections]"));
 const nextTrialButton = requiredElement<HTMLButtonElement>("#nextTrialButton");
 const undoStrokeButton = requiredElement<HTMLButtonElement>("#undoStrokeButton");
@@ -305,7 +307,7 @@ function readCopyActive(): "today" | "earlier" | null {
 
 function enterCopy(): void {
   copyActive = true;
-  modeSelect.value = "COPY";
+  showModeChoice("COPY");
   appShell.classList.add("copy-active");
   feedbackCard.hidden = true;
   copyView.show();
@@ -706,6 +708,40 @@ function todayStatusText(queue: DailyQueueState): string {
   return `Today · ${queueRemaining(queue)} left · about ${queueMinutesLeft(queue)} min`;
 }
 
+/**
+ * The toolbar's mode switch: Today and Copy are buttons, the single drills sit in the Drills menu.
+ * The menu shows "Drills" while Today or Copy is on.
+ */
+function showModeChoice(mode: PracticeMode | "COPY"): void {
+  const drill = mode !== "TODAY" && mode !== "COPY" && Array.from(modeSelect.options).some((option) => option.value === mode);
+  modeSelect.value = drill ? mode : "";
+  modeSelect.classList.toggle("active", drill);
+  todayModeButton.setAttribute("aria-pressed", String(mode === "TODAY"));
+  copyModeButton.setAttribute("aria-pressed", String(mode === "COPY"));
+}
+
+/** Switches mode from the toolbar, unless a stroke is in progress. */
+function chooseMode(value: string): void {
+  const current = copyActive ? "COPY" : selectedMode;
+  if (value === current) { showModeChoice(current); return; }
+  if ((copyActive && copyView.isDrawing()) || trialState === "DRAWING") {
+    showModeChoice(current);
+    showToast("Finish the current stroke before changing modes");
+    return;
+  }
+  // Copy is handled before any practice-mode logic: it has no trials.
+  if (value === "COPY") {
+    enterCopy();
+    return;
+  }
+  const mode = value as PracticeMode;
+  if (!VALID_MODES.includes(mode)) { showModeChoice(current); return; }
+  if (copyActive) leaveCopy(mode);
+  else resetSession(mode);
+  rememberModeDay();
+  void savePracticeMode(mode).catch(() => showToast("Practice mode could not be saved"));
+}
+
 /** Shown instead of a target when today's queue is finished or nothing is ticked. */
 function showDoneCard(queue: DailyQueueState): void {
   updateTodayHud();
@@ -829,7 +865,7 @@ function showDayDoneDialog(card: CopyCard): void {
 
 function goToToday(): void {
   if (dayDoneDialog.open) dayDoneDialog.close();
-  modeSelect.value = "TODAY";
+  showModeChoice("TODAY");
   if (copyActive) leaveCopy("TODAY");
   else resetSession("TODAY");
   void savePracticeMode("TODAY").catch(() => showToast("Practice mode could not be saved"));
@@ -1072,7 +1108,7 @@ function resetSession(mode: PracticeMode): void {
   repCount.textContent = "0";
   streakCount.textContent = "0";
   lastScore.textContent = "—";
-  modeSelect.value = mode;
+  showModeChoice(mode);
   beginNewTrial();
 }
 
@@ -1598,33 +1634,9 @@ function wireControls(): void {
   undoStrokeButton.addEventListener("click", undoBoxStroke);
   boxTipsButton.addEventListener("click", () => setBoxTipsOpen(!boxTipsOpen));
   requiredElement<HTMLButtonElement>("#closeBoxTipsButton").addEventListener("click", () => setBoxTipsOpen(false));
-  modeSelect.addEventListener("change", () => {
-    if (copyActive && copyView.isDrawing()) {
-      modeSelect.value = "COPY";
-      showToast("Finish the current stroke before changing modes");
-      return;
-    }
-    // Copy is handled before any practice-mode logic: it has no trials.
-    if (modeSelect.value === "COPY") {
-      if (trialState === "DRAWING") {
-        modeSelect.value = selectedMode;
-        showToast("Finish the current stroke before changing modes");
-        return;
-      }
-      enterCopy();
-      return;
-    }
-    const mode = modeSelect.value as PracticeMode;
-    if (!VALID_MODES.includes(mode) || trialState === "DRAWING") {
-      modeSelect.value = copyActive ? "COPY" : selectedMode;
-      if (trialState === "DRAWING") showToast("Finish the current stroke before changing modes");
-      return;
-    }
-    if (copyActive) leaveCopy(mode);
-    else resetSession(mode);
-    rememberModeDay();
-    void savePracticeMode(mode).catch(() => showToast("Practice mode could not be saved"));
-  });
+  modeSelect.addEventListener("change", () => chooseMode(modeSelect.value));
+  todayModeButton.addEventListener("click", () => chooseMode("TODAY"));
+  copyModeButton.addEventListener("click", () => chooseMode("COPY"));
   requiredElement<HTMLButtonElement>("#settingsButton").addEventListener("click", () => { configureRuler(); renderDailyTicks(); renderCopyBudget(); calibrationDialog.showModal(); });
   // Diagnostics and practice data open from Settings, replacing it rather than stacking on top.
   requiredElement<HTMLButtonElement>("#diagnosticsButton").addEventListener("click", () => { calibrationDialog.close(); renderDiagnostics(); diagnosticsDialog.showModal(); });
@@ -1729,6 +1741,8 @@ async function initialize(): Promise<void> {
     handedness = storedHandedness ?? DEFAULT_HANDEDNESS;
     correctionGateEnabled = storedCorrectionGate ?? false;
     selectedMode = storedMode && VALID_MODES.includes(storedMode) ? storedMode : "LINE";
+    // The Mixed modes left the menu in 0.15.0 (Today interleaves the drills); a stored one opens on Today.
+    if (selectedMode === "MIXED_BLOCKED" || selectedMode === "MIXED_RANDOM") selectedMode = "TODAY";
     // Open on Today while today's queue has reps left, unless a free mode was picked earlier today.
     const queue = todayQueue();
     selectedMode = startupMode(selectedMode, readModeDay(), dayKey(Date.now()), queue.order.length > 0 && !isQueueDone(queue));
