@@ -106,7 +106,7 @@ import {
   startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.15.3";
+const APP_VERSION = "0.15.4";
 const SCHEMA_VERSION = "4" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;

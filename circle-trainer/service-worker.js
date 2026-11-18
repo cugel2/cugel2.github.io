@@ -1,4 +1,4 @@
-const CACHE_NAME = "circle-trainer-v36";
+const CACHE_NAME = "circle-trainer-v37";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -23,7 +23,10 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin || !url.pathname.includes("/circle-trainer/")) return;
 
   event.respondWith(
-    fetch(event.request)
+    // GitHub Pages marks files fresh for 10 minutes (max-age=600), so a plain fetch could reuse an old copy from
+    // the HTTP cache for that long after a release. "no-cache" asks the server every time; an unchanged file costs
+    // only a short "not modified" reply. Offline, the cached copy below is used as before.
+    fetch(event.request, { cache: "no-cache" })
       .then((response) => {
         if (response.ok) {
           const copy = response.clone();
