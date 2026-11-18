@@ -1,8 +1,7 @@
-import { drillFor } from "./activities/drills/registry";
-import type { Mark } from "./activities/drills/types";
-import { EXERCISE_LABELS, MODE_LABELS } from "./core/scheduler";
-import { TROPHY_ORDER, type TrophyCase } from "./core/trophies";
-import type { ExerciseType, Point2, TrialRecord } from "./core/types";
+import { drillFor, EXERCISE_LABELS, type Mark } from "../activities/drills";
+import { MODE_LABELS } from "../core/scheduler";
+import { TROPHY_ORDER, type TrophyCase } from "../core/trophies";
+import type { ExerciseType, Point2, TrialRecord } from "../core/types";
 
 /** Everything the feedback screen showed for this trial, in the trial's original canvas coordinates (from its drill). */
 function trialMarks(trial: TrialRecord, cssPxPerMm: number): Mark[] {
