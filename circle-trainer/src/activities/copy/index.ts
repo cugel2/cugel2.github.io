@@ -1,5 +1,14 @@
 import { createCopyView } from "../../copy/copyView";
-import type { CopyHost, MountedCopy } from "../types";
+import type { CopyHost, MountedCopy, OffersToday } from "../types";
+
+/** Copy's unit in Today and in the mode switch. */
+export const COPY_UNIT = "COPY";
+
+/** Copy time per day, when it is not Off. */
+export const todayParts: OffersToday = (settings) => {
+  const minutes = settings.minutes[COPY_UNIT] ?? 0;
+  return minutes > 0 ? [{ kind: "TIMED", unitId: COPY_UNIT, label: "Copy", minutes }] : [];
+};
 
 /**
  * The Copy activity (0.17.0): a thin adapter around Copy's own view in src/copy/, which is unchanged. It finds

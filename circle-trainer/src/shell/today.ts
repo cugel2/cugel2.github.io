@@ -1,4 +1,6 @@
-import { ALL_EXERCISE_TYPES, DAILY_COUNTS, EXERCISE_LABELS } from "../activities/drills";
+import { COPY_UNIT, todayParts as copyTodayParts } from "../activities/copy";
+import { ALL_EXERCISE_TYPES, DAILY_COUNTS, EXERCISE_LABELS, todayParts as drillsTodayParts } from "../activities/drills";
+import type { OffersToday } from "../activities/types";
 import type { DrillsHost } from "../activities/types";
 import { backupReminder } from "../core/backup";
 import {
@@ -18,14 +20,14 @@ import {
 import {
   advanceQueue,
   currentQueueExercise,
-  dailyMinutes,
-  ensureTodayQueue,
+  ensureQueueForCounts,
   queueMinutesLeft,
   queueProgress,
   queueRemaining,
-  requeueForTicks,
+  retickQueue,
   type DailyQueueState,
 } from "../core/dailyQueue";
+import { planDay, planRepMinutes, timedMinutes, type DayPlan } from "../core/todayPlan";
 import { dayKey, formatClock, formatMinutes } from "../core/timer";
 import type { ExerciseType } from "../core/types";
 import { saveCopyBudget, saveCopyTime, saveDailyQueue, saveDailyTicks, saveDayMarks, saveFinishedDays, savePracticeTime } from "../storage";
@@ -88,11 +90,23 @@ export function recordActivity(options: { save: boolean; show: boolean }): void 
   if (options.show) updatePracticeTime();
 }
 
-/* ---------- Today's queue ---------- */
+/* ---------- Today's plan and queue ---------- */
+
+/**
+ * The activities that offer Today something, in the order of the day: the drills' reps first, then Copy's time.
+ * A new activity joins Today by offering its parts here (and a setting for them).
+ */
+const TODAY_OFFERS: readonly OffersToday[] = [drillsTodayParts, copyTodayParts];
+
+/** Today as planned from the standing settings (core/todayPlan.ts). */
+export function todayPlan(): DayPlan {
+  const settings = { ticks: app.dailyTicks, minutes: { [COPY_UNIT]: app.copyBudgetMin } };
+  return planDay(TODAY_OFFERS.flatMap((offer) => offer(settings)));
+}
 
 /** Today's queue, rebuilt (and saved) when the practice day has changed since it was made. */
 export function todayQueue(): DailyQueueState {
-  const next = ensureTodayQueue(app.dailyQueue, app.dailyTicks, Date.now());
+  const next = ensureQueueForCounts(app.dailyQueue, todayPlan().reps, Date.now());
   if (next !== app.dailyQueue) {
     app.dailyQueue = next;
     void saveDailyQueue(next).catch(() => undefined);
@@ -177,7 +191,9 @@ export function dayInput(nowMs: number, queue: DailyQueueState = todayQueue()): 
     drillReps: queue.order.length,
     drillRepsLeft: queueRemaining(queue),
     copyMs: app.copyClock.todayTotalMs(nowMs),
-    copyBudgetMin: app.copyBudgetMin,
+    // The daily flow has one timed part so far, Copy, with its own clock. More timed parts (Gesture, Memory) will
+    // need a clock and a handoff each: see TODO "One daily total, split by the app".
+    copyBudgetMin: timedMinutes(todayPlan(), COPY_UNIT),
     marks: marksForToday(app.dayMarks, nowMs),
   };
 }
@@ -185,6 +201,9 @@ export function dayInput(nowMs: number, queue: DailyQueueState = todayQueue()): 
 /** Records today as finished once the flow is done (checked every second and when a Done card shows). */
 export function recordFinishedDay(nowMs = Date.now()): void {
   if (!app.finishedDaysLoaded) return;
+  // Everything unticked after some reps is a change of mind, not a finished day: ticking drills again must still
+  // add them back today (retickQueue), so do not record the day as finished meanwhile.
+  if (app.dailyTicks.length === 0 && (app.dailyQueue?.order.length ?? 0) > 0) return;
   const today = dayKey(nowMs);
   if (app.finishedDays.includes(today) || !dayFinished(dayInput(nowMs))) return;
   app.finishedDays = addFinishedDay(app.finishedDays, today);
@@ -281,24 +300,33 @@ export function renderDailyTicks(): void {
     label.append(input, name, count);
     return label;
   }));
-  dailyEstimate.textContent = app.dailyTicks.length === 0 ? "Nothing ticked: Today will be empty." : `About ${dailyMinutes(app.dailyTicks)} min a day.`;
+  dailyEstimate.textContent = app.dailyTicks.length === 0 ? "Nothing ticked: Today will be empty." : `About ${planRepMinutes(todayPlan())} min a day.`;
 }
 
 async function setDailyTick(type: ExerciseType, ticked: boolean): Promise<void> {
+  const now = Date.now();
+  // Is the day finished right now (as the screen shows it), before this change? Drills done and Copy used up,
+  // declined or Off. Not when nothing was ticked: ticking drills after unticking them all adds them back.
+  const finishedNow = app.dailyTicks.length > 0 && app.dailyQueue !== null && dayFinished(dayInput(now, app.dailyQueue));
   app.dailyTicks = ALL_EXERCISE_TYPES.filter((each) => (each === type ? ticked : app.dailyTicks.includes(each)));
   renderDailyTicks();
   void saveDailyTicks(app.dailyTicks).catch(() => showToast("Today's ticks could not be saved"));
-  // A Today rep in progress (a stroke, or a box partly drawn) counts as started: keep it.
-  const midTrial = app.selectedMode === "TODAY" && !app.copyActive && activities.drills.isBusy();
-  const { queue, rebuilt } = midTrial ? { queue: todayQueue(), rebuilt: false } : requeueForTicks(app.dailyQueue, app.dailyTicks, Date.now());
-  if (!rebuilt) {
-    showToast("Today's queue has started: applies from tomorrow");
+  // A Today rep in progress (a stroke, or a box partly drawn) is kept: the new ticks apply from the next rep.
+  const inToday = app.selectedMode === "TODAY" && !app.copyActive;
+  const midTrial = inToday && activities.drills.isBusy();
+  const { queue, outcome } = retickQueue(app.dailyQueue, todayPlan().reps, now, midTrial, finishedNow);
+  if (outcome === "FINISHED") {
+    showToast("Today is done: applies from tomorrow");
     return;
   }
   app.dailyQueue = queue;
   void saveDailyQueue(queue).catch(() => undefined);
-  if (app.selectedMode === "TODAY" && !app.copyActive) activities.drills.newTrial();
-  showToast(queue.order.length === 0 ? "Today's queue is empty" : `Today's queue updated · ${queue.order.length} reps`);
+  if (inToday && !midTrial) activities.drills.newTrial();
+  else updateTodayHud();
+  const left = queueRemaining(queue);
+  showToast(queue.order.length === 0
+    ? "Today's queue is empty"
+    : outcome === "REBUILT" ? `Today's queue updated · ${queue.order.length} reps` : `Today's queue updated · ${left === 0 ? "all done" : `${left} left`}`);
 }
 
 export function wireToday(): void {

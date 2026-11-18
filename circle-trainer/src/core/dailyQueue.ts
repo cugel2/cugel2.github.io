@@ -30,9 +30,21 @@ export function normalizeTicks(ticks: readonly string[]): ExerciseType[] {
   return ALL_EXERCISE_TYPES.filter((type) => ticks.includes(type));
 }
 
-export function buildDailyQueue(day: string, ticks: readonly ExerciseType[]): DailyQueueState {
-  const counts = new Map(normalizeTicks(ticks).map((type) => [type, DAILY_COUNTS[type]] as const));
+/** Reps per drill, in the order the interleaving starts from. */
+export type RepCounts = ReadonlyMap<ExerciseType, number>;
+
+/** The reps the ticks stand for: each ticked drill's Today count, in menu order. */
+export function repCountsForTicks(ticks: readonly ExerciseType[]): Map<ExerciseType, number> {
+  return new Map(normalizeTicks(ticks).map((type) => [type, DAILY_COUNTS[type]] as const));
+}
+
+/** A day's queue from the planned reps (core/todayPlan.ts). */
+export function buildQueueFromCounts(day: string, counts: RepCounts): DailyQueueState {
   return { dayKey: day, order: interleave(counts, seededRandom(`daily:${day}`)), position: 0 };
+}
+
+export function buildDailyQueue(day: string, ticks: readonly ExerciseType[]): DailyQueueState {
+  return buildQueueFromCounts(day, repCountsForTicks(ticks));
 }
 
 /**
@@ -103,9 +115,14 @@ export function interleave<T>(counts: ReadonlyMap<T, number>, random: RandomSour
  * ticks of the day take effect at once.
  */
 export function ensureTodayQueue(saved: DailyQueueState | null, ticks: readonly ExerciseType[], nowMs: number): DailyQueueState {
+  return ensureQueueForCounts(saved, repCountsForTicks(ticks), nowMs);
+}
+
+/** ensureTodayQueue, from the planned reps. */
+export function ensureQueueForCounts(saved: DailyQueueState | null, counts: RepCounts, nowMs: number): DailyQueueState {
   const today = dayKey(nowMs);
   if (saved && saved.dayKey === today && saved.order.length > 0) return saved;
-  return buildDailyQueue(today, ticks);
+  return buildQueueFromCounts(today, counts);
 }
 
 /**
@@ -113,9 +130,43 @@ export function ensureTodayQueue(saved: DailyQueueState | null, ticks: readonly 
  * empty), so changing your mind before starting takes effect at once. Once a rep is done, changes wait for tomorrow.
  */
 export function requeueForTicks(saved: DailyQueueState | null, ticks: readonly ExerciseType[], nowMs: number): { queue: DailyQueueState; rebuilt: boolean } {
+  return requeueForCounts(saved, repCountsForTicks(ticks), nowMs);
+}
+
+/** requeueForTicks, from the planned reps. */
+export function requeueForCounts(saved: DailyQueueState | null, counts: RepCounts, nowMs: number): { queue: DailyQueueState; rebuilt: boolean } {
   const today = dayKey(nowMs);
   if (saved && saved.dayKey === today && saved.order.length > 0 && saved.position > 0) return { queue: saved, rebuilt: false };
-  return { queue: buildDailyQueue(today, ticks), rebuilt: true };
+  return { queue: buildQueueFromCounts(today, counts), rebuilt: true };
+}
+
+/**
+ * The ticks changed during the day (0.18.1+): today's queue follows them at once, unless the day is finished
+ * (`dayFinished`: drills done and Copy used up, declined or Off, as for the seven-day dots); then the change waits
+ * for tomorrow, so ticking for tomorrow in the evening cannot reopen a finished day. A queue that ran out only
+ * because everything was unticked is not a finished day, so ticking drills again adds them back.
+ * Reps already done stay done and keep counting; the rest is rebuilt from the new counts less what has been done of
+ * each drill, interleaved as usual. With `keepCurrent` (a rep is in progress) the current rep stays too, so the
+ * new ticks apply from the next one. A queue not yet started (or from another day, or empty) is built afresh.
+ */
+export function retickQueue(
+  saved: DailyQueueState | null,
+  counts: RepCounts,
+  nowMs: number,
+  keepCurrent = false,
+  dayFinished = false,
+): { queue: DailyQueueState; outcome: "REBUILT" | "UPDATED" | "FINISHED" } {
+  const today = dayKey(nowMs);
+  if (!saved || saved.dayKey !== today || saved.order.length === 0 || (saved.position === 0 && !keepCurrent)) {
+    return { queue: buildQueueFromCounts(today, counts), outcome: "REBUILT" };
+  }
+  if (dayFinished && isQueueDone(saved)) return { queue: saved, outcome: "FINISHED" };
+  const kept = saved.order.slice(0, Math.min(saved.order.length, saved.position + (keepCurrent ? 1 : 0)));
+  const done = new Map<ExerciseType, number>();
+  for (const type of kept) done.set(type, (done.get(type) ?? 0) + 1);
+  const rest = new Map([...counts].map(([type, count]) => [type, Math.max(0, count - (done.get(type) ?? 0))] as const));
+  const order = [...kept, ...interleave(rest, seededRandom(`daily:${today}:retick:${kept.length}`))];
+  return { queue: { dayKey: today, order, position: saved.position }, outcome: "UPDATED" };
 }
 
 export function currentQueueExercise(state: DailyQueueState): ExerciseType | null {

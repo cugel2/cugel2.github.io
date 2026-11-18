@@ -1,4 +1,14 @@
+import type { TodayPart, TodaySettings } from "../core/todayPlan";
 import type { ExerciseType, Handedness, PracticeMode, ScheduleContext, TrialRecord } from "../core/types";
+
+export type { TodayPart, TodaySettings };
+
+/**
+ * What an activity offers Today (since 0.18.0), from the standing settings: Drills offer reps of each ticked drill,
+ * Copy offers its minutes. The shell lists the activities in the order of the day and plans from their parts
+ * (core/todayPlan.ts). A pure function, available before the activity is mounted.
+ */
+export type OffersToday = (settings: TodaySettings) => TodayPart[];
 
 /**
  * An activity is one kind of screen (since 0.17.0): Drills (a target, strokes, a score, next) and Copy (a reference

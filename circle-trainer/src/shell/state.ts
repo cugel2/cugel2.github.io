@@ -7,7 +7,7 @@ import { DEFAULT_HANDEDNESS, type DeviceSnapshot, type ExerciseType, type Handed
 
 /** The shell's shared state and constants (moved from main.ts in 0.17.0). */
 
-export const APP_VERSION = "0.17.0";
+export const APP_VERSION = "0.18.1";
 export const SCHEMA_VERSION = "4" as const;
 export const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 export const VALID_MODES: readonly PracticeMode[] = [...ALL_EXERCISE_TYPES, "MIXED_BLOCKED", "MIXED_RANDOM", "TODAY"];
