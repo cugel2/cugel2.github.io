@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { actionAfterResize, backingOutOfDate, backingSize, relayoutBox, shiftStroke, targetOnCanvas, type ResizeSituation } from "../src/core/canvasSize";
+import { actionAfterResize, backingOutOfDate, backingSize, shiftStroke, targetOnCanvas, type ResizeSituation } from "../src/core/canvasSize";
+import { relayoutBox } from "../src/activities/drills/box";
 import { BOX_EDGES, nonHingeEdgeIndices } from "../src/core/box";
 import { analyseBoxStrokes } from "../src/core/boxMetrics";
 import { generateTarget } from "../src/core/targets";
@@ -46,7 +47,7 @@ describe("what a resize does", () => {
   const fitsBoth = { kind: "LINE", aCss: { x: 200, y: 200 }, bCss: { x: 600, y: 300 }, lengthMm: 80 } as const;
   const landscapeOnly = { kind: "LINE", aCss: { x: 100, y: 200 }, bCss: { x: 1050, y: 300 }, lengthMm: 180 } as const;
   const situation = (overrides: Partial<ResizeSituation>): ResizeSituation => ({
-    state: "READY", target: fitsBoth, generatedFor: LANDSCAPE, canvas: PORTRAIT, cssPxPerMm: PX, ...overrides,
+    state: "READY", target: fitsBoth, relayout: false, generatedFor: LANDSCAPE, canvas: PORTRAIT, cssPxPerMm: PX, ...overrides,
   });
 
   it("keeps a target that still fits, so a rotation does not make it jump", () => {
@@ -66,12 +67,12 @@ describe("what a resize does", () => {
     expect(actionAfterResize(situation({ state: "FEEDBACK", target: landscapeOnly }))).toBe("REDRAW");
   });
 
-  it("moves a box into the new halves whenever the size changes, started or not", () => {
+  it("moves a re-laid-out target (a box) into the new layout whenever the size changes, started or not", () => {
     const box = generateTarget("BOX", LANDSCAPE, PX, "resize", 0, "LEFT");
-    expect(actionAfterResize(situation({ target: box, canvas: { width: 1180.4, height: 690.5 } }))).toBe("REDRAW");
-    expect(actionAfterResize(situation({ target: box, canvas: { width: 1180, height: 640 } }))).toBe("RELAYOUT_BOX");
-    expect(actionAfterResize(situation({ target: box }))).toBe("RELAYOUT_BOX");
-    expect(actionAfterResize(situation({ target: box, state: "FEEDBACK" }))).toBe("RELAYOUT_BOX");
+    expect(actionAfterResize(situation({ target: box, relayout: true, canvas: { width: 1180.4, height: 690.5 } }))).toBe("REDRAW");
+    expect(actionAfterResize(situation({ target: box, relayout: true, canvas: { width: 1180, height: 640 } }))).toBe("RELAYOUT");
+    expect(actionAfterResize(situation({ target: box, relayout: true }))).toBe("RELAYOUT");
+    expect(actionAfterResize(situation({ target: box, relayout: true, state: "FEEDBACK" }))).toBe("RELAYOUT");
   });
 
   it("does nothing special without a target or while preparing", () => {

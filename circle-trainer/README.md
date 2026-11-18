@@ -105,6 +105,12 @@ Line scoring remains `line-1`. Every additional primitive has an independent fir
 
 The execution gate always runs before accuracy. Correction rejection is a persistent device-local toggle and defaults off; incomplete coverage and implausible strokes are still withheld when it is off. Historical scores are never recomputed or overwritten.
 
+## Code layout
+
+Each drill is a self-contained unit in `src/activities/drills/` (since 0.16.0): `primitives/` (lines, arcs, circles, ellipses, S curves), `taper/` and `box/`, each implementing the `Drill` contract in `types.ts`, listed once in `registry.ts`. A drill supplies its names and wording, versions, Today count and seconds per rep, how many strokes it needs, its Undo and Tips buttons, target generation, analysis, canvas drawing, feedback and trophy text and the trophy drawing; Box also rejects too-short edges (`acceptStroke`) and re-lays itself out after a rotation (`relayout`). The trial state machine in `src/main.ts` names no drill: it reaches everything through the registry, and treats every drill needing several strokes the same way (progress, Undo, a record with `rawStrokes`). `EXERCISE_LABELS`, `DAILY_COUNTS`, `SECONDS_PER_REP`, `ALL_EXERCISE_TYPES` and `versionsForExercise` are views over the registry with unchanged values. Scoring stays in `src/core/` unchanged. `tests/drills/` checks every drill's drawing, feedback and trophy text and trophy drawing call for call against a verbatim copy of the 0.15.4 code.
+
+Adding a drill: add its id to `ExerciseType` in `src/core/types.ts`, add its folder, and add it to `DRILLS` in `registry.ts` (and an `<option>` in the Drills menu in `src/index.html`).
+
 ## Local development
 
 ```sh

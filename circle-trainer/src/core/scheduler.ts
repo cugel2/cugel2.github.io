@@ -1,20 +1,11 @@
+import { ALL_EXERCISE_TYPES, EXERCISE_LABELS } from "../activities/drills/registry";
 import { seededRandom, shuffle } from "./random";
 import type { ExerciseType, PracticeMode, PrimitiveExerciseType, ScheduleContext } from "./types";
 
 export const EXERCISE_TYPES: readonly PrimitiveExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE"];
 export const MIXED_EXERCISE_TYPES: readonly ExerciseType[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE"];
-/** Every single-exercise mode, including the Taper and Box drills (which are never part of a mixed mode). */
-export const ALL_EXERCISE_TYPES: readonly ExerciseType[] = [...EXERCISE_TYPES, "TAPER", "BOX"];
-
-export const EXERCISE_LABELS: Record<ExerciseType, string> = {
-  LINE: "Lines",
-  ARC: "Arcs",
-  CIRCLE: "Circles",
-  ELLIPSE: "Ellipses",
-  S_CURVE: "S Curves",
-  TAPER: "Tapers",
-  BOX: "Boxes",
-};
+/** Every single-exercise mode and its label: views over the drill registry (0.16.0), re-exported here. */
+export { ALL_EXERCISE_TYPES, EXERCISE_LABELS };
 
 export const MODE_LABELS: Record<PracticeMode, string> = {
   ...EXERCISE_LABELS,

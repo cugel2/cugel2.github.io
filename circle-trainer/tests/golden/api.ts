@@ -7,7 +7,8 @@
  */
 export { generateTarget } from "../../src/core/targets";
 export { sampleTargetPathCss } from "../../src/core/targets";
-export { analyseTargetStroke, versionsForExercise } from "../../src/core/primitiveMetrics";
+export { analyseTargetStroke } from "../../src/core/primitiveMetrics";
+export { versionsForExercise } from "../../src/activities/drills/registry";
 export { analyseTaperStroke, taperMetricText, PRESSURE_HIGH, PRESSURE_LOW, WIDTH_MAX_MM, WIDTH_MIN_MM, targetWidthAtMm } from "../../src/core/taper";
 export { analyseBoxStrokes } from "../../src/core/boxMetrics";
 export { answerCornersMmForSwing, BOX_EDGES, nonHingeEdgeIndices } from "../../src/core/box";

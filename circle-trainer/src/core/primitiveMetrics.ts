@@ -1,7 +1,6 @@
 import { pointCssPxToMm, polylineLength, resampleByArcLength, wrapAngleRad } from "./geometry";
-import { BOX_METRIC_VERSION, BOX_SCORING_VERSION } from "./boxMetrics";
-import { analyseLineStroke, METRIC_VERSION as LINE_METRIC_VERSION, SCORING_VERSION as LINE_SCORING_VERSION } from "./lineMetrics";
-import { analyseTaperStroke, TAPER_METRIC_VERSION, TAPER_SCORING_VERSION } from "./taper";
+import { analyseLineStroke } from "./lineMetrics";
+import { analyseTaperStroke } from "./taper";
 import { sampleTargetPathCss, targetPathLengthMm } from "./targets";
 import type {
   AnalysisResult,
@@ -11,7 +10,6 @@ import type {
   CircleTarget,
   EllipseMetrics,
   EllipseTarget,
-  ExerciseType,
   Point2,
   PrimitiveMetrics,
   RawStroke,
@@ -19,20 +17,6 @@ import type {
   SCurveTarget,
   TargetDefinition,
 } from "./types";
-
-const VERSIONS: Record<ExerciseType, { metric: string; scoring: string }> = {
-  LINE: { metric: LINE_METRIC_VERSION, scoring: LINE_SCORING_VERSION },
-  ARC: { metric: "arc-2", scoring: "arc-1" },
-  CIRCLE: { metric: "circle-1", scoring: "circle-1" },
-  ELLIPSE: { metric: "ellipse-1", scoring: "ellipse-1" },
-  S_CURVE: { metric: "s-curve-2", scoring: "s-curve-1" },
-  TAPER: { metric: TAPER_METRIC_VERSION, scoring: TAPER_SCORING_VERSION },
-  BOX: { metric: BOX_METRIC_VERSION, scoring: BOX_SCORING_VERSION },
-};
-
-export function versionsForExercise(type: ExerciseType): { metric: string; scoring: string } {
-  return VERSIONS[type];
-}
 
 function distance(a: Point2, b: Point2): number {
   return Math.hypot(b.x - a.x, b.y - a.y);

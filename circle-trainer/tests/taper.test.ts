@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { analyseTargetStroke, versionsForExercise } from "../src/core/primitiveMetrics";
+import { analyseTargetStroke } from "../src/core/primitiveMetrics";
+import { versionsForExercise } from "../src/activities/drills/registry";
 import { ALL_EXERCISE_TYPES, MIXED_EXERCISE_TYPES } from "../src/core/scheduler";
 import {
   analyseTaperStroke,

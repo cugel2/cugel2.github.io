@@ -1,5 +1,6 @@
 import { seededRandom, type RandomSource } from "./random";
 import { ALL_EXERCISE_TYPES } from "./scheduler";
+import { DAILY_COUNTS, SECONDS_PER_REP } from "../activities/drills/registry";
 import { dayKey } from "./timer";
 import type { ExerciseType } from "./types";
 
@@ -10,27 +11,8 @@ import type { ExerciseType } from "./types";
  * dropped at rollover: there is no backlog.
  */
 
-/** Reps per ticked mode: about 2 minutes of each quick shape and about 5 minutes of boxes. Provisional. */
-export const DAILY_COUNTS: Record<ExerciseType, number> = {
-  LINE: 40,
-  ARC: 30,
-  CIRCLE: 24,
-  ELLIPSE: 24,
-  S_CURVE: 20,
-  TAPER: 24,
-  BOX: 10,
-};
-
-/** Rough seconds per attempt, used only for the "about N min" estimate. */
-export const SECONDS_PER_REP: Record<ExerciseType, number> = {
-  LINE: 3,
-  ARC: 4,
-  CIRCLE: 5,
-  ELLIPSE: 5,
-  S_CURVE: 6,
-  TAPER: 5,
-  BOX: 30,
-};
+/** Reps per ticked mode and rough seconds per rep: views over the drill registry (0.16.0), re-exported here. Provisional. */
+export { DAILY_COUNTS, SECONDS_PER_REP };
 
 /** Ticked when nothing has been chosen yet: about 11 minutes. */
 export const DEFAULT_DAILY_TICKS: readonly ExerciseType[] = ["LINE", "CIRCLE", "ELLIPSE", "BOX"];

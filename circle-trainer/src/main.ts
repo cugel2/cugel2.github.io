@@ -1,35 +1,24 @@
 import "./styles.css";
 
-import { arrowLabelCss, BOX_EDGES, BOX_FACES, BOX_STROKES_REQUIRED, boxAreas, boxShading, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
-import { analyseBoxStrokes } from "./core/boxMetrics";
+import { ALL_EXERCISE_TYPES, drillFor, versionsForExercise } from "./activities/drills/registry";
+import type { Drill } from "./activities/drills/types";
 import { duplicateStrokeIds, looseStrokes, oldLooseStrokeIds, pruneTrial, RAW_SAMPLE_DAYS, strokeIdsInTrials, trialSampleCount, trialsToPrune } from "./core/retention";
-import { actionAfterResize, backingOutOfDate, relayoutBox, shiftStroke, type CanvasBox } from "./core/canvasSize";
-import { polylineLength } from "./core/geometry";
+import { actionAfterResize, backingOutOfDate, shiftStroke, type CanvasBox } from "./core/canvasSize";
 import { rawSampleIdentity } from "./core/input";
 import { isTap, type TapPoint } from "./core/tap";
-import { drawVariableWidthStroke } from "./core/strokeRender";
 import { bestTrialsByExercise } from "./core/trophies";
-import { analyseTargetStroke, versionsForExercise } from "./core/primitiveMetrics";
-import { ALL_EXERCISE_TYPES, EXERCISE_LABELS, MODE_LABELS, PracticeScheduler } from "./core/scheduler";
-import { generateTarget, sampleTargetPathCss, targetCheckpointsCss } from "./core/targets";
-import { strokeWidthsMm, taperCheckpointsCss, taperMetricText, taperOutlineCss, targetWidthAtMm } from "./core/taper";
+import { EXERCISE_LABELS, MODE_LABELS, PracticeScheduler } from "./core/scheduler";
 import type {
   AnalysisResult,
-  BoxMetrics,
-  BoxTarget,
-  BoxTrialRecord,
   DeviceSnapshot,
   ExerciseType,
   ExportBundle,
   PhysicalCalibration,
   PracticeMode,
-  SingleStrokeExerciseType,
   PrimitiveMetrics,
   RawSample,
   RawStroke,
-  SingleStrokeTrialRecord,
   StrokeEventType,
-  TaperTarget,
   TargetDefinition,
   TrialRecord,
 } from "./core/types";
@@ -106,34 +95,15 @@ import {
   startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.15.4";
+const APP_VERSION = "0.16.0";
 const SCHEMA_VERSION = "4" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
-const VALID_MODES: readonly PracticeMode[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE", "TAPER", "BOX", "MIXED_BLOCKED", "MIXED_RANDOM", "TODAY"];
-/** Box strokes shorter than this (or with fewer samples) are treated as accidental taps and not counted. */
-const BOX_MIN_STROKE_SAMPLES = 8;
-const BOX_MIN_STROKE_PATH_MM = 6;
-const BOX_ACCENT = "#d2691e";
-const BOX_REFERENCE_GREY = "#9a968d";
-/** Hidden reference edges: the same grey, fainter, so the wireframe reads one way only. */
-const BOX_HIDDEN_EDGE = "rgba(154, 150, 141, 0.38)";
-const BOX_FACE_SHADE = "rgba(120, 114, 104, 0.16)";
-const BOX_ANSWER_FACE_SHADE = "rgba(21, 87, 192, 0.14)";
-/** The same face after the swing, when it has turned away from the viewer. */
-const BOX_ANSWER_FACE_SHADE_AWAY = "rgba(21, 87, 192, 0.05)";
+const VALID_MODES: readonly PracticeMode[] = [...ALL_EXERCISE_TYPES, "MIXED_BLOCKED", "MIXED_RANDOM", "TODAY"];
+/** The first drill in the menu: where a fresh install starts. */
+const FIRST_DRILL = ALL_EXERCISE_TYPES[0];
 
 type TrialState = "PREPARING" | "READY" | "DRAWING" | "PROCESSING" | "FEEDBACK";
-
-const INSTRUCTIONS: Record<ExerciseType, { kicker: string; prompt: string }> = {
-  LINE: { kicker: "Line practice", prompt: "Draw one committed stroke between the two points." },
-  ARC: { kicker: "Arc practice", prompt: "Draw one smooth arc through the three points." },
-  CIRCLE: { kicker: "Circle practice", prompt: "Draw one full circle through the four points." },
-  ELLIPSE: { kicker: "Ellipse practice", prompt: "Draw one full ellipse through the four points." },
-  S_CURVE: { kicker: "S-curve practice", prompt: "Draw one smooth S curve through the four points." },
-  TAPER: { kicker: "Taper practice", prompt: "Draw one straight stroke through the three dots, pressing so its width matches each dot." },
-  BOX: { kicker: "Box practice", prompt: "Swing the box about the orange edge by the angle shown, then draw its other 11 edges from the lone orange edge — one stroke each." },
-};
 
 function requiredElement<T extends Element>(selector: string): T {
   const element = document.querySelector<T>(selector);
@@ -188,9 +158,10 @@ const copyModeButton = requiredElement<HTMLButtonElement>("#copyModeButton");
 const correctionButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("#correctionGateSetting button[data-corrections]"));
 const nextTrialButton = requiredElement<HTMLButtonElement>("#nextTrialButton");
 const undoStrokeButton = requiredElement<HTMLButtonElement>("#undoStrokeButton");
-const boxTipsButton = requiredElement<HTMLButtonElement>("#boxTipsButton");
-const boxTipsPanel = requiredElement<HTMLElement>("#boxTipsPanel");
-const BOX_TIPS_OPEN_KEY = "circle-trainer:box-tips-open";
+/** A drill's Tips button and panel (Box has them; the ids and the stored key keep their names). */
+const tipsButton = requiredElement<HTMLButtonElement>("#boxTipsButton");
+const tipsPanel = requiredElement<HTMLElement>("#boxTipsPanel");
+const TIPS_OPEN_KEY = "circle-trainer:box-tips-open";
 const toast = requiredElement<HTMLElement>("#toast");
 
 const calibrationDialog = requiredElement<HTMLDialogElement>("#calibrationDialog");
@@ -348,10 +319,10 @@ const runtime = {
 let calibration: PhysicalCalibration | null = null;
 let correctionGateEnabled = false;
 let handedness: Handedness = DEFAULT_HANDEDNESS;
-let selectedMode: PracticeMode = "LINE";
-let scheduler = new PracticeScheduler("LINE", createId());
+let selectedMode: PracticeMode = FIRST_DRILL;
+let scheduler = new PracticeScheduler(FIRST_DRILL, createId());
 let targetGenerationIndex = 0;
-let activeExercise: ExerciseType = "LINE";
+let activeExercise: ExerciseType = FIRST_DRILL;
 let trialState: TrialState = "PREPARING";
 let target: TargetDefinition | null = null;
 let activePointerId: number | null = null;
@@ -363,14 +334,14 @@ let feedbackTap: { pointerId: number; pen: boolean; spoiled: boolean; points: Ta
 let activeStroke: RawStroke | null = null;
 let activeSampleKeys = new Set<string>();
 let completedStroke: RawStroke | null = null;
-/** Accepted strokes of the current Box trial, in drawing order. */
-let boxStrokes: RawStroke[] = [];
+/** Accepted strokes of the current trial, in drawing order (the finished one, for a one-stroke drill). */
+let trialStrokes: RawStroke[] = [];
 /** The canvas size (CSS px) and drawing hand the current target was laid out for. */
 let targetCanvas: CanvasBox | null = null;
 let targetHandedness: Handedness = DEFAULT_HANDEDNESS;
 /** Times the size watcher found the canvas's pixel size out of date (shown in Diagnostics). */
 let lateCanvasResizes = 0;
-let boxTipsOpen = readBoxTipsOpen();
+let tipsOpen = readTipsOpen();
 let lastAnalysis: AnalysisResult<PrimitiveMetrics> | null = null;
 let sessionReps = 0;
 let sessionStreak = 0;
@@ -480,7 +451,8 @@ function judgeTargetAfterResize(): void {
   if (bounds.width <= 0 || bounds.height <= 0) return;
   if (backingOutOfDate(bounds, { width: canvas.width, height: canvas.height }, window.devicePixelRatio || 1)) resizeCanvas();
   const size = { width: bounds.width, height: bounds.height };
-  const action = actionAfterResize({ state: trialState, target, generatedFor: targetCanvas, canvas: size, cssPxPerMm: cssPxPerMm() });
+  const drill = target ? activeDrill() : null;
+  const action = actionAfterResize({ state: trialState, target, relayout: Boolean(drill?.relayout), generatedFor: targetCanvas, canvas: size, cssPxPerMm: cssPxPerMm() });
   if (action === "WAIT") {
     resizeSettleTimer = window.setTimeout(judgeTargetAfterResize, RESIZE_SETTLE_MS);
     return;
@@ -489,273 +461,40 @@ function judgeTargetAfterResize(): void {
     beginNewTrial();
     return;
   }
-  if (action !== "RELAYOUT_BOX" || target?.kind !== "BOX") return;
-  const moved = relayoutBox(target, size, cssPxPerMm(), targetHandedness);
+  if (action !== "RELAYOUT" || !target || !drill?.relayout) return;
+  const moved = drill.relayout(target, size, cssPxPerMm(), targetHandedness);
   if (!moved) {
-    // Each box is made to fit the halves of the screen it was made on; a landscape box often does not fit the
-    // smaller portrait halves. Before any edge: a fresh box. With edges drawn: keep its layout, so turning the
-    // iPad back lines everything up again.
-    if (trialState === "READY" && boxStrokes.length === 0) beginNewTrial();
-    else if (trialState === "READY") showToast("This box doesn't fit this way round — turn the iPad back to finish it");
+    // A target is made to fit the canvas it was made on; a landscape box often does not fit the smaller portrait
+    // halves. Before any stroke: a fresh one. With strokes drawn: keep its layout, so turning the iPad back lines
+    // everything up again.
+    if (trialState === "READY" && trialStrokes.length === 0) beginNewTrial();
+    else if (trialState === "READY") showToast(`This ${drill.singular} doesn't fit this way round — turn the iPad back to finish it`);
     return;
   }
-  // The same box in the new halves; edges drawn so far move with the drawing half, so they score the same.
-  const lastWasCompleted = completedStroke !== null && completedStroke === boxStrokes.at(-1);
-  boxStrokes = boxStrokes.map((stroke) => shiftStroke(stroke, moved.answerShiftCss));
-  if (lastWasCompleted) completedStroke = boxStrokes.at(-1) ?? null;
+  // The same target in the new layout; strokes drawn so far move with it, so they score the same.
+  const lastWasCompleted = completedStroke !== null && completedStroke === trialStrokes.at(-1);
+  trialStrokes = trialStrokes.map((stroke) => shiftStroke(stroke, moved.strokeShift));
+  if (lastWasCompleted) completedStroke = trialStrokes.at(-1) ?? null;
   target = moved.target;
   targetCanvas = size;
   redrawAll();
 }
 
-function drawLandmark(point: { x: number; y: number }): void {
-  context.beginPath();
-  context.arc(point.x, point.y, 6, 0, Math.PI * 2);
-  context.fillStyle = "#fffefa";
-  context.fill();
-  context.lineWidth = 2;
-  context.strokeStyle = "#171717";
-  context.stroke();
+function activeDrill(): Drill {
+  return drillFor(activeExercise);
 }
 
-function drawRawStroke(stroke: RawStroke): void {
-  if (stroke.samples.length === 0) return;
-  context.strokeStyle = "#171717";
-  context.fillStyle = "#171717";
-  context.lineWidth = 2.2;
-  context.setLineDash([]);
-  context.beginPath();
-  context.arc(stroke.samples[0].xCss, stroke.samples[0].yCss, context.lineWidth / 2, 0, Math.PI * 2);
-  context.fill();
-  if (stroke.samples.length < 2) return;
-  context.beginPath();
-  context.moveTo(stroke.samples[0].xCss, stroke.samples[0].yCss);
-  for (let index = 1; index < stroke.samples.length; index += 1) context.lineTo(stroke.samples[index].xCss, stroke.samples[index].yCss);
-  context.stroke();
+/** The drill needs several strokes (Box's 11 edges): progress, Undo and "keep drawing" apply. */
+function multiStroke(): boolean {
+  return activeDrill().strokesRequired > 1;
 }
 
-/** Taper strokes are drawn at their pressure-driven width (mm from pressure, so physical size, not screen px). */
-function drawPressureStroke(stroke: RawStroke): void {
-  const samples = stroke.samples;
-  if (samples.length === 0) return;
-  const px = cssPxPerMm();
-  const widths = strokeWidthsMm(samples).map((width) => (width === null ? 2.2 : width * px));
-  drawVariableWidthStroke(context, samples.map((sample) => ({ x: sample.xCss, y: sample.yCss })), widths);
-}
-
-/** Cue: a filled dot at the true wanted width, inside a faint ring so even a 0.5 mm dot can be found. */
-function drawTaperCue(taper: TaperTarget): void {
-  const px = cssPxPerMm();
-  taperCheckpointsCss(taper).forEach((point, index) => {
-    context.save();
-    context.beginPath();
-    context.arc(point.x, point.y, 11, 0, Math.PI * 2);
-    context.strokeStyle = "rgba(23, 23, 23, 0.22)";
-    context.lineWidth = 1;
-    context.setLineDash([]);
-    context.stroke();
-    context.beginPath();
-    context.arc(point.x, point.y, (targetWidthAtMm(taper, index / 2) * px) / 2, 0, Math.PI * 2);
-    context.fillStyle = "#171717";
-    context.fill();
-    context.restore();
-  });
-}
-
-function drawTaperOutline(taper: TaperTarget): void {
-  const outline = taperOutlineCss(taper, cssPxPerMm());
-  context.save();
-  context.beginPath();
-  context.moveTo(outline[0].x, outline[0].y);
-  for (let index = 1; index < outline.length; index += 1) context.lineTo(outline[index].x, outline[index].y);
-  context.strokeStyle = "#1557c0";
-  context.lineWidth = 1.4;
-  context.setLineDash([6, 4]);
-  context.stroke();
-  context.restore();
-}
-
-function drawIdealTarget(targetDefinition: TargetDefinition): void {
-  const path = sampleTargetPathCss(targetDefinition, cssPxPerMm(), 512);
-  context.save();
-  context.beginPath();
-  context.moveTo(path[0].x, path[0].y);
-  for (let index = 1; index < path.length; index += 1) context.lineTo(path[index].x, path[index].y);
-  context.strokeStyle = "#1557c0";
-  context.lineWidth = 2;
-  context.setLineDash([8, 6]);
-  context.stroke();
-  context.restore();
-}
-
-function singularLabel(type: ExerciseType): string {
-  return type === "BOX" ? "box" : EXERCISE_LABELS[type].toLowerCase().replace(/s$/, "");
-}
-
-function strokeSegment(a: { x: number; y: number }, b: { x: number; y: number }): void {
-  context.beginPath();
-  context.moveTo(a.x, a.y);
-  context.lineTo(b.x, b.y);
-  context.stroke();
-}
-
-function drawHinge(corners: readonly { x: number; y: number }[], hingeEdgeIndex: number): void {
-  const [a, b] = BOX_EDGES[hingeEdgeIndex];
-  context.save();
-  context.strokeStyle = BOX_ACCENT;
-  context.lineWidth = 4;
-  context.setLineDash([]);
-  strokeSegment(corners[a], corners[b]);
-  context.restore();
-}
-
-function drawBoxDivider(): void {
-  // Divide the canvas the box was laid out for, so a kept box and its divider always agree.
-  const bounds = targetCanvas ?? canvas.getBoundingClientRect();
-  const { landscape } = boxAreas({ width: bounds.width, height: bounds.height });
-  context.save();
-  context.strokeStyle = "rgba(23, 23, 23, 0.1)";
-  context.lineWidth = 1;
-  context.setLineDash([]);
-  if (landscape) strokeSegment({ x: bounds.width / 2, y: 24 }, { x: bounds.width / 2, y: bounds.height - 24 });
-  else strokeSegment({ x: 24, y: bounds.height / 2 }, { x: bounds.width - 24, y: bounds.height / 2 });
-  context.restore();
-}
-
-/**
- * The complete reference box (all 12 edges), its hinge, the swing arrow and the angle label.
- * Kept separate so a later "hide reference on first stroke" option only needs to skip this call.
- */
-function fillFace(corners: readonly { x: number; y: number }[], faceIndex: number, color: string): void {
-  const points = BOX_FACES[faceIndex].corners.map((corner) => corners[corner]);
-  context.save();
-  context.beginPath();
-  context.moveTo(points[0].x, points[0].y);
-  for (const point of points.slice(1)) context.lineTo(point.x, point.y);
-  context.closePath();
-  context.fillStyle = color;
-  context.fill();
-  context.restore();
-}
-
-function drawBoxReference(box: BoxTarget): void {
-  const px = cssPxPerMm();
-  const shading = boxShading(box);
-  fillFace(box.referenceCornersCss, shading.faceIndex, BOX_FACE_SHADE);
-  context.save();
-  context.setLineDash([]);
-  BOX_EDGES.forEach(([a, b], index) => {
-    const hidden = shading.referenceHiddenEdges.includes(index);
-    context.strokeStyle = hidden ? BOX_HIDDEN_EDGE : BOX_REFERENCE_GREY;
-    context.lineWidth = hidden ? 1 : 1.3;
-    strokeSegment(box.referenceCornersCss[a], box.referenceCornersCss[b]);
-  });
-  context.restore();
-  drawHinge(box.referenceCornersCss, box.hingeEdgeIndex);
-
-  drawSwingArrow(swingArrowCss(box, px), px);
-  context.save();
-  context.fillStyle = BOX_ACCENT;
-  const label = arrowLabelCss(box, px);
-  context.font = "600 15px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.strokeStyle = "rgba(255, 254, 250, 0.95)";
-  context.lineWidth = 4;
-  context.lineJoin = "round";
-  context.strokeText(`${Math.abs(box.swingDeg)}°`, label.x, label.y);
-  context.fillText(`${Math.abs(box.swingDeg)}°`, label.x, label.y);
-  context.restore();
-}
-
-/**
- * Tail dot → curved shaft → large head, all over a paper-coloured halo so the arrow reads clearly even
- * where it crosses the reference box's grey edges.
- */
-function drawSwingArrow(arrow: readonly { x: number; y: number }[], px: number): void {
-  const tip = arrow.at(-1)!;
-  const before = arrow.at(-4) ?? arrow[0];
-  const heading = Math.atan2(tip.y - before.y, tip.x - before.x);
-  const head = Math.max(11, 2.4 * px);
-  // Stop the shaft inside the head so its round cap doesn't poke out of the point.
-  const shaftEnd = { x: tip.x - Math.cos(heading) * head * 0.5, y: tip.y - Math.sin(heading) * head * 0.5 };
-  const headPoints = [
-    { x: tip.x + Math.cos(heading) * head * 0.25, y: tip.y + Math.sin(heading) * head * 0.25 },
-    { x: tip.x + Math.cos(heading + 2.65) * head, y: tip.y + Math.sin(heading + 2.65) * head },
-    { x: tip.x + Math.cos(heading - 2.65) * head, y: tip.y + Math.sin(heading - 2.65) * head },
-  ];
-  const tracePath = (): void => {
-    context.beginPath();
-    context.moveTo(arrow[0].x, arrow[0].y);
-    for (let index = 1; index < arrow.length - 1; index += 1) context.lineTo(arrow[index].x, arrow[index].y);
-    context.lineTo(shaftEnd.x, shaftEnd.y);
-  };
-  const traceHead = (): void => {
-    context.beginPath();
-    context.moveTo(headPoints[0].x, headPoints[0].y);
-    context.lineTo(headPoints[1].x, headPoints[1].y);
-    context.lineTo(headPoints[2].x, headPoints[2].y);
-    context.closePath();
-  };
-  const tailRadius = 3.2;
-  context.save();
-  context.setLineDash([]);
-  context.lineCap = "round";
-  context.lineJoin = "round";
-  // Halo.
-  context.strokeStyle = "rgba(255, 254, 250, 0.95)";
-  context.fillStyle = "rgba(255, 254, 250, 0.95)";
-  context.lineWidth = 8;
-  tracePath();
-  context.stroke();
-  traceHead();
-  context.stroke();
-  context.beginPath();
-  context.arc(arrow[0].x, arrow[0].y, tailRadius + 3, 0, Math.PI * 2);
-  context.fill();
-  // Arrow.
-  context.strokeStyle = BOX_ACCENT;
-  context.fillStyle = BOX_ACCENT;
-  context.lineWidth = 2.6;
-  tracePath();
-  context.stroke();
-  traceHead();
-  context.fill();
-  context.beginPath();
-  context.arc(arrow[0].x, arrow[0].y, tailRadius, 0, Math.PI * 2);
-  context.fill();
-  context.restore();
-}
-
-function drawBoxAnswer(box: BoxTarget): void {
-  context.save();
-  context.strokeStyle = "#1557c0";
-  context.lineWidth = 2;
-  context.setLineDash([8, 6]);
-  for (const index of nonHingeEdgeIndices(box.hingeEdgeIndex)) {
-    const [a, b] = BOX_EDGES[index];
-    strokeSegment(box.answerCornersCss[a], box.answerCornersCss[b]);
-  }
-  context.restore();
-}
-
-function drawBoxTrial(box: BoxTarget): void {
-  drawBoxDivider();
-  drawBoxReference(box);
-  if (trialState === "FEEDBACK") {
-    // The same physical face as in the reference, under the strokes so they stay readable.
-    const shading = boxShading(box);
-    fillFace(box.answerCornersCss, shading.faceIndex, shading.answerFaceVisible ? BOX_ANSWER_FACE_SHADE : BOX_ANSWER_FACE_SHADE_AWAY);
-  }
-  for (const stroke of boxStrokes) drawRawStroke(stroke);
-  if (activeStroke) drawRawStroke(activeStroke);
-  if (trialState === "FEEDBACK") drawBoxAnswer(box);
-  drawHinge(box.answerCornersCss, box.hingeEdgeIndex);
-}
-
-function boxProgressText(): string {
-  const box = `${EXERCISE_LABELS.BOX.replace(/es$/, "")} · ${boxStrokes.length}/${BOX_STROKES_REQUIRED}`;
-  return selectedMode === "TODAY" && dailyQueue ? `${box} · ${queueRemaining(dailyQueue)} left today` : box;
+/** "Box · 4/11", and what is left today: the status line of a drill needing several strokes. */
+function progressText(): string {
+  const drill = activeDrill();
+  const name = drill.singular.charAt(0).toUpperCase() + drill.singular.slice(1);
+  const progress = `${name} · ${trialStrokes.length}/${drill.strokesRequired}`;
+  return selectedMode === "TODAY" && dailyQueue ? `${progress} · ${queueRemaining(dailyQueue)} left today` : progress;
 }
 
 /* ---------- Today's queue ---------- */
@@ -816,8 +555,8 @@ function showDoneCard(queue: DailyQueueState): void {
   feedbackCard.hidden = true;
   emptyState.classList.add("hidden");
   undoStrokeButton.hidden = true;
-  boxTipsButton.hidden = true;
-  boxTipsPanel.hidden = true;
+  tipsButton.hidden = true;
+  tipsPanel.hidden = true;
   const now = Date.now();
   const day = dayInput(now, queue);
   const card = todayCard(day) ?? "DONE";
@@ -969,7 +708,7 @@ function scheduleContext() {
 /** The 4 am rollover while the page is open: start the new day's queue unless a trial is in progress. */
 function checkDayRollover(): void {
   if (selectedMode !== "TODAY" || !dailyQueue || dailyQueue.dayKey === dayKey(Date.now())) return;
-  const midTrial = trialState === "DRAWING" || trialState === "PROCESSING" || (trialState === "READY" && boxStrokes.length > 0);
+  const midTrial = trialState === "DRAWING" || trialState === "PROCESSING" || (trialState === "READY" && trialStrokes.length > 0);
   if (!midTrial) beginNewTrial();
 }
 
@@ -996,7 +735,7 @@ async function setDailyTick(type: ExerciseType, ticked: boolean): Promise<void> 
   void saveDailyTicks(dailyTicks).catch(() => showToast("Today's ticks could not be saved"));
   // A Today rep in progress (a stroke, or a box partly drawn) counts as started: keep it.
   const midTrial = selectedMode === "TODAY" && !copyActive
-    && (trialState === "DRAWING" || trialState === "PROCESSING" || (trialState === "READY" && boxStrokes.length > 0));
+    && (trialState === "DRAWING" || trialState === "PROCESSING" || (trialState === "READY" && trialStrokes.length > 0));
   const { queue, rebuilt } = midTrial ? { queue: todayQueue(), rebuilt: false } : requeueForTicks(dailyQueue, dailyTicks, Date.now());
   if (!rebuilt) {
     showToast("Today's queue has started: applies from tomorrow");
@@ -1009,34 +748,34 @@ async function setDailyTick(type: ExerciseType, ticked: boolean): Promise<void> 
 }
 
 /** Device-local convenience only, so plain localStorage (guarded) rather than IndexedDB. */
-function readBoxTipsOpen(): boolean {
-  try { return window.localStorage.getItem(BOX_TIPS_OPEN_KEY) === "1"; } catch { return false; }
+function readTipsOpen(): boolean {
+  try { return window.localStorage.getItem(TIPS_OPEN_KEY) === "1"; } catch { return false; }
 }
 
-function updateBoxTips(): void {
-  const boxMode = activeExercise === "BOX";
-  boxTipsButton.hidden = !boxMode;
-  boxTipsButton.setAttribute("aria-pressed", String(boxTipsOpen));
-  boxTipsPanel.hidden = !boxMode || !boxTipsOpen;
+function updateTips(): void {
+  const shown = activeDrill().controls.tips;
+  tipsButton.hidden = !shown;
+  tipsButton.setAttribute("aria-pressed", String(tipsOpen));
+  tipsPanel.hidden = !shown || !tipsOpen;
 }
 
-function setBoxTipsOpen(open: boolean): void {
-  boxTipsOpen = open;
-  try { window.localStorage.setItem(BOX_TIPS_OPEN_KEY, open ? "1" : "0"); } catch { /* Private mode: just don't remember. */ }
-  updateBoxTips();
+function setTipsOpen(open: boolean): void {
+  tipsOpen = open;
+  try { window.localStorage.setItem(TIPS_OPEN_KEY, open ? "1" : "0"); } catch { /* Private mode: just don't remember. */ }
+  updateTips();
 }
 
 function updateUndoButton(): void {
-  const boxDrawing = activeExercise === "BOX" && (trialState === "READY" || trialState === "DRAWING");
-  undoStrokeButton.hidden = !boxDrawing;
-  undoStrokeButton.disabled = !boxDrawing || trialState !== "READY" || boxStrokes.length === 0;
+  const drawing = activeDrill().controls.undo && (trialState === "READY" || trialState === "DRAWING");
+  undoStrokeButton.hidden = !drawing;
+  undoStrokeButton.disabled = !drawing || trialState !== "READY" || trialStrokes.length === 0;
 }
 
-function undoBoxStroke(): void {
-  if (activeExercise !== "BOX" || trialState !== "READY" || boxStrokes.length === 0) return;
-  boxStrokes.pop();
-  completedStroke = boxStrokes.at(-1) ?? null;
-  statusText.textContent = boxProgressText();
+function undoStroke(): void {
+  if (!activeDrill().controls.undo || trialState !== "READY" || trialStrokes.length === 0) return;
+  trialStrokes.pop();
+  completedStroke = trialStrokes.at(-1) ?? null;
+  statusText.textContent = progressText();
   updateUndoButton();
   redrawAll();
 }
@@ -1045,26 +784,18 @@ function redrawAll(): void {
   const bounds = canvas.getBoundingClientRect();
   context.clearRect(0, 0, bounds.width, bounds.height);
   if (!target) return;
-  if (target.kind === "BOX") {
-    drawBoxTrial(target);
-    return;
-  }
-  if (target.kind === "TAPER") {
-    // Cue first so the stroke covers it; the outline goes on top after lift.
-    drawTaperCue(target);
-    const stroke = activeStroke ?? completedStroke;
-    if (stroke) drawPressureStroke(stroke);
-    if (trialState === "FEEDBACK") drawTaperOutline(target);
-    return;
-  }
-  if (activeStroke) drawRawStroke(activeStroke);
-  else if (completedStroke) drawRawStroke(completedStroke);
-  if (trialState === "FEEDBACK") drawIdealTarget(target);
-  targetCheckpointsCss(target, cssPxPerMm()).forEach(drawLandmark);
+  activeDrill().draw(context, {
+    target,
+    strokes: trialStrokes,
+    activeStroke,
+    feedback: trialState === "FEEDBACK",
+    cssPxPerMm: cssPxPerMm(),
+    layoutCanvas: targetCanvas ?? { width: bounds.width, height: bounds.height },
+  });
 }
 
 function statusForCurrentTrial(): string {
-  if (activeExercise === "BOX") return boxProgressText();
+  if (multiStroke()) return progressText();
   if (selectedMode === "TODAY" && dailyQueue) return todayStatusText(dailyQueue);
   const exerciseLabel = EXERCISE_LABELS[activeExercise];
   if (selectedMode === "MIXED_BLOCKED") {
@@ -1106,9 +837,11 @@ function setHandedness(next: Handedness): void {
   applyHandedness();
   copyView.setHandedness();
   void saveHandedness(next).catch(() => showToast("Hand setting could not be saved"));
-  // Re-lay out a Box that has not been started; a box in progress keeps its layout until the next one.
-  if (activeExercise === "BOX" && trialState === "READY" && boxStrokes.length === 0) beginNewTrial();
-  else if (activeExercise === "BOX") showToast("Applies from the next box");
+  // A target laid out for the drawing hand (a box) is laid out again if not started; one in progress keeps its
+  // layout until the next one.
+  const drill = activeDrill();
+  if (drill.relayout && trialState === "READY" && trialStrokes.length === 0) beginNewTrial();
+  else if (drill.relayout) showToast(`Applies from the next ${drill.singular}`);
 }
 
 function updateCorrectionGateButton(): void {
@@ -1122,7 +855,7 @@ function beginNewTrial(): void {
   activeStroke = null;
   activeSampleKeys = new Set<string>();
   completedStroke = null;
-  boxStrokes = [];
+  trialStrokes = [];
   lastAnalysis = null;
   feedbackCard.hidden = true;
   feedbackCard.classList.remove("failed");
@@ -1141,27 +874,18 @@ function beginNewTrial(): void {
   const bounds = canvas.getBoundingClientRect();
   targetCanvas = { width: bounds.width, height: bounds.height };
   targetHandedness = handedness;
-  target = generateTarget(
-    activeExercise,
-    { width: bounds.width, height: bounds.height },
-    cssPxPerMm(),
-    scheduler.sessionSeed,
-    targetGenerationIndex,
-    handedness,
-  );
+  const drill = activeDrill();
+  target = drill.generate({ width: bounds.width, height: bounds.height }, cssPxPerMm(), scheduler.sessionSeed, targetGenerationIndex, handedness);
   targetGenerationIndex += 1;
-  const instruction = INSTRUCTIONS[activeExercise];
-  instructionType.textContent = instruction.kicker;
-  instructionText.textContent = instruction.prompt;
-  instructionNote.textContent = activeExercise === "BOX"
-    ? "The true box appears in blue after the 11th edge."
-    : activeExercise === "TAPER" ? "The ideal outline appears in blue after you lift the Pencil." : DEFAULT_INSTRUCTION_NOTE;
-  emptyState.classList.toggle("compact", activeExercise === "BOX" || activeExercise === "TAPER");
-  nextTrialButton.textContent = `Next ${singularLabel(activeExercise)}`;
+  instructionType.textContent = drill.intro.kicker;
+  instructionText.textContent = drill.intro.prompt;
+  instructionNote.textContent = drill.intro.note ?? DEFAULT_INSTRUCTION_NOTE;
+  emptyState.classList.toggle("compact", drill.intro.compact);
+  nextTrialButton.textContent = `Next ${drill.singular}`;
   trialState = "READY";
   statusText.textContent = statusForCurrentTrial();
   updateUndoButton();
-  updateBoxTips();
+  updateTips();
   emptyState.classList.toggle("hidden", introducedExercises.has(activeExercise));
   updateBestHud();
   redrawAll();
@@ -1253,7 +977,7 @@ function handlePointerDown(event: PointerEvent): void {
   introducedExercises.add(activeExercise);
   practiceClock.recordActivity(Date.now());
   emptyState.classList.add("hidden");
-  statusText.textContent = activeExercise === "BOX" ? boxProgressText() : `${EXERCISE_LABELS[activeExercise]} · commit to the movement`;
+  statusText.textContent = multiStroke() ? progressText() : `${EXERCISE_LABELS[activeExercise]} · commit to the movement`;
   updateUndoButton();
   appendPointerSamples(event, "pointerdown");
 }
@@ -1315,44 +1039,15 @@ function updatePracticeHud(analysis: AnalysisResult): void {
   updateBestHud();
 }
 
-function boxFeedbackDetail(metrics: BoxMetrics): string {
-  const target = Math.abs(metrics.targetSwingDeg);
-  const fitted = Math.round(Math.abs(metrics.fittedSwingDeg));
-  const edges = `edges ${metrics.rmsOrthogonalDeviationMm.toFixed(1)} mm`;
-  const wrongWay = fitted >= 1 && Math.sign(metrics.fittedSwingDeg) !== Math.sign(metrics.targetSwingDeg);
-  return wrongWay
-    ? `You swung it the wrong way (${fitted}°) · target ${target}° · ${edges}`
-    : `You turned it ${fitted}° · target ${target}° · ${edges}`;
-}
-
-function feedbackDetails(analysis: AnalysisResult): string {
-  const metrics = analysis.metrics;
-  if ("fittedSwingDeg" in metrics) return boxFeedbackDetail(metrics);
-  if ("widthRmsErrorMm" in metrics) return taperMetricText(metrics);
-  if (activeExercise === "LINE" && "rmsOrthogonalDeviationMm" in metrics) {
-    return `RMS error ${metrics.rmsOrthogonalDeviationMm.toFixed(1)} mm · endpoints ${metrics.endpointMeanErrorMm.toFixed(1)} mm`;
-  }
-  if (activeExercise === "CIRCLE" && "radialRmsMm" in metrics) {
-    return `Radial error ${metrics.radialRmsMm.toFixed(1)} mm · closure ${metrics.closureMm.toFixed(1)} mm`;
-  }
-  if (activeExercise === "ELLIPSE" && "closureMm" in metrics) {
-    return `Path error ${metrics.rmsDeviationMm.toFixed(1)} mm · closure ${metrics.closureMm.toFixed(1)} mm`;
-  }
-  if ("endpointMeanErrorMm" in metrics) {
-    const pathError = "rmsDeviationMm" in metrics ? metrics.rmsDeviationMm : metrics.rmsOrthogonalDeviationMm;
-    return `Path error ${pathError.toFixed(1)} mm · endpoints ${metrics.endpointMeanErrorMm.toFixed(1)} mm`;
-  }
-  return `Path error ${("rmsDeviationMm" in metrics ? metrics.rmsDeviationMm : 0).toFixed(1)} mm`;
-}
-
 function showFeedback(analysis: AnalysisResult): void {
+  const drill = activeDrill();
   feedbackCard.hidden = false;
   nextTrialButton.textContent = "Next";
   if (analysis.executionPassed) {
-    feedbackResult.textContent = `Committed ${singularLabel(activeExercise)} ✓`;
+    feedbackResult.textContent = `Committed ${drill.singular} ✓`;
     feedbackScore.textContent = `Accuracy ${analysis.accuracyScore ?? 0}`;
-    feedbackDetail.textContent = feedbackDetails(analysis);
-    statusText.textContent = activeExercise === "BOX" ? "Feedback shown — true box in blue" : "Feedback shown — ideal path in blue";
+    feedbackDetail.textContent = drill.feedbackText(analysis.metrics);
+    statusText.textContent = `Feedback shown — ${drill.revealName} in blue`;
   } else {
     feedbackCard.classList.add("failed");
     feedbackResult.textContent = "Execution not scored";
@@ -1379,8 +1074,9 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
   activeStroke = null;
   activePointerId = null;
 
-  if (target.kind === "BOX") {
-    await finishBoxStroke(stroke, target);
+  const drill = activeDrill();
+  if (drill.strokesRequired > 1) {
+    await finishOneOfSeveral(drill, stroke, target);
     return;
   }
 
@@ -1389,46 +1085,8 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
     beginNewTrial();
     return;
   }
-
-  try {
-    const analysis = analyseTargetStroke(stroke, target, cssPxPerMm(), correctionGateEnabled);
-    lastAnalysis = analysis;
-    const versions = versionsForExercise(activeExercise);
-    const schedule = scheduleContext();
-    const trial: SingleStrokeTrialRecord = {
-      id: createId(),
-      appVersion: APP_VERSION,
-      metricVersion: versions.metric,
-      scoringVersion: versions.scoring,
-      createdAtEpochMs: Date.now(),
-      exerciseType: activeExercise as SingleStrokeExerciseType,
-      practiceMode: selectedMode,
-      correctionGateEnabled,
-      schedule,
-      target,
-      rawStroke: stroke,
-      calibrationId: calibration?.id ?? null,
-      derived: analysis,
-    };
-    // The stroke is stored once, inside its trial (0.15.3+); only strokes with no trial go to the strokes store.
-    await saveTrial(trial);
-    savedStrokeCount += 1;
-    savedTrialCount += 1;
-    updatePracticeHud(analysis);
-    advanceSchedule();
-    trialState = "FEEDBACK";
-    showFeedback(analysis);
-    redrawAll();
-  } catch {
-    trialState = "FEEDBACK";
-    feedbackCard.hidden = false;
-    feedbackCard.classList.add("failed");
-    feedbackResult.textContent = "Couldn’t evaluate this stroke";
-    feedbackScore.textContent = "Try another one";
-    feedbackDetail.textContent = "The raw stroke was kept for diagnostics.";
-    statusText.textContent = "Evaluation failed — raw stroke preserved";
-    redrawAll();
-  }
+  trialStrokes = [stroke];
+  await submitTrial(drill, target);
 }
 
 function showEvaluationFailure(): void {
@@ -1443,59 +1101,61 @@ function showEvaluationFailure(): void {
   redrawAll();
 }
 
-function returnToBoxDrawing(message?: string): void {
+function returnToDrawing(message?: string): void {
   trialState = "READY";
   if (message) showToast(message);
-  statusText.textContent = boxProgressText();
+  statusText.textContent = progressText();
   updateUndoButton();
   redrawAll();
 }
 
-/** One Box stroke has ended: drop it, keep it, or (on the 11th) score the whole box. */
-async function finishBoxStroke(stroke: RawStroke, box: BoxTarget): Promise<void> {
+/** One stroke of a drill needing several has ended: drop it, keep it, or (on the last) score the whole trial. */
+async function finishOneOfSeveral(drill: Drill, stroke: RawStroke, trialTarget: TargetDefinition): Promise<void> {
   if (stroke.cancelled) {
     void saveStroke(stroke).then(() => { savedStrokeCount += 1; }, () => undefined);
-    returnToBoxDrawing("Stroke interrupted — not counted");
+    returnToDrawing("Stroke interrupted — not counted");
     return;
   }
-  const px = cssPxPerMm();
-  const pathMm = polylineLength(stroke.samples.map((sample) => ({ x: sample.xCss / px, y: sample.yCss / px })));
-  if (stroke.samples.length < BOX_MIN_STROKE_SAMPLES || pathMm < BOX_MIN_STROKE_PATH_MM) {
-    returnToBoxDrawing("Too short — not counted");
+  const rejection = drill.acceptStroke?.(stroke, cssPxPerMm()) ?? null;
+  if (rejection) {
+    returnToDrawing(rejection);
     return;
   }
-  boxStrokes.push(stroke);
-  if (boxStrokes.length < BOX_STROKES_REQUIRED) {
-    returnToBoxDrawing();
+  trialStrokes.push(stroke);
+  if (trialStrokes.length < drill.strokesRequired) {
+    returnToDrawing();
     return;
   }
-  await submitBoxTrial(box);
-}
-
-async function submitBoxTrial(box: BoxTarget): Promise<void> {
   trialState = "PROCESSING";
   updateUndoButton();
-  statusText.textContent = boxProgressText();
-  const strokes = [...boxStrokes];
+  statusText.textContent = progressText();
+  await submitTrial(drill, trialTarget);
+}
+
+/**
+ * Scores the trial's strokes and saves the record. A one-stroke drill's record holds `rawStroke`, a several-stroke
+ * drill's `rawStrokes` (each stroke is stored once, inside its trial, since 0.15.3).
+ */
+async function submitTrial(drill: Drill, trialTarget: TargetDefinition): Promise<void> {
+  const strokes = [...trialStrokes];
   try {
-    const analysis = analyseBoxStrokes(strokes, box, cssPxPerMm());
+    const analysis = drill.analyse(trialTarget, strokes, { cssPxPerMm: cssPxPerMm(), correctionGateEnabled });
     lastAnalysis = analysis;
-    const versions = versionsForExercise("BOX");
-    const trial: BoxTrialRecord = {
+    const trial = {
       id: createId(),
       appVersion: APP_VERSION,
-      metricVersion: versions.metric,
-      scoringVersion: versions.scoring,
+      metricVersion: drill.versions.metric,
+      scoringVersion: drill.versions.scoring,
       createdAtEpochMs: Date.now(),
-      exerciseType: "BOX",
+      exerciseType: drill.id,
       practiceMode: selectedMode,
-      correctionGateEnabled: false,
+      correctionGateEnabled: drill.usesCorrectionGate ? correctionGateEnabled : false,
       schedule: scheduleContext(),
-      target: box,
-      rawStrokes: strokes,
+      target: trialTarget,
+      ...(drill.strokesRequired > 1 ? { rawStrokes: strokes } : { rawStroke: strokes[0] }),
       calibrationId: calibration?.id ?? null,
       derived: analysis,
-    };
+    } as TrialRecord;
     await saveTrial(trial);
     savedStrokeCount += strokes.length;
     savedTrialCount += 1;
@@ -1764,9 +1424,9 @@ function wireControls(): void {
     void saveCorrectionGateEnabled(correctionGateEnabled).catch(() => showToast("Correction setting could not be saved"));
   });
   nextTrialButton.addEventListener("click", beginNewTrial);
-  undoStrokeButton.addEventListener("click", undoBoxStroke);
-  boxTipsButton.addEventListener("click", () => setBoxTipsOpen(!boxTipsOpen));
-  requiredElement<HTMLButtonElement>("#closeBoxTipsButton").addEventListener("click", () => setBoxTipsOpen(false));
+  undoStrokeButton.addEventListener("click", undoStroke);
+  tipsButton.addEventListener("click", () => setTipsOpen(!tipsOpen));
+  requiredElement<HTMLButtonElement>("#closeBoxTipsButton").addEventListener("click", () => setTipsOpen(false));
   modeSelect.addEventListener("change", () => chooseMode(modeSelect.value));
   todayModeButton.addEventListener("click", () => chooseMode("TODAY"));
   copyModeButton.addEventListener("click", () => chooseMode("COPY"));
@@ -1877,7 +1537,7 @@ async function initialize(): Promise<void> {
     calibration = storedCalibration;
     handedness = storedHandedness ?? DEFAULT_HANDEDNESS;
     correctionGateEnabled = storedCorrectionGate ?? false;
-    selectedMode = storedMode && VALID_MODES.includes(storedMode) ? storedMode : "LINE";
+    selectedMode = storedMode && VALID_MODES.includes(storedMode) ? storedMode : FIRST_DRILL;
     // The Mixed modes left the menu in 0.15.0 (Today interleaves the drills); a stored one opens on Today.
     if (selectedMode === "MIXED_BLOCKED" || selectedMode === "MIXED_RANDOM") selectedMode = "TODAY";
     // Open on Today while today's queue has reps left, unless a free mode was picked earlier today.

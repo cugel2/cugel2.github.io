@@ -1,66 +1,12 @@
-import { BOX_EDGES, BOX_FACES, boxShading, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
+import { drillFor } from "./activities/drills/registry";
+import type { Mark } from "./activities/drills/types";
 import { EXERCISE_LABELS, MODE_LABELS } from "./core/scheduler";
-import { strokeWidthsMm, taperMetricText, taperOutlineCss } from "./core/taper";
-import { sampleTargetPathCss } from "./core/targets";
 import { TROPHY_ORDER, type TrophyCase } from "./core/trophies";
 import type { ExerciseType, Point2, TrialRecord } from "./core/types";
 
-const INK = "#171717";
-const IDEAL_BLUE = "#1557c0";
-const BOX_ACCENT = "#d2691e";
-const BOX_REFERENCE_GREY = "#9a968d";
-const SINGULAR: Record<ExerciseType, string> = { LINE: "line", ARC: "arc", CIRCLE: "circle", ELLIPSE: "ellipse", S_CURVE: "S curve", TAPER: "taper", BOX: "box" };
-
-interface Mark {
-  points: Point2[];
-  color: string;
-  width: number;
-  dash?: number[];
-  /** Draw a small arrowhead at the last point and a dot at the first. */
-  arrow?: boolean;
-  /** Fill the closed polygon with `color` instead of stroking it. */
-  fill?: boolean;
-  /** Per-point stroke widths in the trial's CSS px; these scale with the drawing (a physical width), unlike `width`. */
-  widths?: Array<number | null>;
-}
-
-/** Everything the feedback screen showed for this trial, in the trial's original canvas coordinates. */
+/** Everything the feedback screen showed for this trial, in the trial's original canvas coordinates (from its drill). */
 function trialMarks(trial: TrialRecord, cssPxPerMm: number): Mark[] {
-  const marks: Mark[] = [];
-  const strokeMark = (samples: ReadonlyArray<{ xCss: number; yCss: number }>): Mark => ({
-    points: samples.map((sample) => ({ x: sample.xCss, y: sample.yCss })),
-    color: INK,
-    width: 1.6,
-  });
-  if (trial.exerciseType === "BOX") {
-    const box = trial.target;
-    const shading = boxShading(box);
-    const face = (corners: Point2[]) => BOX_FACES[shading.faceIndex].corners.map((corner) => corners[corner]);
-    marks.push({ points: face(box.referenceCornersCss), color: "rgba(120, 114, 104, 0.16)", width: 0, fill: true });
-    marks.push({ points: face(box.answerCornersCss), color: shading.answerFaceVisible ? "rgba(21, 87, 192, 0.14)" : "rgba(21, 87, 192, 0.05)", width: 0, fill: true });
-    BOX_EDGES.forEach(([a, b], index) => {
-      const hidden = shading.referenceHiddenEdges.includes(index);
-      marks.push({ points: [box.referenceCornersCss[a], box.referenceCornersCss[b]], color: hidden ? "rgba(154, 150, 141, 0.38)" : BOX_REFERENCE_GREY, width: 1 });
-    });
-    marks.push({ points: swingArrowCss(box, cssPxPerMm), color: BOX_ACCENT, width: 1.6, arrow: true });
-    for (const stroke of trial.rawStrokes) marks.push(strokeMark(stroke.samples));
-    for (const index of nonHingeEdgeIndices(box.hingeEdgeIndex)) {
-      const [a, b] = BOX_EDGES[index];
-      marks.push({ points: [box.answerCornersCss[a], box.answerCornersCss[b]], color: IDEAL_BLUE, width: 1.4, dash: [5, 4] });
-    }
-    const [ha, hb] = BOX_EDGES[box.hingeEdgeIndex];
-    for (const corners of [box.referenceCornersCss, box.answerCornersCss]) marks.push({ points: [corners[ha], corners[hb]], color: BOX_ACCENT, width: 3 });
-    return marks;
-  }
-  if (trial.target.kind === "TAPER") {
-    const widths = strokeWidthsMm(trial.rawStroke.samples).map((width) => (width === null ? null : width * cssPxPerMm));
-    marks.push({ ...strokeMark(trial.rawStroke.samples), widths });
-    marks.push({ points: taperOutlineCss(trial.target, cssPxPerMm), color: IDEAL_BLUE, width: 1.2, dash: [5, 4] });
-    return marks;
-  }
-  marks.push(strokeMark(trial.rawStroke.samples));
-  marks.push({ points: sampleTargetPathCss(trial.target, cssPxPerMm, 256), color: IDEAL_BLUE, width: 1.4, dash: [5, 4] });
-  return marks;
+  return drillFor(trial.exerciseType).trophyMarks(trial, cssPxPerMm);
 }
 
 /** Draws a trial scaled to fit the canvas's CSS box. Line widths stay in screen pixels so small thumbnails stay legible. */
@@ -146,21 +92,7 @@ function formatDate(epochMs: number): string {
 
 /** One line of the measurements behind the score. */
 export function trophyMetricText(trial: TrialRecord): string {
-  const metrics = trial.derived.metrics;
-  if ("widthRmsErrorMm" in metrics) return taperMetricText(metrics);
-  if ("fittedSwingDeg" in metrics) {
-    const fitted = Math.round(Math.abs(metrics.fittedSwingDeg));
-    const wrongWay = fitted >= 1 && Math.sign(metrics.fittedSwingDeg) !== Math.sign(metrics.targetSwingDeg);
-    const turn = wrongWay ? `Swung the wrong way (${fitted}°)` : `Turned ${fitted}°`;
-    return `${turn} · target ${Math.abs(metrics.targetSwingDeg)}° · edges ${metrics.rmsOrthogonalDeviationMm.toFixed(1)} mm`;
-  }
-  if ("rmsOrthogonalDeviationMm" in metrics) {
-    return `RMS error ${metrics.rmsOrthogonalDeviationMm.toFixed(1)} mm · endpoints ${metrics.endpointMeanErrorMm.toFixed(1)} mm`;
-  }
-  if ("radialRmsMm" in metrics) return `Radial error ${metrics.radialRmsMm.toFixed(1)} mm · closure ${metrics.closureMm.toFixed(1)} mm`;
-  if ("closureMm" in metrics) return `Path error ${metrics.rmsDeviationMm.toFixed(1)} mm · closure ${metrics.closureMm.toFixed(1)} mm`;
-  // Arcs and S curves.
-  return `Path error ${metrics.rmsDeviationMm.toFixed(1)} mm · endpoints ${metrics.endpointMeanErrorMm.toFixed(1)} mm`;
+  return drillFor(trial.exerciseType).trophyText(trial.derived.metrics);
 }
 
 export interface TrophyViewElements {
@@ -190,7 +122,7 @@ export function createTrophyView(elements: TrophyViewElements, pxPerMmFor: (tria
     if (!trial) return;
     elements.grid.hidden = true;
     elements.detail.hidden = false;
-    elements.detailTitle.textContent = `Best ${SINGULAR[type]}`;
+    elements.detailTitle.textContent = `Best ${drillFor(type).trophyNoun}`;
     elements.detailScore.textContent = `Accuracy ${trial.derived.accuracyScore}`;
     elements.detailMeta.textContent = `${formatDate(trial.createdAtEpochMs)} · ${MODE_LABELS[trial.practiceMode] ?? trial.practiceMode}`;
     elements.detailMetrics.textContent = trophyMetricText(trial);

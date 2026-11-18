@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BOX_1_SCORE_SIGMA, BOX_METRIC_VERSION, BOX_SCORE_SIGMA, BOX_SCORING_VERSION, boxScoreFromError } from "../src/core/boxMetrics";
-import { versionsForExercise } from "../src/core/primitiveMetrics";
+import { versionsForExercise } from "../src/activities/drills/registry";
 
 describe("box-2 score curve", () => {
   it("is a new scoring version on the unchanged box-1 metric", () => {
