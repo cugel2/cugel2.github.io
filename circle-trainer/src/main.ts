@@ -143,9 +143,19 @@ async function initialize(): Promise<void> {
     renderDiagnostics();
     diagnosticsDialog.showModal();
   }
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => { void navigator.serviceWorker.register("./service-worker.js").catch(() => undefined); });
-  }
+  registerServiceWorker();
+}
+
+/**
+ * The offline helper. Registering waits for the page's load event so it never competes with startup; but startup
+ * awaits stored data first, and if the load event has already fired by then, waiting for it would never register
+ * (until 0.18.2 that happened on some visits). So register at once when the page has already loaded.
+ */
+function registerServiceWorker(): void {
+  if (!("serviceWorker" in navigator)) return;
+  const register = () => { void navigator.serviceWorker.register("./service-worker.js").catch(() => undefined); };
+  if (document.readyState === "complete") register();
+  else window.addEventListener("load", register, { once: true });
 }
 
 void initialize();

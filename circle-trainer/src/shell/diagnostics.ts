@@ -42,7 +42,15 @@ function buildDiagnosticReport(): Record<string, string | number | boolean> {
     "Last normalized error": drills.lastNormalizedError,
     "Saved input strokes": app.savedStrokeCount,
     "Saved trials": app.savedTrialCount,
+    "Offline helper": serviceWorkerState(),
   };
+}
+
+/** Whether the service worker (offline use, fresh releases) is running for this page. */
+function serviceWorkerState(): string {
+  if (!("serviceWorker" in navigator)) return window.isSecureContext ? "Not supported" : "Not available on this address (needs https)";
+  const controller = navigator.serviceWorker.controller;
+  return controller ? "Running" : "Not running yet (it starts from the next open)";
 }
 
 export function renderDiagnostics(): void {
