@@ -79,6 +79,28 @@ export async function saveTrial(trial: TrialRecord): Promise<void> {
   database.close();
 }
 
+/** Replace several trials in one transaction (all or nothing). */
+export async function saveTrials(trials: readonly TrialRecord[]): Promise<void> {
+  if (trials.length === 0) return;
+  const database = await openDatabase();
+  const transaction = database.transaction(TRIALS, "readwrite");
+  const store = transaction.objectStore(TRIALS);
+  for (const trial of trials) store.put(trial);
+  await waitForTransaction(transaction);
+  database.close();
+}
+
+/** Delete strokes by id in one transaction (all or nothing). */
+export async function deleteStrokes(ids: readonly string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const database = await openDatabase();
+  const transaction = database.transaction(STROKES, "readwrite");
+  const store = transaction.objectStore(STROKES);
+  for (const id of ids) store.delete(id);
+  await waitForTransaction(transaction);
+  database.close();
+}
+
 export function normalizeStoredTrial(trial: TrialRecord | LegacyLineTrialRecord, index: number): TrialRecord {
   if ("exerciseType" in trial) return { ...trial, correctionGateEnabled: trial.correctionGateEnabled ?? true };
   return {
@@ -311,4 +333,23 @@ export async function saveLastExport(epochMs: number): Promise<void> {
 
 export async function getLastExport(): Promise<number | null> {
   return parseLastExport(await getSetting(LAST_EXPORT_KEY));
+}
+
+/** How much trimming has removed so far: trials trimmed and Pencil samples removed. */
+const PRUNED_KEY = "retention-pruned";
+
+export interface PrunedTotals {
+  trials: number;
+  samples: number;
+  strokesDeleted: number;
+}
+
+export async function savePrunedTotals(totals: PrunedTotals): Promise<void> {
+  await putSetting(PRUNED_KEY, totals);
+}
+
+export async function getPrunedTotals(): Promise<PrunedTotals> {
+  const value = await getSetting(PRUNED_KEY) as Partial<PrunedTotals> | undefined;
+  const count = (item: unknown) => (typeof item === "number" && Number.isFinite(item) && item >= 0 ? item : 0);
+  return { trials: count(value?.trials), samples: count(value?.samples), strokesDeleted: count(value?.strokesDeleted) };
 }

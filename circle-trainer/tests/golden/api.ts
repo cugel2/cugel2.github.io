@@ -33,6 +33,7 @@ export {
   type DayInput,
 } from "../../src/core/dailyFlow";
 export { normalizeStoredTrial } from "../../src/storage";
+export { pruneTrial } from "../../src/core/retention";
 export { seededRandom } from "../../src/core/random";
 export type {
   BoxTarget,

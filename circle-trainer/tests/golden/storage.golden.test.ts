@@ -3,6 +3,7 @@ import {
   ALL_EXERCISE_TYPES,
   generateTarget,
   normalizeStoredTrial,
+  pruneTrial,
   sampleTargetPathCss,
   type ExerciseType,
   type LegacyLineTrialRecord,
@@ -104,6 +105,12 @@ describe("golden: stored trial records (normalizeStoredTrial)", () => {
 
   it("the whole normalised set", () => {
     expectGolden("storage-normalized", storedSet().map((trial, index) => normalizeStoredTrial(trial, index)));
+  });
+
+  it("trimmed records (0.15.3+, raw samples removed) read back as stored", () => {
+    const trimmed = storedSet().filter((trial): trial is TrialRecord => "exerciseType" in trial).map(pruneTrial);
+    trimmed.forEach((trial, index) => expect(normalizeStoredTrial(trial, index)).toEqual({ ...trial, correctionGateEnabled: trial.correctionGateEnabled ?? true }));
+    expectGolden("storage-trimmed", trimmed.map((trial, index) => normalizeStoredTrial(trial, index)));
   });
 
   it("does not change the record it is given", () => {

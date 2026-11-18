@@ -2,6 +2,7 @@ import "./styles.css";
 
 import { arrowLabelCss, BOX_EDGES, BOX_FACES, BOX_STROKES_REQUIRED, boxAreas, boxShading, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
 import { analyseBoxStrokes } from "./core/boxMetrics";
+import { duplicateStrokeIds, looseStrokes, oldLooseStrokeIds, pruneTrial, RAW_SAMPLE_DAYS, strokeIdsInTrials, trialSampleCount, trialsToPrune } from "./core/retention";
 import { actionAfterResize, backingOutOfDate, relayoutBox, shiftStroke, type CanvasBox } from "./core/canvasSize";
 import { polylineLength } from "./core/geometry";
 import { rawSampleIdentity } from "./core/input";
@@ -45,6 +46,10 @@ import {
   getDayMarks,
   getFinishedDays,
   getLastExport,
+  getPrunedTotals,
+  deleteStrokes,
+  savePrunedTotals,
+  saveTrials,
   getHandedness,
   getPracticeTime,
   getPracticeMode,
@@ -101,8 +106,8 @@ import {
   startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.15.2";
-const SCHEMA_VERSION = "3" as const;
+const APP_VERSION = "0.15.3";
+const SCHEMA_VERSION = "4" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
 const VALID_MODES: readonly PracticeMode[] = ["LINE", "ARC", "CIRCLE", "ELLIPSE", "S_CURVE", "TAPER", "BOX", "MIXED_BLOCKED", "MIXED_RANDOM", "TODAY"];
@@ -203,6 +208,7 @@ const diagnosticsDialog = requiredElement<HTMLDialogElement>("#diagnosticsDialog
 const diagnosticGrid = requiredElement<HTMLElement>("#diagnosticGrid");
 const dataDialog = requiredElement<HTMLDialogElement>("#dataDialog");
 const dataSummary = requiredElement<HTMLElement>("#dataSummary");
+const dataRetention = requiredElement<HTMLElement>("#dataRetention");
 const trophyDialog = requiredElement<HTMLDialogElement>("#trophyDialog");
 const trophyIntro = requiredElement<HTMLElement>("#trophyIntro");
 const trophyView = createTrophyView({
@@ -1404,7 +1410,8 @@ async function finishStroke(event: PointerEvent, cancelled: boolean): Promise<vo
       calibrationId: calibration?.id ?? null,
       derived: analysis,
     };
-    await Promise.all([saveStroke(stroke), saveTrial(trial)]);
+    // The stroke is stored once, inside its trial (0.15.3+); only strokes with no trial go to the strokes store.
+    await saveTrial(trial);
     savedStrokeCount += 1;
     savedTrialCount += 1;
     updatePracticeHud(analysis);
@@ -1489,7 +1496,7 @@ async function submitBoxTrial(box: BoxTarget): Promise<void> {
       calibrationId: calibration?.id ?? null,
       derived: analysis,
     };
-    await Promise.all([...strokes.map(saveStroke), saveTrial(trial)]);
+    await saveTrial(trial);
     savedStrokeCount += strokes.length;
     savedTrialCount += 1;
     updatePracticeHud(analysis);
@@ -1605,8 +1612,8 @@ function renderDiagnostics(): void {
   }
 }
 
-function downloadJson(filename: string, value: unknown): void {
-  const blob = new Blob([JSON.stringify(value, null, 2)], { type: "application/json" });
+function downloadJson(filename: string, value: unknown, compact = false): void {
+  const blob = new Blob([compact ? JSON.stringify(value) : JSON.stringify(value, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -1624,18 +1631,64 @@ async function exportAllData(): Promise<void> {
     const [strokes, trials] = await Promise.all([getStrokes(), getTrials()]);
     const bundle: ExportBundle = {
       schemaVersion: SCHEMA_VERSION, appVersion: APP_VERSION, exportedAt: Date.now(), calibration,
-      selectedMode, correctionGateEnabled, device: getDeviceSnapshot(), strokes, trials,
+      // Each stroke once: trials hold their own, so only strokes with no trial are listed separately.
+      selectedMode, correctionGateEnabled, device: getDeviceSnapshot(), strokes: looseStrokes(strokes, strokeIdsInTrials(trials)), trials,
       practiceTimeByDay: practiceClock.snapshot(Date.now()),
       copyTimeByDay: copyClock.snapshot(Date.now()),
       finishedDays,
     };
-    downloadJson(`circle-trainer-${dateStamp()}.json`, bundle);
+    downloadJson(`circle-trainer-${dateStamp()}.json`, bundle, true);
     lastExportMs = bundle.exportedAt;
     void saveLastExport(bundle.exportedAt).catch(() => undefined);
     doneBackup.hidden = true;
     dayDoneBackup.hidden = true;
     showToast("JSON export created");
+    await offerTrim(trials, strokes, bundle.exportedAt);
   } catch { showToast("Data export failed"); }
+}
+
+/** Removes the strokes store's spare copies of trial strokes (nothing is lost: each trial holds its own). */
+function removeDuplicateStrokes(ids: readonly string[]): void {
+  if (ids.length === 0) return;
+  void deleteStrokes(ids).then(async () => {
+    const totals = await getPrunedTotals();
+    await savePrunedTotals({ ...totals, strokesDeleted: totals.strokesDeleted + ids.length });
+  }).catch(() => undefined);
+}
+
+const TRIM_BATCH = 200;
+
+/**
+ * After an export: if any Pencil points are past RAW_SAMPLE_DAYS (and in that export), ask whether the file was
+ * saved, and only then trim them (core/retention.ts). Scores and trial records stay. Trials are rewritten in batches,
+ * each all-or-nothing, so an interruption leaves the rest for the next export.
+ */
+async function offerTrim(trials: readonly TrialRecord[], strokes: readonly RawStroke[], exportedAt: number): Promise<void> {
+  const now = Date.now();
+  const toPrune = trialsToPrune(trials, now, exportedAt);
+  const looseOld = oldLooseStrokeIds(strokes, strokeIdsInTrials(trials), now, exportedAt);
+  if (toPrune.length === 0 && looseOld.length === 0) return;
+  const samples = toPrune.reduce((sum, trial) => sum + trialSampleCount(trial), 0);
+  const ok = window.confirm(
+    `Did the export file save? If it did, Circle Trainer can now remove the Pencil points of ${toPrune.length.toLocaleString()} `
+    + `trial${toPrune.length === 1 ? "" : "s"} older than ${RAW_SAMPLE_DAYS} days to save space. Their scores and records stay, `
+    + "and trophies keep their drawings. The exported file keeps everything.\n\nOK to trim now, Cancel to keep everything for now.",
+  );
+  if (!ok) return;
+  try {
+    let totals = await getPrunedTotals();
+    for (let start = 0; start < toPrune.length; start += TRIM_BATCH) {
+      const batch = toPrune.slice(start, start + TRIM_BATCH);
+      await saveTrials(batch.map(pruneTrial));
+      totals = { ...totals, trials: totals.trials + batch.length, samples: totals.samples + batch.reduce((sum, trial) => sum + trialSampleCount(trial), 0) };
+      await savePrunedTotals(totals);
+    }
+    await deleteStrokes(looseOld);
+    if (looseOld.length > 0) await savePrunedTotals({ ...totals, strokesDeleted: totals.strokesDeleted + looseOld.length });
+    savedStrokeCount -= looseOld.length;
+    showToast(`Trimmed ${samples.toLocaleString()} Pencil points`);
+    if (dataDialog.open) void showDataDialog();
+  } catch { showToast("Trimming stopped; nothing is lost, and it continues after the next export"); }
 }
 
 async function showDataDialog(): Promise<void> {
@@ -1647,8 +1700,14 @@ async function showDataDialog(): Promise<void> {
     dataSummary.textContent = trials.length === 0
       ? "No practice trials saved yet."
       : `${trials.length.toLocaleString()} trials saved · ${counts.LINE} lines · ${counts.ARC} arcs · ${counts.CIRCLE} circles · ${counts.ELLIPSE} ellipses · ${counts.S_CURVE} S curves · ${counts.BOX} boxes.`;
+    const totals = await getPrunedTotals();
+    const trimmed = totals.trials === 0
+      ? "Nothing trimmed yet."
+      : `Trimmed so far: Pencil points of ${totals.trials.toLocaleString()} trial${totals.trials === 1 ? "" : "s"} (${totals.samples.toLocaleString()} points).`;
+    dataRetention.textContent = `Every trial and score is kept. Pencil points are kept for ${RAW_SAMPLE_DAYS} days, and for good for trophies; `
+      + `older ones can be trimmed after you export (you are asked first). ${trimmed}`;
   } catch { dataSummary.textContent = "Saved data could not be read in this browser."; }
-  dataDialog.showModal();
+  if (!dataDialog.open) dataDialog.showModal();
 }
 
 /**
@@ -1824,8 +1883,11 @@ async function initialize(): Promise<void> {
     // Open on Today while today's queue has reps left, unless a free mode was picked earlier today.
     const queue = todayQueue();
     selectedMode = startupMode(selectedMode, readModeDay(), dayKey(Date.now()), queue.order.length > 0 && !isQueueDone(queue));
-    savedStrokeCount = strokes.length;
+    const inTrials = strokeIdsInTrials(trials);
+    savedStrokeCount = looseStrokes(strokes, inTrials).length + inTrials.size;
     savedTrialCount = trials.length;
+    // Strokes up to 0.15.2 were stored twice (in the strokes store and inside their trial): drop the spare copies.
+    removeDuplicateStrokes(duplicateStrokeIds(strokes, inTrials));
     for (const trial of trials) {
       introducedExercises.add(trial.exerciseType);
       const value = trial.derived.accuracyScore;

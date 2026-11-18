@@ -243,6 +243,11 @@ interface TrialRecordBase {
   correctionGateEnabled: boolean;
   schedule: ScheduleContext;
   calibrationId: string | null;
+  /**
+   * Set (0.15.3+) when the trial's raw Pencil samples were removed to save space: its stroke records remain, with
+   * empty `samples`, and everything else (target, metrics, score, versions) is as it was saved. See core/retention.ts.
+   */
+  samplesPruned?: true;
 }
 
 export interface SingleStrokeTrialRecord extends TrialRecordBase {
@@ -292,14 +297,20 @@ export interface DeviceSnapshot {
   coalescedEvents: boolean;
 }
 
+/**
+ * Export schema 4 (0.15.3+): written without indentation; `strokes` holds only strokes that belong to no trial
+ * (interrupted ones), since every trial already contains its own; trials marked `samplesPruned` have empty sample
+ * lists. Schema 3 listed every stroke twice (here and inside its trial).
+ */
 export interface ExportBundle {
-  schemaVersion: "3";
+  schemaVersion: "4";
   appVersion: string;
   exportedAt: number;
   calibration: PhysicalCalibration | null;
   selectedMode: PracticeMode;
   correctionGateEnabled: boolean;
   device: DeviceSnapshot;
+  /** Strokes that belong to no trial (interrupted ones). Each trial's strokes are inside the trial. */
   strokes: RawStroke[];
   trials: TrialRecord[];
   /** Practice milliseconds per practice day ("YYYY-MM-DD", rolling over at 4 am). Added in 0.7.0. */

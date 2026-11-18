@@ -180,6 +180,14 @@ The ruler section of the Settings sheet maps CSS pixels to physical millimetres.
 
 IndexedDB stores calibration, settings, raw strokes, and trial records. Export schema 2 adds the selected practice mode, target union, and schedule context. Export schema 3 adds Box trials: their `exerciseType` is `BOX`, the target stores the box parameters (edge lengths, reference quaternion, hinge edge index, signed swing, camera factor, both 2D offsets) and the projected corners of both boxes, and the record holds `rawStrokes` (the 11 accepted strokes in drawing order) instead of a single `rawStroke`. Box metrics store per-edge errors and angle errors, pooled values, the fitted and target swings, total duration and path length. Each stroke is also saved to the strokes store. The IndexedDB version is unchanged. Taper trials use the single-stroke record with `exerciseType` `TAPER` and a `TAPER` target (both endpoints, length, profile and the three wanted widths); export stays schema 3.
 
+### What is kept (0.15.3+)
+
+Every trial record is kept for good: target, metrics, score, versions and schedule. Raw Pencil points are most of the data (about 735 bytes each in a schema 3 export), so they are kept for 30 days (`RAW_SAMPLE_DAYS` in `src/core/retention.ts`), and for good for every trial that is or has ever been a trophy (the best scored attempt at its exercise when it was drawn; ties stay with the earlier one, as in the trophy case). An older trial keeps its stroke records (ids, times, pointer type) with an empty `samples` list and is marked `samplesPruned: true`; nothing else in it changes and no score is recomputed. Trimming is one-way, so it happens only right after a JSON export, only if something is past 30 days, and only after a confirmation that the file saved; it then touches only data created before that export. Trials are rewritten in batches of 200, each all-or-nothing, so an interruption leaves the rest for the next export. The Data sheet shows the rule and how much has been trimmed (`retention-pruned` in the settings store).
+
+Each stroke is stored once, inside its trial. Up to 0.15.2 every trial stroke was also written to the `strokes` store; those spare copies are removed at startup (nothing is lost), and the `strokes` store now holds only strokes that belong to no trial (interrupted ones), which are trimmed with the rest after 30 days.
+
+Export schema 4 (0.15.3+) is written without indentation and lists in `strokes` only the strokes that belong to no trial; trials carry their own, and trimmed trials have empty sample lists. Together that makes an export about a quarter of the size: about 194 bytes per Pencil point instead of 735. Older exports (schema 3) are unchanged. The four sample fields that are constant on a first-generation Pencil (twist, tangential pressure, contact width and height) are still recorded as they come.
+
 Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw data, `line-1` scores, and stored records are not rewritten.
 
 ## Manual iPad checklist
@@ -193,7 +201,7 @@ Existing 0.2 line trials are normalized in memory as `LINE` trials. Their raw da
 7. Switch between Today, Copy and a drill from the toolbar, and check the pressed button and the Drills menu's label.
 8. Rotate or background the app, resume, and confirm drawing remains stable.
 9. Confirm finger movement does not draw or scroll the canvas.
-10. Export JSON and inspect the saved target, mode, schedule, metrics, and raw samples.
+10. Export JSON and inspect the saved target, mode, schedule, metrics, and raw samples (schema 4: compact, each stroke once, inside its trial).
 11. In Boxes, check the arrow and angle label are legible, draw a full box, use Undo, and cancel a stroke mid-way; confirm the score and rotation readout feel fair.
 12. In Settings, switch the drawing hand: in landscape Box the reference moves to the side away from that hand, and the feedback card and Tips follow it.
 13. Confirm the toolbar fits on one row in both iPad orientations, including Box mode with Undo and Tips.
