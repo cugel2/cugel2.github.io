@@ -1,0 +1,362 @@
+[
+ {
+  "stored": "LINE",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "LINE"
+ },
+ {
+  "stored": "LINE",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "LINE"
+ },
+ {
+  "stored": "LINE",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "LINE",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "LINE"
+ },
+ {
+  "stored": "LINE",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "LINE",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "LINE"
+ },
+ {
+  "stored": "ARC",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "ARC"
+ },
+ {
+  "stored": "ARC",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "ARC"
+ },
+ {
+  "stored": "ARC",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "ARC",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "ARC"
+ },
+ {
+  "stored": "ARC",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "ARC",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "ARC"
+ },
+ {
+  "stored": "CIRCLE",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "CIRCLE"
+ },
+ {
+  "stored": "CIRCLE",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "CIRCLE"
+ },
+ {
+  "stored": "CIRCLE",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "CIRCLE",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "CIRCLE"
+ },
+ {
+  "stored": "CIRCLE",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "CIRCLE",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "CIRCLE"
+ },
+ {
+  "stored": "ELLIPSE",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "ELLIPSE"
+ },
+ {
+  "stored": "ELLIPSE",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "ELLIPSE"
+ },
+ {
+  "stored": "ELLIPSE",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "ELLIPSE",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "ELLIPSE"
+ },
+ {
+  "stored": "ELLIPSE",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "ELLIPSE",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "ELLIPSE"
+ },
+ {
+  "stored": "S_CURVE",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "S_CURVE"
+ },
+ {
+  "stored": "S_CURVE",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "S_CURVE"
+ },
+ {
+  "stored": "S_CURVE",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "S_CURVE",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "S_CURVE"
+ },
+ {
+  "stored": "S_CURVE",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "S_CURVE",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "S_CURVE"
+ },
+ {
+  "stored": "TAPER",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "TAPER"
+ },
+ {
+  "stored": "TAPER",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "TAPER"
+ },
+ {
+  "stored": "TAPER",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "TAPER",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "TAPER"
+ },
+ {
+  "stored": "TAPER",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "TAPER",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "TAPER"
+ },
+ {
+  "stored": "BOX",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "BOX"
+ },
+ {
+  "stored": "BOX",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "BOX"
+ },
+ {
+  "stored": "BOX",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "BOX",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "BOX"
+ },
+ {
+  "stored": "BOX",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "BOX",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "BOX"
+ },
+ {
+  "stored": "MIXED_BLOCKED",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "MIXED_BLOCKED"
+ },
+ {
+  "stored": "MIXED_BLOCKED",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "MIXED_BLOCKED"
+ },
+ {
+  "stored": "MIXED_BLOCKED",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "MIXED_BLOCKED",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "MIXED_BLOCKED"
+ },
+ {
+  "stored": "MIXED_BLOCKED",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "MIXED_BLOCKED",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "MIXED_BLOCKED"
+ },
+ {
+  "stored": "MIXED_RANDOM",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "MIXED_RANDOM"
+ },
+ {
+  "stored": "MIXED_RANDOM",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "MIXED_RANDOM"
+ },
+ {
+  "stored": "MIXED_RANDOM",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "MIXED_RANDOM",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "MIXED_RANDOM"
+ },
+ {
+  "stored": "MIXED_RANDOM",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "MIXED_RANDOM",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "MIXED_RANDOM"
+ },
+ {
+  "stored": "TODAY",
+  "storedDay": "2026-11-16",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "TODAY",
+  "storedDay": "2026-11-16",
+  "repsLeft": false,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "TODAY",
+  "storedDay": "2026-11-15",
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "TODAY",
+  "storedDay": "2026-11-15",
+  "repsLeft": false,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "TODAY",
+  "storedDay": null,
+  "repsLeft": true,
+  "opens": "TODAY"
+ },
+ {
+  "stored": "TODAY",
+  "storedDay": null,
+  "repsLeft": false,
+  "opens": "TODAY"
+ }
+]

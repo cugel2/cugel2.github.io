@@ -1,0 +1,622 @@
+[
+ {
+  "seed": "golden-a",
+  "index": 0,
+  "cases": {
+   "clean": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 46.78857482836794,
+      "meanSpeedMmS": 65.71429048928083,
+      "rmsDeviationMm": 0.15267867502275936,
+      "maxDeviationMm": 0.27126345926353396,
+      "normalizedError": 0.004424992454615679,
+      "endpointMeanErrorMm": 0.23021714810420113,
+      "reverseCoverageRmsMm": 0.15729696139677554,
+      "progression": 0.9960861056751468,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9978408928756048,
+      "curvatureSignTransitions": 3
+     },
+     "executionPassed": true,
+     "accuracyScore": 97
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 46.78857482836794,
+      "meanSpeedMmS": 65.71429048928083,
+      "rmsDeviationMm": 0.15267867502275936,
+      "maxDeviationMm": 0.27126345926353396,
+      "normalizedError": 0.004424992454615679,
+      "endpointMeanErrorMm": 0.23021714810420113,
+      "reverseCoverageRmsMm": 0.15729696139677554,
+      "progression": 0.9960861056751468,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9978408928756048,
+      "curvatureSignTransitions": 3
+     },
+     "executionPassed": true,
+     "accuracyScore": 97
+    }
+   },
+   "reversed": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 46.473297698913385,
+      "meanSpeedMmS": 65.27148553218173,
+      "rmsDeviationMm": 0.3267768120706472,
+      "maxDeviationMm": 0.6341895626169592,
+      "normalizedError": 0.00909222176319103,
+      "endpointMeanErrorMm": 0.44362949905648774,
+      "reverseCoverageRmsMm": 0.3323835647305924,
+      "progression": 0.9902152641878669,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9911171058504131,
+      "curvatureSignTransitions": 19
+     },
+     "executionPassed": true,
+     "accuracyScore": 92
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 46.473297698913385,
+      "meanSpeedMmS": 65.27148553218173,
+      "rmsDeviationMm": 0.3267768120706472,
+      "maxDeviationMm": 0.6341895626169592,
+      "normalizedError": 0.00909222176319103,
+      "endpointMeanErrorMm": 0.44362949905648774,
+      "reverseCoverageRmsMm": 0.3323835647305924,
+      "progression": 0.9902152641878669,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9911171058504131,
+      "curvatureSignTransitions": 19
+     },
+     "executionPassed": true,
+     "accuracyScore": 92
+    }
+   },
+   "rough": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 552,
+      "pathLengthMm": 54.20146917871679,
+      "meanSpeedMmS": 98.19106735274781,
+      "rmsDeviationMm": 1.0592841406916087,
+      "maxDeviationMm": 2.3862195788123026,
+      "normalizedError": 0.035412101943097504,
+      "endpointMeanErrorMm": 2.131162606720704,
+      "reverseCoverageRmsMm": 1.0049474775244036,
+      "progression": 1,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.1559326737105253,
+      "curvatureSignTransitions": 18
+     },
+     "executionPassed": true,
+     "accuracyScore": 58
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 552,
+      "pathLengthMm": 54.20146917871679,
+      "meanSpeedMmS": 98.19106735274781,
+      "rmsDeviationMm": 1.0592841406916087,
+      "maxDeviationMm": 2.3862195788123026,
+      "normalizedError": 0.035412101943097504,
+      "endpointMeanErrorMm": 2.131162606720704,
+      "reverseCoverageRmsMm": 1.0049474775244036,
+      "progression": 1,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.1559326737105253,
+      "curvatureSignTransitions": 18
+     },
+     "executionPassed": true,
+     "accuracyScore": 58
+    }
+   },
+   "offset": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 46.62079807350015,
+      "meanSpeedMmS": 65.47864897963504,
+      "rmsDeviationMm": 2.552855978228983,
+      "maxDeviationMm": 3.795228372052815,
+      "normalizedError": 0.07308296760247196,
+      "endpointMeanErrorMm": 3.8062971984852356,
+      "reverseCoverageRmsMm": 2.554198691930563,
+      "progression": 0.9843444227005871,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9942627863080258,
+      "curvatureSignTransitions": 9
+     },
+     "executionPassed": true,
+     "accuracyScore": 23
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 46.62079807350015,
+      "meanSpeedMmS": 65.47864897963504,
+      "rmsDeviationMm": 2.552855978228983,
+      "maxDeviationMm": 3.795228372052815,
+      "normalizedError": 0.07308296760247196,
+      "endpointMeanErrorMm": 3.8062971984852356,
+      "reverseCoverageRmsMm": 2.554198691930563,
+      "progression": 0.9843444227005871,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9942627863080258,
+      "curvatureSignTransitions": 9
+     },
+     "executionPassed": true,
+     "accuracyScore": 23
+    }
+   },
+   "partial": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 392,
+      "pathLengthMm": 25.635180809186807,
+      "meanSpeedMmS": 65.39586941119083,
+      "rmsDeviationMm": 4.664754566292076,
+      "maxDeviationMm": 0.35991944245671104,
+      "normalizedError": 0.15697614036786275,
+      "endpointMeanErrorMm": 8.09867932474895,
+      "reverseCoverageRmsMm": 6.595005563061061,
+      "progression": 0.547945205479452,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.5467110678514933,
+      "curvatureSignTransitions": 10
+     },
+     "executionPassed": false,
+     "executionReason": "Incomplete S curve — pass through all four points"
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 392,
+      "pathLengthMm": 25.635180809186807,
+      "meanSpeedMmS": 65.39586941119083,
+      "rmsDeviationMm": 4.664754566292076,
+      "maxDeviationMm": 0.35991944245671104,
+      "normalizedError": 0.15697614036786275,
+      "endpointMeanErrorMm": 8.09867932474895,
+      "reverseCoverageRmsMm": 6.595005563061061,
+      "progression": 0.547945205479452,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.5467110678514933,
+      "curvatureSignTransitions": 10
+     },
+     "executionPassed": false,
+     "executionReason": "Incomplete S curve — pass through all four points"
+    }
+   },
+   "backtracked": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 1196,
+      "pathLengthMm": 72.37203052316774,
+      "meanSpeedMmS": 60.51173120666199,
+      "rmsDeviationMm": 0.18852041916306383,
+      "maxDeviationMm": 0.3298679928694439,
+      "normalizedError": 0.004969559963416697,
+      "endpointMeanErrorMm": 0.22827363083578556,
+      "reverseCoverageRmsMm": 0.19809939342210958,
+      "progression": 1,
+      "backtrackingFraction": 0.16158940397350993,
+      "pathLengthRatio": 1.5434488402641784,
+      "curvatureSignTransitions": 6
+     },
+     "executionPassed": false,
+     "executionReason": "Too corrective — commit to the next one"
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 1196,
+      "pathLengthMm": 72.37203052316774,
+      "meanSpeedMmS": 60.51173120666199,
+      "rmsDeviationMm": 0.18852041916306383,
+      "maxDeviationMm": 0.3298679928694439,
+      "normalizedError": 0.004969559963416697,
+      "endpointMeanErrorMm": 0.22827363083578556,
+      "reverseCoverageRmsMm": 0.19809939342210958,
+      "progression": 1,
+      "backtrackingFraction": 0.16158940397350993,
+      "pathLengthRatio": 1.5434488402641784,
+      "curvatureSignTransitions": 6
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    }
+   },
+   "slow": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 3560,
+      "pathLengthMm": 46.596981488341235,
+      "meanSpeedMmS": 13.089039743916077,
+      "rmsDeviationMm": 0.132359236479225,
+      "maxDeviationMm": 0.2596375342965882,
+      "normalizedError": 0.003851614663883044,
+      "endpointMeanErrorMm": 0.2047894170539123,
+      "reverseCoverageRmsMm": 0.13266141416398267,
+      "progression": 1,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9937548596894572,
+      "curvatureSignTransitions": 6
+     },
+     "executionPassed": true,
+     "accuracyScore": 97
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 3560,
+      "pathLengthMm": 46.596981488341235,
+      "meanSpeedMmS": 13.089039743916077,
+      "rmsDeviationMm": 0.132359236479225,
+      "maxDeviationMm": 0.2596375342965882,
+      "normalizedError": 0.003851614663883044,
+      "endpointMeanErrorMm": 0.2047894170539123,
+      "reverseCoverageRmsMm": 0.13266141416398267,
+      "progression": 1,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9937548596894572,
+      "curvatureSignTransitions": 6
+     },
+     "executionPassed": true,
+     "accuracyScore": 97
+    }
+   },
+   "dot": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 16,
+      "pathLengthMm": 0,
+      "meanSpeedMmS": 0,
+      "rmsDeviationMm": 14.748380951131033,
+      "maxDeviationMm": 0,
+      "normalizedError": 0.41071684435619754,
+      "endpointMeanErrorMm": 17.502302669920024,
+      "reverseCoverageRmsMm": 20.857360364134514,
+      "progression": 0,
+      "backtrackingFraction": 1,
+      "pathLengthRatio": 0,
+      "curvatureSignTransitions": 0
+     },
+     "executionPassed": false,
+     "executionReason": "Stroke too short — try again"
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 16,
+      "pathLengthMm": 0,
+      "meanSpeedMmS": 0,
+      "rmsDeviationMm": 14.748380951131033,
+      "maxDeviationMm": 0,
+      "normalizedError": 0.41071684435619754,
+      "endpointMeanErrorMm": 17.502302669920024,
+      "reverseCoverageRmsMm": 20.857360364134514,
+      "progression": 0,
+      "backtrackingFraction": 1,
+      "pathLengthRatio": 0,
+      "curvatureSignTransitions": 0
+     },
+     "executionPassed": false,
+     "executionReason": "Stroke too short — try again"
+    }
+   }
+  }
+ },
+ {
+  "seed": "golden-b",
+  "index": 1,
+  "cases": {
+   "clean": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 50.0828265470309,
+      "meanSpeedMmS": 70.34104852111082,
+      "rmsDeviationMm": 0.140051338333366,
+      "maxDeviationMm": 0.2419417357180077,
+      "normalizedError": 0.0039412162448974695,
+      "endpointMeanErrorMm": 0.2302171481042008,
+      "reverseCoverageRmsMm": 0.13860819639972477,
+      "progression": 0.9960861056751468,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9937037263442946,
+      "curvatureSignTransitions": 6
+     },
+     "executionPassed": true,
+     "accuracyScore": 97
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 50.0828265470309,
+      "meanSpeedMmS": 70.34104852111082,
+      "rmsDeviationMm": 0.140051338333366,
+      "maxDeviationMm": 0.2419417357180077,
+      "normalizedError": 0.0039412162448974695,
+      "endpointMeanErrorMm": 0.2302171481042008,
+      "reverseCoverageRmsMm": 0.13860819639972477,
+      "progression": 0.9960861056751468,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.9937037263442946,
+      "curvatureSignTransitions": 6
+     },
+     "executionPassed": true,
+     "accuracyScore": 97
+    }
+   },
+   "reversed": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 50.97078380577388,
+      "meanSpeedMmS": 71.5881795024914,
+      "rmsDeviationMm": 0.2812103688911617,
+      "maxDeviationMm": 0.6766956689373275,
+      "normalizedError": 0.00772650972055314,
+      "endpointMeanErrorMm": 0.44362949905648597,
+      "reverseCoverageRmsMm": 0.27190290503172143,
+      "progression": 0.9941291585127201,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.0113218700810258,
+      "curvatureSignTransitions": 13
+     },
+     "executionPassed": true,
+     "accuracyScore": 93
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 50.97078380577388,
+      "meanSpeedMmS": 71.5881795024914,
+      "rmsDeviationMm": 0.2812103688911617,
+      "maxDeviationMm": 0.6766956689373275,
+      "normalizedError": 0.00772650972055314,
+      "endpointMeanErrorMm": 0.44362949905648597,
+      "reverseCoverageRmsMm": 0.27190290503172143,
+      "progression": 0.9941291585127201,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.0113218700810258,
+      "curvatureSignTransitions": 13
+     },
+     "executionPassed": true,
+     "accuracyScore": 93
+    }
+   },
+   "rough": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 552,
+      "pathLengthMm": 56.44651960754696,
+      "meanSpeedMmS": 102.25818769483145,
+      "rmsDeviationMm": 0.7755465897302396,
+      "maxDeviationMm": 2.317025094850196,
+      "normalizedError": 0.025814345956326305,
+      "endpointMeanErrorMm": 1.7410494915079755,
+      "reverseCoverageRmsMm": 0.723130078287049,
+      "progression": 1,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.1199670773476145,
+      "curvatureSignTransitions": 24
+     },
+     "executionPassed": true,
+     "accuracyScore": 70
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 552,
+      "pathLengthMm": 56.44651960754696,
+      "meanSpeedMmS": 102.25818769483145,
+      "rmsDeviationMm": 0.7755465897302396,
+      "maxDeviationMm": 2.317025094850196,
+      "normalizedError": 0.025814345956326305,
+      "endpointMeanErrorMm": 1.7410494915079755,
+      "reverseCoverageRmsMm": 0.723130078287049,
+      "progression": 1,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.1199670773476145,
+      "curvatureSignTransitions": 24
+     },
+     "executionPassed": true,
+     "accuracyScore": 70
+    }
+   },
+   "offset": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 50.446304239385675,
+      "meanSpeedMmS": 70.8515508980136,
+      "rmsDeviationMm": 2.544414798318597,
+      "maxDeviationMm": 3.817366024917623,
+      "normalizedError": 0.06836705886274849,
+      "endpointMeanErrorMm": 3.806297198485222,
+      "reverseCoverageRmsMm": 2.494080992122333,
+      "progression": 0.9393346379647749,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.0009155624613475,
+      "curvatureSignTransitions": 13
+     },
+     "executionPassed": true,
+     "accuracyScore": 26
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 712,
+      "pathLengthMm": 50.446304239385675,
+      "meanSpeedMmS": 70.8515508980136,
+      "rmsDeviationMm": 2.544414798318597,
+      "maxDeviationMm": 3.817366024917623,
+      "normalizedError": 0.06836705886274849,
+      "endpointMeanErrorMm": 3.806297198485222,
+      "reverseCoverageRmsMm": 2.494080992122333,
+      "progression": 0.9393346379647749,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.0009155624613475,
+      "curvatureSignTransitions": 13
+     },
+     "executionPassed": true,
+     "accuracyScore": 26
+    }
+   },
+   "partial": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 392,
+      "pathLengthMm": 27.963913832488366,
+      "meanSpeedMmS": 71.33651487879685,
+      "rmsDeviationMm": 4.790175381155809,
+      "maxDeviationMm": 0.3037479938723953,
+      "normalizedError": 0.1495452707313155,
+      "endpointMeanErrorMm": 8.111709266698254,
+      "reverseCoverageRmsMm": 6.772807020281522,
+      "progression": 0.547945205479452,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.5548378015849392,
+      "curvatureSignTransitions": 10
+     },
+     "executionPassed": false,
+     "executionReason": "Incomplete S curve — pass through all four points"
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 392,
+      "pathLengthMm": 27.963913832488366,
+      "meanSpeedMmS": 71.33651487879685,
+      "rmsDeviationMm": 4.790175381155809,
+      "maxDeviationMm": 0.3037479938723953,
+      "normalizedError": 0.1495452707313155,
+      "endpointMeanErrorMm": 8.111709266698254,
+      "reverseCoverageRmsMm": 6.772807020281522,
+      "progression": 0.547945205479452,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 0.5548378015849392,
+      "curvatureSignTransitions": 10
+     },
+     "executionPassed": false,
+     "executionReason": "Incomplete S curve — pass through all four points"
+    }
+   },
+   "backtracked": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 1196,
+      "pathLengthMm": 78.65428648782431,
+      "meanSpeedMmS": 65.76445358513739,
+      "rmsDeviationMm": 0.10935261430814405,
+      "maxDeviationMm": 0.2942345729234805,
+      "normalizedError": 0.003488208812698422,
+      "endpointMeanErrorMm": 0.2282736308357881,
+      "reverseCoverageRmsMm": 0.07687826438197529,
+      "progression": 0.9980430528375733,
+      "backtrackingFraction": 0.1626984126984127,
+      "pathLengthRatio": 1.5605959759980097,
+      "curvatureSignTransitions": 7
+     },
+     "executionPassed": false,
+     "executionReason": "Too corrective — commit to the next one"
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 1196,
+      "pathLengthMm": 78.65428648782431,
+      "meanSpeedMmS": 65.76445358513739,
+      "rmsDeviationMm": 0.10935261430814405,
+      "maxDeviationMm": 0.2942345729234805,
+      "normalizedError": 0.003488208812698422,
+      "endpointMeanErrorMm": 0.2282736308357881,
+      "reverseCoverageRmsMm": 0.07687826438197529,
+      "progression": 0.9980430528375733,
+      "backtrackingFraction": 0.1626984126984127,
+      "pathLengthRatio": 1.5605959759980097,
+      "curvatureSignTransitions": 7
+     },
+     "executionPassed": true,
+     "accuracyScore": 98
+    }
+   },
+   "slow": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 3560,
+      "pathLengthMm": 51.158509417078754,
+      "meanSpeedMmS": 14.370367813786167,
+      "rmsDeviationMm": 0.16782156663766956,
+      "maxDeviationMm": 0.29332161956995906,
+      "normalizedError": 0.004126876234359362,
+      "endpointMeanErrorMm": 0.20478941705390666,
+      "reverseCoverageRmsMm": 0.1676691181567339,
+      "progression": 1,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.0150465727854296,
+      "curvatureSignTransitions": 5
+     },
+     "executionPassed": true,
+     "accuracyScore": 97
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 3560,
+      "pathLengthMm": 51.158509417078754,
+      "meanSpeedMmS": 14.370367813786167,
+      "rmsDeviationMm": 0.16782156663766956,
+      "maxDeviationMm": 0.29332161956995906,
+      "normalizedError": 0.004126876234359362,
+      "endpointMeanErrorMm": 0.20478941705390666,
+      "reverseCoverageRmsMm": 0.1676691181567339,
+      "progression": 1,
+      "backtrackingFraction": 0,
+      "pathLengthRatio": 1.0150465727854296,
+      "curvatureSignTransitions": 5
+     },
+     "executionPassed": true,
+     "accuracyScore": 97
+    }
+   },
+   "dot": {
+    "gateOn": {
+     "metrics": {
+      "durationMs": 16,
+      "pathLengthMm": 0,
+      "meanSpeedMmS": 0,
+      "rmsDeviationMm": 14.950862302344419,
+      "maxDeviationMm": 0,
+      "normalizedError": 0.38895997223369627,
+      "endpointMeanErrorMm": 17.55840663705021,
+      "reverseCoverageRmsMm": 21.143712237148115,
+      "progression": 0,
+      "backtrackingFraction": 1,
+      "pathLengthRatio": 0,
+      "curvatureSignTransitions": 0
+     },
+     "executionPassed": false,
+     "executionReason": "Stroke too short — try again"
+    },
+    "gateOff": {
+     "metrics": {
+      "durationMs": 16,
+      "pathLengthMm": 0,
+      "meanSpeedMmS": 0,
+      "rmsDeviationMm": 14.950862302344419,
+      "maxDeviationMm": 0,
+      "normalizedError": 0.38895997223369627,
+      "endpointMeanErrorMm": 17.55840663705021,
+      "reverseCoverageRmsMm": 21.143712237148115,
+      "progression": 0,
+      "backtrackingFraction": 1,
+      "pathLengthRatio": 0,
+      "curvatureSignTransitions": 0
+     },
+     "executionPassed": false,
+     "executionReason": "Stroke too short — try again"
+    }
+   }
+  }
+ }
+]

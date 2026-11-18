@@ -1,0 +1,1098 @@
+[
+ {
+  "seed": "golden-a",
+  "index": 0,
+  "swingDeg": 30,
+  "cases": {
+   "good": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "good-0",
+       "rmsMm": 0.12233231122697685,
+       "endpointMm": 0.17604187038488595,
+       "angleErrorDeg": 0.5454138140853012
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "good-1",
+       "rmsMm": 0.09830827097873066,
+       "endpointMm": 0.24215150534424,
+       "angleErrorDeg": 0.18282446032938537
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "good-2",
+       "rmsMm": 0.16106460747957446,
+       "endpointMm": 0.25082641320815513,
+       "angleErrorDeg": 0.3551220770023251
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "good-3",
+       "rmsMm": 0.19503893877863088,
+       "endpointMm": 0.21639691621720514,
+       "angleErrorDeg": 0.3885896637786743
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "good-4",
+       "rmsMm": 0.17172860333320253,
+       "endpointMm": 0.2613043091201149,
+       "angleErrorDeg": 0.4595685538090629
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "good-5",
+       "rmsMm": 0.1795492340831711,
+       "endpointMm": 0.26624641302782726,
+       "angleErrorDeg": 0.28640893103204235
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "good-6",
+       "rmsMm": 0.17283574221754747,
+       "endpointMm": 0.2032791494157573,
+       "angleErrorDeg": 0.6160133077758285
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "good-7",
+       "rmsMm": 0.16539935472900905,
+       "endpointMm": 0.22468531174571843,
+       "angleErrorDeg": 0.1328712360159443
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "good-8",
+       "rmsMm": 0.14187751831825682,
+       "endpointMm": 0.19319744118644483,
+       "angleErrorDeg": 0.5275588833843841
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "good-9",
+       "rmsMm": 0.16474326140047008,
+       "endpointMm": 0.03792565172742046,
+       "angleErrorDeg": 0.0317064368179274
+      },
+      {
+       "edgeIndex": 4,
+       "strokeId": "good-10",
+       "rmsMm": 0.15803380929672553,
+       "endpointMm": 0.22078224544218727,
+       "angleErrorDeg": 0.004519926910627815
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 0.15949173366796363,
+     "endpointMeanErrorMm": 0.21697318836019971,
+     "meanAngleErrorDeg": 0.3209633900855912,
+     "fittedSwingDeg": 29.90184129629312,
+     "targetSwingDeg": 30,
+     "scaleMm": 34.65240629731359,
+     "normalizedError": 0.0059412123437636325,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 382.57909614375757,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 100
+   },
+   "rough": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "rough-0",
+       "rmsMm": 0.5562009216315298,
+       "endpointMm": 2.4400227613802645,
+       "angleErrorDeg": 2.3471261747417063
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "rough-1",
+       "rmsMm": 0.7159865470808694,
+       "endpointMm": 2.557813404641153,
+       "angleErrorDeg": 0.6664297852684342
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "rough-2",
+       "rmsMm": 0.47459081340013287,
+       "endpointMm": 1.4490098434346632,
+       "angleErrorDeg": 1.3153863051746486
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "rough-3",
+       "rmsMm": 0.6868726225033113,
+       "endpointMm": 2.4426363895879764,
+       "angleErrorDeg": 1.2979967948992055
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "rough-4",
+       "rmsMm": 0.5613951239348394,
+       "endpointMm": 4.0771392127437185,
+       "angleErrorDeg": 1.210549574799014
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "rough-5",
+       "rmsMm": 0.5435535718201487,
+       "endpointMm": 1.9085130335113192,
+       "angleErrorDeg": 0.40352783491886157
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "rough-6",
+       "rmsMm": 0.6779614535198588,
+       "endpointMm": 2.9814021493937855,
+       "angleErrorDeg": 2.073255133530686
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "rough-7",
+       "rmsMm": 0.7549740171341299,
+       "endpointMm": 2.6249441908570574,
+       "angleErrorDeg": 0.061530068347337874
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "rough-8",
+       "rmsMm": 0.5152695482561518,
+       "endpointMm": 1.968459009872932,
+       "angleErrorDeg": 0.7110607785020567
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "rough-9",
+       "rmsMm": 0.7599148091235755,
+       "endpointMm": 2.317278882257499,
+       "angleErrorDeg": 0.6486995682386123
+      },
+      {
+       "edgeIndex": 4,
+       "strokeId": "rough-10",
+       "rmsMm": 0.41638942317760425,
+       "endpointMm": 3.9506675850174053,
+       "angleErrorDeg": 0.7649690017559361
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 0.6161177932222186,
+     "endpointMeanErrorMm": 2.7212828884192666,
+     "meanAngleErrorDeg": 1.0455028200160454,
+     "fittedSwingDeg": 29.66789101840289,
+     "targetSwingDeg": 30,
+     "scaleMm": 34.65240629731359,
+     "normalizedError": 0.05036149609034136,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 339.97935497558944,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 94
+   },
+   "overTurned": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "over-0",
+       "rmsMm": 2.782196357477178,
+       "endpointMm": 5.5151692720903265,
+       "angleErrorDeg": 10.227683531841842
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "over-1",
+       "rmsMm": 1.8262048535162836,
+       "endpointMm": 7.655249043861819,
+       "angleErrorDeg": 4.992763922556662
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "over-2",
+       "rmsMm": 1.2637047750087689,
+       "endpointMm": 5.882161872108081,
+       "angleErrorDeg": 9.356922112274857
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "over-3",
+       "rmsMm": 0.6423535777984405,
+       "endpointMm": 3.1359867330641973,
+       "angleErrorDeg": 1.4545462235413709
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "over-4",
+       "rmsMm": 11.205821414567668,
+       "endpointMm": 11.319059720425777,
+       "angleErrorDeg": 0.21660476662689626
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "over-5",
+       "rmsMm": 2.978242859176195,
+       "endpointMm": 5.699642469909048,
+       "angleErrorDeg": 15.63094580508593
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "over-6",
+       "rmsMm": 0.776375052512843,
+       "endpointMm": 7.330187715422294,
+       "angleErrorDeg": 2.0906808910702757
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "over-7",
+       "rmsMm": 5.681085346691945,
+       "endpointMm": 5.798491718618228,
+       "angleErrorDeg": 0.3297605912352708
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "over-8",
+       "rmsMm": 1.1000950320769793,
+       "endpointMm": 4.4275055076206575,
+       "angleErrorDeg": 4.083122035651631
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "over-9",
+       "rmsMm": 1.7261266152863763,
+       "endpointMm": 3.2548937299312457,
+       "angleErrorDeg": 5.20826586718573
+      },
+      {
+       "edgeIndex": 4,
+       "strokeId": "over-10",
+       "rmsMm": 2.1356979090381207,
+       "endpointMm": 3.6149988841167486,
+       "angleErrorDeg": 0.21783047316008944
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 4.14678396074603,
+     "endpointMeanErrorMm": 6.213480371827078,
+     "meanAngleErrorDeg": 4.8917387472936875,
+     "fittedSwingDeg": 45.06580929895545,
+     "targetSwingDeg": 30,
+     "scaleMm": 34.65240629731359,
+     "normalizedError": 0.16091928892544002,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 379.86585689060513,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 75
+   },
+   "wrongWay": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 9,
+       "strokeId": "wrong-0",
+       "rmsMm": 6.5233035996646045,
+       "endpointMm": 6.5970383521421425,
+       "angleErrorDeg": 8.352535091039103
+      },
+      {
+       "edgeIndex": 0,
+       "strokeId": "wrong-1",
+       "rmsMm": 2.238303304937851,
+       "endpointMm": 11.91531495575524,
+       "angleErrorDeg": 35.778674146280984
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "wrong-2",
+       "rmsMm": 4.3590529027894425,
+       "endpointMm": 23.499402377176043,
+       "angleErrorDeg": 4.290176542506434
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "wrong-3",
+       "rmsMm": 1.7919558662868205,
+       "endpointMm": 15.286280414960576,
+       "angleErrorDeg": 48.891300303810596
+      },
+      {
+       "edgeIndex": 4,
+       "strokeId": "wrong-4",
+       "rmsMm": 19.18376256930015,
+       "endpointMm": 19.078431021622215,
+       "angleErrorDeg": 0.2669197950130741
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "wrong-5",
+       "rmsMm": 10.858214986846031,
+       "endpointMm": 23.604268599794338,
+       "angleErrorDeg": 10.327283820735886
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "wrong-6",
+       "rmsMm": 0.8315862923198919,
+       "endpointMm": 10.836282527501044,
+       "angleErrorDeg": 14.407261489078081
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "wrong-7",
+       "rmsMm": 29.114516132433412,
+       "endpointMm": 32.0251957341401,
+       "angleErrorDeg": 0.6414353429580615
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "wrong-8",
+       "rmsMm": 2.5638100397883536,
+       "endpointMm": 3.1693553256474796,
+       "angleErrorDeg": 2.426676338975666
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "wrong-9",
+       "rmsMm": 4.3249188285854085,
+       "endpointMm": 17.263111722982227,
+       "angleErrorDeg": 55.08478005561652
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "wrong-10",
+       "rmsMm": 1.7725475458285789,
+       "endpointMm": 3.344228716562128,
+       "angleErrorDeg": 0.3710811187587767
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 11.411557433240748,
+     "endpointMeanErrorMm": 17.463775076052848,
+     "meanAngleErrorDeg": 16.439829458615744,
+     "fittedSwingDeg": -29.974664763690765,
+     "targetSwingDeg": 30,
+     "scaleMm": 34.65240629731359,
+     "normalizedError": 0.44708306565290057,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 310.16318791386016,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 31
+   },
+   "halfTurned": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "half-0",
+       "rmsMm": 1.747247758486205,
+       "endpointMm": 6.634595224758183,
+       "angleErrorDeg": 5.997473126346111
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "half-1",
+       "rmsMm": 2.387007825615181,
+       "endpointMm": 6.05188225175752,
+       "angleErrorDeg": 8.502258201216591
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "half-2",
+       "rmsMm": 1.1546278851472511,
+       "endpointMm": 4.187289679778262,
+       "angleErrorDeg": 2.016299555511663
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "half-3",
+       "rmsMm": 0.7094411172760439,
+       "endpointMm": 4.611090568486799,
+       "angleErrorDeg": 0.881558299417037
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "half-4",
+       "rmsMm": 2.4934978006479063,
+       "endpointMm": 8.841249621167275,
+       "angleErrorDeg": 0.21760441409833
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "half-5",
+       "rmsMm": 2.9312912679912757,
+       "endpointMm": 4.755735989078889,
+       "angleErrorDeg": 9.805129981129681
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "half-6",
+       "rmsMm": 0.9983316855499953,
+       "endpointMm": 5.655208761395692,
+       "angleErrorDeg": 4.158753170152183
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "half-7",
+       "rmsMm": 1.2730878317335443,
+       "endpointMm": 11.453558184226617,
+       "angleErrorDeg": 0.5088685889575117
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "half-8",
+       "rmsMm": 1.014779340840211,
+       "endpointMm": 5.02463490709221,
+       "angleErrorDeg": 4.311675193459873
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "half-9",
+       "rmsMm": 1.8144036545653508,
+       "endpointMm": 4.196364495630086,
+       "angleErrorDeg": 5.862369255434089
+      },
+      {
+       "edgeIndex": 4,
+       "strokeId": "half-10",
+       "rmsMm": 2.342919433254205,
+       "endpointMm": 3.2142690155513582,
+       "angleErrorDeg": 1.2002634218391766
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 1.8543727463254385,
+     "endpointMeanErrorMm": 6.2999043339693,
+     "meanAngleErrorDeg": 3.9511139279602046,
+     "fittedSwingDeg": 14.805913216367152,
+     "targetSwingDeg": 30,
+     "scaleMm": 34.65240629731359,
+     "normalizedError": 0.12150107287900808,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 377.60995114243883,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 82
+   },
+   "fewStrokes": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "few-0",
+       "rmsMm": 0.11336879548677933,
+       "endpointMm": 0.23083807567500378,
+       "angleErrorDeg": 0.1702342994869127
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "few-1",
+       "rmsMm": 0.15123026261509867,
+       "endpointMm": 0.22970886258412077,
+       "angleErrorDeg": 0.2394993455901897
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "few-2",
+       "rmsMm": 0.16221361544564494,
+       "endpointMm": 0.15596218196492748,
+       "angleErrorDeg": 0.4544506039184061
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "few-3",
+       "rmsMm": 0.12756739446337298,
+       "endpointMm": 0.18624701386967915,
+       "angleErrorDeg": 0.49084835785285463
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "few-4",
+       "rmsMm": 0.18630430283334584,
+       "endpointMm": 0.21862414391605747,
+       "angleErrorDeg": 0.14521237333619483
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "few-5",
+       "rmsMm": 0.12752983173515112,
+       "endpointMm": 0.1383405720650536,
+       "angleErrorDeg": 0.03723029551915147
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 0.14678948902168898,
+     "endpointMeanErrorMm": 0.1966380606139014,
+     "meanAngleErrorDeg": 0.25624587928395154,
+     "fittedSwingDeg": 30.076044288430424,
+     "targetSwingDeg": 30,
+     "scaleMm": 34.65240629731359,
+     "normalizedError": 0.005434748670010131,
+     "durationMs": 10232,
+     "drawingDurationMs": 1392,
+     "pathLengthMm": 201.83151864984745,
+     "strokeCount": 6
+    },
+    "executionPassed": true,
+    "accuracyScore": 100
+   }
+  }
+ },
+ {
+  "seed": "golden-b",
+  "index": 1,
+  "swingDeg": -30,
+  "cases": {
+   "good": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "good-0",
+       "rmsMm": 0.10924224578388665,
+       "endpointMm": 0.176041870384889,
+       "angleErrorDeg": 0.19856396549581617
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "good-1",
+       "rmsMm": 0.18778337298255035,
+       "endpointMm": 0.24215150534423746,
+       "angleErrorDeg": 0.9027579191240704
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "good-2",
+       "rmsMm": 0.16478483231464414,
+       "endpointMm": 0.25082641320814736,
+       "angleErrorDeg": 0.3320741223908031
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "good-3",
+       "rmsMm": 0.09275476575381349,
+       "endpointMm": 0.2163969162172023,
+       "angleErrorDeg": 0.4506679651459251
+      },
+      {
+       "edgeIndex": 7,
+       "strokeId": "good-4",
+       "rmsMm": 0.1661731249793805,
+       "endpointMm": 0.26130430912010627,
+       "angleErrorDeg": 0.35557619378135963
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "good-5",
+       "rmsMm": 0.1817104296510908,
+       "endpointMm": 0.26624641302782814,
+       "angleErrorDeg": 0.2802303602927907
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "good-6",
+       "rmsMm": 0.11778433223495864,
+       "endpointMm": 0.20327914941576503,
+       "angleErrorDeg": 0.013146019247133232
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "good-7",
+       "rmsMm": 0.1612753519959617,
+       "endpointMm": 0.22468531174571543,
+       "angleErrorDeg": 0.07522783935223742
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "good-8",
+       "rmsMm": 0.14048071100190956,
+       "endpointMm": 0.1931974411864414,
+       "angleErrorDeg": 0.3743599811965055
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "good-9",
+       "rmsMm": 0.12876473138988692,
+       "endpointMm": 0.03792565172743043,
+       "angleErrorDeg": 0.1422117581609541
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "good-10",
+       "rmsMm": 0.16094595084453353,
+       "endpointMm": 0.2207822454421946,
+       "angleErrorDeg": 0.21778466493281545
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 0.14944984323153582,
+     "endpointMeanErrorMm": 0.2169731883601987,
+     "meanAngleErrorDeg": 0.30387279901094644,
+     "fittedSwingDeg": -29.950574507603136,
+     "targetSwingDeg": -30,
+     "scaleMm": 36.95927136328128,
+     "normalizedError": 0.005362650744755828,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 407.4963243774905,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 100
+   },
+   "rough": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "rough-0",
+       "rmsMm": 0.5306403887236426,
+       "endpointMm": 3.3451461414893435,
+       "angleErrorDeg": 1.300548761170169
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "rough-1",
+       "rmsMm": 0.473779336430547,
+       "endpointMm": 2.4911608903461864,
+       "angleErrorDeg": 1.743535352391632
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "rough-2",
+       "rmsMm": 0.45870609797137113,
+       "endpointMm": 4.362107635926288,
+       "angleErrorDeg": 0.29987134676498717
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "rough-3",
+       "rmsMm": 0.5024323758665281,
+       "endpointMm": 2.74224558392364,
+       "angleErrorDeg": 1.1307416361622131
+      },
+      {
+       "edgeIndex": 7,
+       "strokeId": "rough-4",
+       "rmsMm": 0.5431146413760881,
+       "endpointMm": 3.3117640394886254,
+       "angleErrorDeg": 1.112867075767886
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "rough-5",
+       "rmsMm": 0.5087408347323996,
+       "endpointMm": 3.6048756997559734,
+       "angleErrorDeg": 0.4440088408698841
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "rough-6",
+       "rmsMm": 0.4333192419129278,
+       "endpointMm": 2.9185486478837186,
+       "angleErrorDeg": 1.1398680723713541
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "rough-7",
+       "rmsMm": 0.6812407703440373,
+       "endpointMm": 2.4433059937814647,
+       "angleErrorDeg": 0.8958812618638206
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "rough-8",
+       "rmsMm": 0.5532470594091525,
+       "endpointMm": 4.319587020692232,
+       "angleErrorDeg": 0.07406359577786162
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "rough-9",
+       "rmsMm": 0.3010707746410518,
+       "endpointMm": 2.3728181185869373,
+       "angleErrorDeg": 1.78208759534283
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "rough-10",
+       "rmsMm": 0.48579675557578533,
+       "endpointMm": 3.3762275794136603,
+       "angleErrorDeg": 1.4969118608086593
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 0.5051791193964931,
+     "endpointMeanErrorMm": 3.2763944974751618,
+     "meanAngleErrorDeg": 1.0382168544810269,
+     "fittedSwingDeg": -30.21708584001922,
+     "targetSwingDeg": -30,
+     "scaleMm": 36.95927136328128,
+     "normalizedError": 0.05491745998660637,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 347.792887083747,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 93
+   },
+   "overTurned": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "over-0",
+       "rmsMm": 4.732225824230918,
+       "endpointMm": 4.080531892165761,
+       "angleErrorDeg": 10.369013100846225
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "over-1",
+       "rmsMm": 5.390490100952139,
+       "endpointMm": 5.197827643341945,
+       "angleErrorDeg": 19.59828203796559
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "over-2",
+       "rmsMm": 2.979191326489264,
+       "endpointMm": 11.652420519327292,
+       "angleErrorDeg": 8.432063881930214
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "over-3",
+       "rmsMm": 7.541024131682942,
+       "endpointMm": 10.251394993302615,
+       "angleErrorDeg": 25.284260886530348
+      },
+      {
+       "edgeIndex": 7,
+       "strokeId": "over-4",
+       "rmsMm": 9.563683754426359,
+       "endpointMm": 11.964804513388437,
+       "angleErrorDeg": 0.5343133415550182
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "over-5",
+       "rmsMm": 3.1528638678156398,
+       "endpointMm": 10.95629448998432,
+       "angleErrorDeg": 8.840481586801701
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "over-6",
+       "rmsMm": 5.514543774135561,
+       "endpointMm": 5.909496706225835,
+       "angleErrorDeg": 21.702631987226287
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "over-7",
+       "rmsMm": 10.627281811172564,
+       "endpointMm": 10.7690926107744,
+       "angleErrorDeg": 1.6786571457525952
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "over-8",
+       "rmsMm": 4.505311741665093,
+       "endpointMm": 3.955872712041109,
+       "angleErrorDeg": 8.76187502508668
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "over-9",
+       "rmsMm": 7.113705995191191,
+       "endpointMm": 9.945597487666785,
+       "angleErrorDeg": 21.710382250893787
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "over-10",
+       "rmsMm": 2.375335699016692,
+       "endpointMm": 7.8588801610068035,
+       "angleErrorDeg": 0.02396452992380363
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 6.313713404585396,
+     "endpointMeanErrorMm": 8.9186038178713,
+     "meanAngleErrorDeg": 11.53962961586475,
+     "fittedSwingDeg": -45.00074050546524,
+     "targetSwingDeg": -30,
+     "scaleMm": 36.95927136328128,
+     "normalizedError": 0.22393154415292355,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 396.5994841401465,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 63
+   },
+   "wrongWay": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 8,
+       "strokeId": "wrong-0",
+       "rmsMm": 12.880221301616128,
+       "endpointMm": 29.62337489329815,
+       "angleErrorDeg": 43.212708676245285
+      },
+      {
+       "edgeIndex": 0,
+       "strokeId": "wrong-1",
+       "rmsMm": 8.899102166492293,
+       "endpointMm": 7.863993993229216,
+       "angleErrorDeg": 20.279534324455113
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "wrong-2",
+       "rmsMm": 7.85973212598856,
+       "endpointMm": 33.94162846325577,
+       "angleErrorDeg": 58.13617824022236
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "wrong-3",
+       "rmsMm": 13.66159799072153,
+       "endpointMm": 14.333598523157448,
+       "angleErrorDeg": 18.307178276851772
+      },
+      {
+       "edgeIndex": 7,
+       "strokeId": "wrong-4",
+       "rmsMm": 0.728224341974021,
+       "endpointMm": 41.78150949616017,
+       "angleErrorDeg": 0.11649219243353928
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "wrong-5",
+       "rmsMm": 7.095700213084335,
+       "endpointMm": 21.013373865333367,
+       "angleErrorDeg": 17.853690956414564
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "wrong-6",
+       "rmsMm": 20.24159985774464,
+       "endpointMm": 23.82606047136312,
+       "angleErrorDeg": 16.66377909920965
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "wrong-7",
+       "rmsMm": 6.23798199291812,
+       "endpointMm": 19.63029797838321,
+       "angleErrorDeg": 29.52622239828662
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "wrong-8",
+       "rmsMm": 13.358444567659966,
+       "endpointMm": 28.316918186075522,
+       "angleErrorDeg": 46.73422356231458
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "wrong-9",
+       "rmsMm": 12.679880422911047,
+       "endpointMm": 43.804358419864464,
+       "angleErrorDeg": 56.170014329752874
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "wrong-10",
+       "rmsMm": 16.23969424528842,
+       "endpointMm": 57.8207528874511,
+       "angleErrorDeg": 2.8567934407811304
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 12.045285396969465,
+     "endpointMeanErrorMm": 32.33499123641149,
+     "meanAngleErrorDeg": 28.168801408815227,
+     "fittedSwingDeg": 30.00578794048143,
+     "targetSwingDeg": -30,
+     "scaleMm": 36.95927136328128,
+     "normalizedError": 0.617872049511894,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 442.2493803529836,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 17
+   },
+   "halfTurned": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "half-0",
+       "rmsMm": 4.829639648132736,
+       "endpointMm": 5.364064734212386,
+       "angleErrorDeg": 12.120935922661838
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "half-1",
+       "rmsMm": 5.414669471592744,
+       "endpointMm": 4.681476358575763,
+       "angleErrorDeg": 14.312412696065735
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "half-2",
+       "rmsMm": 4.512264695543924,
+       "endpointMm": 10.009991597817715,
+       "angleErrorDeg": 8.600311314853814
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "half-3",
+       "rmsMm": 5.422383598349094,
+       "endpointMm": 10.038273912848453,
+       "angleErrorDeg": 18.183357578407254
+      },
+      {
+       "edgeIndex": 7,
+       "strokeId": "half-4",
+       "rmsMm": 6.539331018955129,
+       "endpointMm": 11.105220309079307,
+       "angleErrorDeg": 0.8238235340805841
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "half-5",
+       "rmsMm": 5.197016643331191,
+       "endpointMm": 10.761698985471135,
+       "angleErrorDeg": 12.776046543424115
+      },
+      {
+       "edgeIndex": 10,
+       "strokeId": "half-6",
+       "rmsMm": 5.422815747412977,
+       "endpointMm": 5.655664889552169,
+       "angleErrorDeg": 16.188226709081302
+      },
+      {
+       "edgeIndex": 6,
+       "strokeId": "half-7",
+       "rmsMm": 9.533415154266168,
+       "endpointMm": 10.103161665611637,
+       "angleErrorDeg": 1.6227448004809446
+      },
+      {
+       "edgeIndex": 1,
+       "strokeId": "half-8",
+       "rmsMm": 4.946792916594145,
+       "endpointMm": 5.467790756646934,
+       "angleErrorDeg": 12.343861360327283
+      },
+      {
+       "edgeIndex": 9,
+       "strokeId": "half-9",
+       "rmsMm": 5.060634822581004,
+       "endpointMm": 9.807189475358385,
+       "angleErrorDeg": 17.74143732031078
+      },
+      {
+       "edgeIndex": 5,
+       "strokeId": "half-10",
+       "rmsMm": 5.966671855285837,
+       "endpointMm": 9.95637998227009,
+       "angleErrorDeg": 1.841307561509938
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 5.863241164500843,
+     "endpointMeanErrorMm": 8.79082162864592,
+     "meanAngleErrorDeg": 10.595860485563962,
+     "fittedSwingDeg": -14.971092710931465,
+     "targetSwingDeg": -30,
+     "scaleMm": 36.95927136328128,
+     "normalizedError": 0.21338523540797066,
+     "durationMs": 20232,
+     "drawingDurationMs": 2552,
+     "pathLengthMm": 428.87647288996453,
+     "strokeCount": 11
+    },
+    "executionPassed": true,
+    "accuracyScore": 65
+   },
+   "fewStrokes": {
+    "metrics": {
+     "edges": [
+      {
+       "edgeIndex": 0,
+       "strokeId": "few-0",
+       "rmsMm": 0.10836451636238055,
+       "endpointMm": 0.2308380756750057,
+       "angleErrorDeg": 0.13842291817118432
+      },
+      {
+       "edgeIndex": 8,
+       "strokeId": "few-1",
+       "rmsMm": 0.15534422496576764,
+       "endpointMm": 0.2297088625841212,
+       "angleErrorDeg": 0.21583976061930343
+      },
+      {
+       "edgeIndex": 3,
+       "strokeId": "few-2",
+       "rmsMm": 0.1694615978957434,
+       "endpointMm": 0.1559621819649221,
+       "angleErrorDeg": 0.38313505072811266
+      },
+      {
+       "edgeIndex": 11,
+       "strokeId": "few-3",
+       "rmsMm": 0.15466403084157362,
+       "endpointMm": 0.18624701386967768,
+       "angleErrorDeg": 0.3474326080083472
+      },
+      {
+       "edgeIndex": 7,
+       "strokeId": "few-4",
+       "rmsMm": 0.17791850778481622,
+       "endpointMm": 0.21862414391605944,
+       "angleErrorDeg": 0.24305663331654148
+      },
+      {
+       "edgeIndex": 2,
+       "strokeId": "few-5",
+       "rmsMm": 0.1133810517064742,
+       "endpointMm": 0.13834057206505745,
+       "angleErrorDeg": 0.06674778685720639
+      }
+     ],
+     "rmsOrthogonalDeviationMm": 0.14889770007886366,
+     "endpointMeanErrorMm": 0.19663806061390174,
+     "meanAngleErrorDeg": 0.23243912628344923,
+     "fittedSwingDeg": -30.026330524744203,
+     "targetSwingDeg": -30,
+     "scaleMm": 36.95927136328128,
+     "normalizedError": 0.0051401157256185746,
+     "durationMs": 10232,
+     "drawingDurationMs": 1392,
+     "pathLengthMm": 224.59737008201566,
+     "strokeCount": 6
+    },
+    "executionPassed": true,
+    "accuracyScore": 100
+   }
+  }
+ }
+]

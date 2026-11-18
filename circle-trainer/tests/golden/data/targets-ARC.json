@@ -1,0 +1,184 @@
+{
+ "landscape": [
+  {
+   "seed": "golden-a",
+   "index": 0,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 841.4205753043294,
+     "y": 297.30807079458606
+    },
+    "radiusMm": 54.03935159149794,
+    "startAngleRad": 2.0662084229029514,
+    "sweepRad": -2.149007884003014
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 1,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 639.1678467988968,
+     "y": 494.92794480789445
+    },
+    "radiusMm": 43.520953089895734,
+    "startAngleRad": 5.215836094063478,
+    "sweepRad": -2.6997493044414185
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 2,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 228.42245525605978,
+     "y": 599.6497946731746
+    },
+    "radiusMm": 47.95902198695506,
+    "startAngleRad": 5.69928748898889,
+    "sweepRad": -1.2629073169100513
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 0,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 452.515751039423,
+     "y": 283.52752230456093
+    },
+    "radiusMm": 52.53583977846286,
+    "startAngleRad": 4.066102118274177,
+    "sweepRad": -2.213400210798715
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 1,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 746.5488359479233,
+     "y": 304.8247457281686
+    },
+    "radiusMm": 32.807972807109074,
+    "startAngleRad": 1.8765027376768437,
+    "sweepRad": -2.232298732296405
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 2,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 872.4338876094669,
+     "y": 331.4479663864709
+    },
+    "radiusMm": 55.97246582408794,
+    "startAngleRad": 2.3675963098553283,
+    "sweepRad": -1.6856927065645828
+   }
+  }
+ ],
+ "portrait": [
+  {
+   "seed": "golden-a",
+   "index": 0,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 453.72268174942576,
+     "y": 693.0050929588266
+    },
+    "radiusMm": 50.79923824827831,
+    "startAngleRad": 1.999559126006497,
+    "sweepRad": -2.038406457708078
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 1,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 441.66306364536285,
+     "y": 762.6704549508169
+    },
+    "radiusMm": 51.720552947412315,
+    "startAngleRad": 5.215836094063478,
+    "sweepRad": -2.6997493044414185
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 2,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 177.15163348950443,
+     "y": 928.6787980429827
+    },
+    "radiusMm": 56.994779752613255,
+    "startAngleRad": 5.69928748898889,
+    "sweepRad": -1.2629073169100513
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 0,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 108.85484875533729,
+     "y": 284.7253279157914
+    },
+    "radiusMm": 40.92558788278355,
+    "startAngleRad": 0.8728649864445689,
+    "sweepRad": -1.3124507509040508
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 1,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 510.8141718408092,
+     "y": 461.31293370435014
+    },
+    "radiusMm": 38.989185075115124,
+    "startAngleRad": 1.8765027376768437,
+    "sweepRad": -2.232298732296405
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 2,
+   "target": {
+    "kind": "ARC",
+    "centerCss": {
+     "x": 556.145125150308,
+     "y": 707.9802301729098
+    },
+    "radiusMm": 52.27965288440769,
+    "startAngleRad": 2.4182061509869257,
+    "sweepRad": 1.2851926936933824
+   }
+  }
+ ],
+ "tiny": {
+  "kind": "ARC",
+  "centerCss": {
+   "x": 86.99552377685905,
+   "y": 58.318783201277256
+  },
+  "radiusMm": 4.5575749449718455,
+  "startAngleRad": 5.7873190876526115,
+  "sweepRad": 1.3606975071401854
+ }
+}

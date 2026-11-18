@@ -1,0 +1,585 @@
+{
+ "drillsThenCopy": [
+  {
+   "after": "start",
+   "repsLeft": 98,
+   "copyMs": 0,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"rep\":1}",
+   "repsLeft": 97,
+   "copyMs": 0,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"rep\":48}",
+   "repsLeft": 49,
+   "copyMs": 0,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"rep\":48}",
+   "repsLeft": 1,
+   "copyMs": 0,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"rep\":1}",
+   "repsLeft": 0,
+   "copyMs": 0,
+   "todayCard": "HANDOFF",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"copyMs\":1}",
+   "repsLeft": 0,
+   "copyMs": 1,
+   "todayCard": "HANDOFF",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1799999
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"copyMs\":600000}",
+   "repsLeft": 0,
+   "copyMs": 600000,
+   "todayCard": "HANDOFF",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1200000
+   },
+   "copyText": "20:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"copyMs\":1799999}",
+   "repsLeft": 0,
+   "copyMs": 1799999,
+   "todayCard": "HANDOFF",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1
+   },
+   "copyText": "0:01 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"copyMs\":1800000}",
+   "repsLeft": 0,
+   "copyMs": 1800000,
+   "todayCard": "DONE",
+   "copyClock": {
+    "kind": "TIME_UP"
+   },
+   "copyText": "Time's up · finish this one",
+   "copyCard": "DAY_DONE",
+   "dayFinished": true
+  },
+  {
+   "after": "{\"doneCardShown\":true}",
+   "repsLeft": 0,
+   "copyMs": 1800000,
+   "todayCard": "DONE",
+   "copyClock": {
+    "kind": "DONE",
+    "copiedMs": 1800000
+   },
+   "copyText": "30 min copied",
+   "copyCard": null,
+   "dayFinished": true
+  },
+  {
+   "after": "{\"copyMs\":2460000}",
+   "repsLeft": 0,
+   "copyMs": 2460000,
+   "todayCard": "DONE",
+   "copyClock": {
+    "kind": "DONE",
+    "copiedMs": 2460000
+   },
+   "copyText": "41 min copied",
+   "copyCard": null,
+   "dayFinished": true
+  }
+ ],
+ "handoffDeclined": [
+  {
+   "after": "start",
+   "repsLeft": 10,
+   "copyMs": 0,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"rep\":10}",
+   "repsLeft": 0,
+   "copyMs": 0,
+   "todayCard": "HANDOFF",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"decline\":true}",
+   "repsLeft": 0,
+   "copyMs": 0,
+   "todayCard": "DONE",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": true
+  },
+  {
+   "after": "{\"copyMs\":300000}",
+   "repsLeft": 0,
+   "copyMs": 300000,
+   "todayCard": "DONE",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1500000
+   },
+   "copyText": "25:00 left",
+   "copyCard": null,
+   "dayFinished": true
+  }
+ ],
+ "copyOff": [
+  {
+   "after": "start",
+   "repsLeft": 10,
+   "copyMs": 0,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "OFF"
+   },
+   "copyText": null,
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"rep\":5}",
+   "repsLeft": 5,
+   "copyMs": 0,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "OFF"
+   },
+   "copyText": null,
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"rep\":5}",
+   "repsLeft": 0,
+   "copyMs": 0,
+   "todayCard": "DONE",
+   "copyClock": {
+    "kind": "OFF"
+   },
+   "copyText": null,
+   "copyCard": null,
+   "dayFinished": true
+  },
+  {
+   "after": "{\"copyMs\":420000}",
+   "repsLeft": 0,
+   "copyMs": 420000,
+   "todayCard": "DONE",
+   "copyClock": {
+    "kind": "OFF"
+   },
+   "copyText": null,
+   "copyCard": null,
+   "dayFinished": true
+  }
+ ],
+ "copyFirst": [
+  {
+   "after": "start",
+   "repsLeft": 10,
+   "copyMs": 0,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 900000
+   },
+   "copyText": "15:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"copyMs\":900000}",
+   "repsLeft": 10,
+   "copyMs": 900000,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "TIME_UP"
+   },
+   "copyText": "Time's up · finish this one",
+   "copyCard": "DRILLS_LEFT",
+   "dayFinished": false
+  },
+  {
+   "after": "{\"doneCardShown\":true}",
+   "repsLeft": 10,
+   "copyMs": 900000,
+   "todayCard": null,
+   "copyClock": {
+    "kind": "DONE",
+    "copiedMs": 900000
+   },
+   "copyText": "15 min copied",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"rep\":10}",
+   "repsLeft": 0,
+   "copyMs": 900000,
+   "todayCard": "DONE",
+   "copyClock": {
+    "kind": "DONE",
+    "copiedMs": 900000
+   },
+   "copyText": "15 min copied",
+   "copyCard": null,
+   "dayFinished": true
+  }
+ ],
+ "nothingTicked": [
+  {
+   "after": "start",
+   "repsLeft": 0,
+   "copyMs": 0,
+   "todayCard": "NOTHING_TICKED",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 1800000
+   },
+   "copyText": "30:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"copyMs\":1740000}",
+   "repsLeft": 0,
+   "copyMs": 1740000,
+   "todayCard": "NOTHING_TICKED",
+   "copyClock": {
+    "kind": "COUNTDOWN",
+    "leftMs": 60000
+   },
+   "copyText": "1:00 left",
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"copyMs\":1800000}",
+   "repsLeft": 0,
+   "copyMs": 1800000,
+   "todayCard": "NOTHING_TICKED",
+   "copyClock": {
+    "kind": "TIME_UP"
+   },
+   "copyText": "Time's up · finish this one",
+   "copyCard": "DAY_DONE",
+   "dayFinished": true
+  },
+  {
+   "after": "{\"doneCardShown\":true}",
+   "repsLeft": 0,
+   "copyMs": 1800000,
+   "todayCard": "NOTHING_TICKED",
+   "copyClock": {
+    "kind": "DONE",
+    "copiedMs": 1800000
+   },
+   "copyText": "30 min copied",
+   "copyCard": null,
+   "dayFinished": true
+  }
+ ],
+ "nothingAtAll": [
+  {
+   "after": "start",
+   "repsLeft": 0,
+   "copyMs": 0,
+   "todayCard": "NOTHING_TICKED",
+   "copyClock": {
+    "kind": "OFF"
+   },
+   "copyText": null,
+   "copyCard": null,
+   "dayFinished": false
+  },
+  {
+   "after": "{\"copyMs\":180000}",
+   "repsLeft": 0,
+   "copyMs": 180000,
+   "todayCard": "NOTHING_TICKED",
+   "copyClock": {
+    "kind": "OFF"
+   },
+   "copyText": null,
+   "copyCard": null,
+   "dayFinished": false
+  }
+ ],
+ "everyBudget": [
+  [
+   {
+    "after": "start",
+    "repsLeft": 4,
+    "copyMs": 0,
+    "todayCard": null,
+    "copyClock": {
+     "kind": "OFF"
+    },
+    "copyText": null,
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"rep\":4}",
+    "repsLeft": 0,
+    "copyMs": 0,
+    "todayCard": "DONE",
+    "copyClock": {
+     "kind": "OFF"
+    },
+    "copyText": null,
+    "copyCard": null,
+    "dayFinished": true
+   },
+   {
+    "after": "{\"copyMs\":1200000}",
+    "repsLeft": 0,
+    "copyMs": 1200000,
+    "todayCard": "DONE",
+    "copyClock": {
+     "kind": "OFF"
+    },
+    "copyText": null,
+    "copyCard": null,
+    "dayFinished": true
+   }
+  ],
+  [
+   {
+    "after": "start",
+    "repsLeft": 4,
+    "copyMs": 0,
+    "todayCard": null,
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 900000
+    },
+    "copyText": "15:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"rep\":4}",
+    "repsLeft": 0,
+    "copyMs": 0,
+    "todayCard": "HANDOFF",
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 900000
+    },
+    "copyText": "15:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"copyMs\":1200000}",
+    "repsLeft": 0,
+    "copyMs": 1200000,
+    "todayCard": "DONE",
+    "copyClock": {
+     "kind": "TIME_UP"
+    },
+    "copyText": "Time's up · finish this one",
+    "copyCard": "DAY_DONE",
+    "dayFinished": true
+   }
+  ],
+  [
+   {
+    "after": "start",
+    "repsLeft": 4,
+    "copyMs": 0,
+    "todayCard": null,
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 1800000
+    },
+    "copyText": "30:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"rep\":4}",
+    "repsLeft": 0,
+    "copyMs": 0,
+    "todayCard": "HANDOFF",
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 1800000
+    },
+    "copyText": "30:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"copyMs\":1200000}",
+    "repsLeft": 0,
+    "copyMs": 1200000,
+    "todayCard": "HANDOFF",
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 600000
+    },
+    "copyText": "10:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   }
+  ],
+  [
+   {
+    "after": "start",
+    "repsLeft": 4,
+    "copyMs": 0,
+    "todayCard": null,
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 2700000
+    },
+    "copyText": "45:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"rep\":4}",
+    "repsLeft": 0,
+    "copyMs": 0,
+    "todayCard": "HANDOFF",
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 2700000
+    },
+    "copyText": "45:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"copyMs\":1200000}",
+    "repsLeft": 0,
+    "copyMs": 1200000,
+    "todayCard": "HANDOFF",
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 1500000
+    },
+    "copyText": "25:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   }
+  ],
+  [
+   {
+    "after": "start",
+    "repsLeft": 4,
+    "copyMs": 0,
+    "todayCard": null,
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 3600000
+    },
+    "copyText": "1:00:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"rep\":4}",
+    "repsLeft": 0,
+    "copyMs": 0,
+    "todayCard": "HANDOFF",
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 3600000
+    },
+    "copyText": "1:00:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   },
+   {
+    "after": "{\"copyMs\":1200000}",
+    "repsLeft": 0,
+    "copyMs": 1200000,
+    "todayCard": "HANDOFF",
+    "copyClock": {
+     "kind": "COUNTDOWN",
+     "leftMs": 2400000
+    },
+    "copyText": "40:00 left",
+    "copyCard": null,
+    "dayFinished": false
+   }
+  ]
+ ]
+}

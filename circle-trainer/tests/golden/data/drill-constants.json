@@ -1,0 +1,92 @@
+{
+ "allExerciseTypes": [
+  "LINE",
+  "ARC",
+  "CIRCLE",
+  "ELLIPSE",
+  "S_CURVE",
+  "TAPER",
+  "BOX"
+ ],
+ "mixedExerciseTypes": [
+  "LINE",
+  "ARC",
+  "CIRCLE",
+  "ELLIPSE"
+ ],
+ "exerciseLabels": {
+  "LINE": "Lines",
+  "ARC": "Arcs",
+  "CIRCLE": "Circles",
+  "ELLIPSE": "Ellipses",
+  "S_CURVE": "S Curves",
+  "TAPER": "Tapers",
+  "BOX": "Boxes"
+ },
+ "modeLabels": {
+  "LINE": "Lines",
+  "ARC": "Arcs",
+  "CIRCLE": "Circles",
+  "ELLIPSE": "Ellipses",
+  "S_CURVE": "S Curves",
+  "TAPER": "Tapers",
+  "BOX": "Boxes",
+  "MIXED_BLOCKED": "Mixed — Blocked",
+  "MIXED_RANDOM": "Mixed — Random",
+  "TODAY": "Today"
+ },
+ "versions": {
+  "LINE": {
+   "metric": "line-1",
+   "scoring": "line-1"
+  },
+  "ARC": {
+   "metric": "arc-2",
+   "scoring": "arc-1"
+  },
+  "CIRCLE": {
+   "metric": "circle-1",
+   "scoring": "circle-1"
+  },
+  "ELLIPSE": {
+   "metric": "ellipse-1",
+   "scoring": "ellipse-1"
+  },
+  "S_CURVE": {
+   "metric": "s-curve-2",
+   "scoring": "s-curve-1"
+  },
+  "TAPER": {
+   "metric": "taper-1",
+   "scoring": "taper-1"
+  },
+  "BOX": {
+   "metric": "box-1",
+   "scoring": "box-2"
+  }
+ },
+ "dailyCounts": {
+  "LINE": 40,
+  "ARC": 30,
+  "CIRCLE": 24,
+  "ELLIPSE": 24,
+  "S_CURVE": 20,
+  "TAPER": 24,
+  "BOX": 10
+ },
+ "secondsPerRep": {
+  "LINE": 3,
+  "ARC": 4,
+  "CIRCLE": 5,
+  "ELLIPSE": 5,
+  "S_CURVE": 6,
+  "TAPER": 5,
+  "BOX": 30
+ },
+ "defaultDailyTicks": [
+  "LINE",
+  "CIRCLE",
+  "ELLIPSE",
+  "BOX"
+ ]
+}

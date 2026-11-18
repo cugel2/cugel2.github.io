@@ -123,6 +123,8 @@ npm test
 npm run build
 ```
 
+`tests/golden/` pins today's behaviour so code can be reorganised without changing it: generated targets for every drill (fixed seeds, landscape, portrait and the small-canvas fallback, both hands for boxes), the full analysis of synthetic strokes for every drill (clean, reversed, rough, offset, partial, backtracked; tapers with matched, even, missing and off-line pressure; boxes turned right, too far, half-way and the wrong way), the per-drill labels, versions and daily counts, every practice mode's schedule (including the retired Mixed modes), Today's queue order and the daily flow's cards for fixed days and ticks, and `normalizeStoredTrial` over a synthetic set of stored records. The pinned values live in `tests/golden/data/*.json` and are compared to the last digit; a missing file fails rather than being recorded. All app imports go through `tests/golden/api.ts`, so moving a function means changing one import there and never a pinned value. The files are written only on purpose, with `UPDATE_GOLDEN=1 npx vitest run tests/golden`. The strokes are synthetic; real practice exports are never used.
+
 The build writes the deployable page, assets, manifest, service worker, and diagnostics route into this directory. GitHub Pages serves it at:
 
 ```text

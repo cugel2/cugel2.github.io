@@ -1,0 +1,2452 @@
+{
+ "LINE": [
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "LINE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 0
+   },
+   "block": null
+  }
+ ],
+ "ARC": [
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "ARC",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 0
+   },
+   "block": null
+  }
+ ],
+ "CIRCLE": [
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "CIRCLE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 0
+   },
+   "block": null
+  }
+ ],
+ "ELLIPSE": [
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "ELLIPSE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 0
+   },
+   "block": null
+  }
+ ],
+ "S_CURVE": [
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "S_CURVE",
+   "context": {
+    "mode": "S_CURVE",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 0
+   },
+   "block": null
+  }
+ ],
+ "TAPER": [
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "TAPER",
+   "context": {
+    "mode": "TAPER",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 0
+   },
+   "block": null
+  }
+ ],
+ "BOX": [
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "BOX",
+   "context": {
+    "mode": "BOX",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 0
+   },
+   "block": null
+  }
+ ],
+ "MIXED_BLOCKED": [
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 0,
+    "blockIndex": 0,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 12,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 13,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 14,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 15,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 16,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 17,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 18,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 19,
+    "cycleIndex": 0,
+    "blockIndex": 1,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 20,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 21,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 22,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 23,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 24,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 25,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 26,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 27,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 28,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 29,
+    "cycleIndex": 0,
+    "blockIndex": 2,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 30,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 31,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 32,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 33,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 34,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 35,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 36,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 37,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 38,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 39,
+    "cycleIndex": 0,
+    "blockIndex": 3,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 40,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 41,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 42,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 43,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 44,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 45,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 46,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 47,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 48,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 49,
+    "cycleIndex": 1,
+    "blockIndex": 0,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 50,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 51,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 52,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 53,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 54,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 55,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 56,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 57,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 58,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 59,
+    "cycleIndex": 1,
+    "blockIndex": 1,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 60,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 61,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 62,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 63,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 64,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 65,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 66,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 67,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 68,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 69,
+    "cycleIndex": 1,
+    "blockIndex": 2,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 70,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 71,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 72,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 73,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 74,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 75,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 76,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 77,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 78,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 79,
+    "cycleIndex": 1,
+    "blockIndex": 3,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 80,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 0
+   },
+   "block": {
+    "current": 1,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 81,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 1
+   },
+   "block": {
+    "current": 2,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 82,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 2
+   },
+   "block": {
+    "current": 3,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 83,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 3
+   },
+   "block": {
+    "current": 4,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 84,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 4
+   },
+   "block": {
+    "current": 5,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 85,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 5
+   },
+   "block": {
+    "current": 6,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 86,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 6
+   },
+   "block": {
+    "current": 7,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 87,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 7
+   },
+   "block": {
+    "current": 8,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 88,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 8
+   },
+   "block": {
+    "current": 9,
+    "total": 10
+   }
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_BLOCKED",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 89,
+    "cycleIndex": 2,
+    "blockIndex": 0,
+    "positionInBlock": 9
+   },
+   "block": {
+    "current": 10,
+    "total": 10
+   }
+  }
+ ],
+ "MIXED_RANDOM": [
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 1
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 1
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 1
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 1
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 2
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 2
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 2
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "MIXED_RANDOM",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 2
+   },
+   "block": null
+  }
+ ],
+ "TODAY": [
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 0,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 1,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 2,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 3,
+    "cycleIndex": 0
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 4,
+    "cycleIndex": 1
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 5,
+    "cycleIndex": 1
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 6,
+    "cycleIndex": 1
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 7,
+    "cycleIndex": 1
+   },
+   "block": null
+  },
+  {
+   "exercise": "LINE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 8,
+    "cycleIndex": 2
+   },
+   "block": null
+  },
+  {
+   "exercise": "ARC",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 9,
+    "cycleIndex": 2
+   },
+   "block": null
+  },
+  {
+   "exercise": "CIRCLE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 10,
+    "cycleIndex": 2
+   },
+   "block": null
+  },
+  {
+   "exercise": "ELLIPSE",
+   "context": {
+    "mode": "TODAY",
+    "sessionSeed": "golden-session",
+    "sequenceIndex": 11,
+    "cycleIndex": 2
+   },
+   "block": null
+  }
+ ]
+}

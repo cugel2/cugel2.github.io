@@ -1,0 +1,1454 @@
+[
+ {
+  "index": 0,
+  "profile": "EVEN",
+  "cases": {
+   "matched": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04531041908328083,
+      "normalizedError": 0.018124167633312333,
+      "drawnWidthsMm": [
+       2.285508604282978,
+       2.2678731212449703,
+       2.272010374005418
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15367704885670513,
+      "pathEndpointMeanErrorMm": 0.17447007450138144,
+      "pathLengthMm": 65.79631073340234,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04531041908328083,
+      "normalizedError": 0.018124167633312333,
+      "drawnWidthsMm": [
+       2.285508604282978,
+       2.2678731212449703,
+       2.272010374005418
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15367704885670513,
+      "pathEndpointMeanErrorMm": 0.17447007450138144,
+      "pathLengthMm": 65.79631073340234,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 2.3/2.3/2.3 vs 2.3/2.3/2.3 mm · path 0.2 mm"
+   },
+   "reversed": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.045183503146212195,
+      "normalizedError": 0.01807340125848488,
+      "drawnWidthsMm": [
+       2.268011315828659,
+       2.2678731212449703,
+       2.285508604282978
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.2709155137549909,
+      "pathEndpointMeanErrorMm": 0.3373513061542854,
+      "pathLengthMm": 66.3841215408269,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.045183503146212195,
+      "normalizedError": 0.01807340125848488,
+      "drawnWidthsMm": [
+       2.268011315828659,
+       2.2678731212449703,
+       2.285508604282978
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.2709155137549909,
+      "pathEndpointMeanErrorMm": 0.3373513061542854,
+      "pathLengthMm": 66.3841215408269,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 2.3/2.3/2.3 vs 2.3/2.3/2.3 mm · path 0.3 mm"
+   },
+   "even": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.8679109748968101,
+      "normalizedError": 0.34716438995872406,
+      "drawnWidthsMm": [
+       1.4042553191489364,
+       1.4042553191489362,
+       1.4042553191489364
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.1450921230983302,
+      "pathEndpointMeanErrorMm": 0.27998073192795103,
+      "pathLengthMm": 65.76137454959435,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 12
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.8679109748968101,
+      "normalizedError": 0.34716438995872406,
+      "drawnWidthsMm": [
+       1.4042553191489364,
+       1.4042553191489362,
+       1.4042553191489364
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.1450921230983302,
+      "pathEndpointMeanErrorMm": 0.27998073192795103,
+      "pathLengthMm": 65.76137454959435,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 12
+    },
+    "text": "Width error 0.9 mm · start/mid/end 1.4/1.4/1.4 vs 2.3/2.3/2.3 mm · path 0.1 mm"
+   },
+   "heavy": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.7278337059542537,
+      "normalizedError": 0.29113348238170145,
+      "drawnWidthsMm": [
+       3,
+       3,
+       3
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15612825958593526,
+      "pathEndpointMeanErrorMm": 0.21658353185101312,
+      "pathLengthMm": 66.00216711273927,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 19
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.7278337059542537,
+      "normalizedError": 0.29113348238170145,
+      "drawnWidthsMm": [
+       3,
+       3,
+       3
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15612825958593526,
+      "pathEndpointMeanErrorMm": 0.21658353185101312,
+      "pathLengthMm": 66.00216711273927,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 19
+    },
+    "text": "Width error 0.7 mm · start/mid/end 3.0/3.0/3.0 vs 2.3/2.3/2.3 mm · path 0.2 mm"
+   },
+   "noPressure": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0,
+      "normalizedError": 0,
+      "drawnWidthsMm": [
+       null,
+       null,
+       null
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 0,
+      "widthSampleCount": 0,
+      "pathRmsMm": 0.16071772332575715,
+      "pathEndpointMeanErrorMm": 0.1484217839989644,
+      "pathLengthMm": 65.96605420657112,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "No pressure reported — use Apple Pencil"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0,
+      "normalizedError": 0,
+      "drawnWidthsMm": [
+       null,
+       null,
+       null
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 0,
+      "widthSampleCount": 0,
+      "pathRmsMm": 0.16071772332575715,
+      "pathEndpointMeanErrorMm": 0.1484217839989644,
+      "pathLengthMm": 65.96605420657112,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "No pressure reported — use Apple Pencil"
+    },
+    "text": "Width error 0.0 mm · start/mid/end —/—/— vs 2.3/2.3/2.3 mm · path 0.2 mm"
+   },
+   "offLine": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04530383817677855,
+      "normalizedError": 0.01812153527071142,
+      "drawnWidthsMm": [
+       2.3172917983121977,
+       2.277219835346447,
+       2.259237671102866
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 0.9,
+      "widthSampleCount": 71,
+      "pathRmsMm": 0.27492526236834003,
+      "pathEndpointMeanErrorMm": 5.866258899858654,
+      "pathLengthMm": 65.54323708122784,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04530383817677855,
+      "normalizedError": 0.01812153527071142,
+      "drawnWidthsMm": [
+       2.3172917983121977,
+       2.277219835346447,
+       2.259237671102866
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 0.9,
+      "widthSampleCount": 71,
+      "pathRmsMm": 0.27492526236834003,
+      "pathEndpointMeanErrorMm": 5.866258899858654,
+      "pathLengthMm": 65.54323708122784,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 2.3/2.3/2.3 vs 2.3/2.3/2.3 mm · path 0.3 mm"
+   },
+   "partial": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04472738892746524,
+      "normalizedError": 0.0178909555709861,
+      "drawnWidthsMm": [
+       2.285508604282978,
+       2.264181237045717,
+       null
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 0.6,
+      "widthSampleCount": 46,
+      "pathRmsMm": 0.152155106479682,
+      "pathEndpointMeanErrorMm": 13.34733259744767,
+      "pathLengthMm": 39.12264601880939,
+      "durationMs": 376
+     },
+     "executionPassed": false,
+     "executionReason": "Cover the whole line, end to end"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04472738892746524,
+      "normalizedError": 0.0178909555709861,
+      "drawnWidthsMm": [
+       2.285508604282978,
+       2.264181237045717,
+       null
+      ],
+      "targetWidthsMm": [
+       2.2721662940457463,
+       2.2721662940457463,
+       2.2721662940457463
+      ],
+      "coverage": 0.6,
+      "widthSampleCount": 46,
+      "pathRmsMm": 0.152155106479682,
+      "pathEndpointMeanErrorMm": 13.34733259744767,
+      "pathLengthMm": 39.12264601880939,
+      "durationMs": 376
+     },
+     "executionPassed": false,
+     "executionReason": "Cover the whole line, end to end"
+    },
+    "text": "Width error 0.0 mm · start/mid/end 2.3/2.3/— vs 2.3/2.3/2.3 mm · path 0.2 mm"
+   }
+  }
+ },
+ {
+  "index": 1,
+  "profile": "THIN_THICK_THIN",
+  "cases": {
+   "matched": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04515929095902138,
+      "normalizedError": 0.01806371638360855,
+      "drawnWidthsMm": [
+       1.1218382399100069,
+       2.336960132212409,
+       1.1182391164863248
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.16175103644578262,
+      "pathEndpointMeanErrorMm": 0.17447007450138524,
+      "pathLengthMm": 106.98384988797508,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04515929095902138,
+      "normalizedError": 0.01806371638360855,
+      "drawnWidthsMm": [
+       1.1218382399100069,
+       2.336960132212409,
+       1.1182391164863248
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.16175103644578262,
+      "pathEndpointMeanErrorMm": 0.17447007450138524,
+      "pathLengthMm": 106.98384988797508,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 1.1/2.3/1.1 vs 0.9/2.5/0.9 mm · path 0.2 mm"
+   },
+   "reversed": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04532954508908913,
+      "normalizedError": 0.01813181803563565,
+      "drawnWidthsMm": [
+       1.124547667719859,
+       2.336960132212409,
+       1.1563950356238604
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.32752755692420676,
+      "pathEndpointMeanErrorMm": 0.33735130615428266,
+      "pathLengthMm": 107.297355583712,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04532954508908913,
+      "normalizedError": 0.01813181803563565,
+      "drawnWidthsMm": [
+       1.124547667719859,
+       2.336960132212409,
+       1.1563950356238604
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.32752755692420676,
+      "pathEndpointMeanErrorMm": 0.33735130615428266,
+      "pathLengthMm": 107.297355583712,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 1.1/2.3/1.2 vs 0.9/2.5/0.9 mm · path 0.3 mm"
+   },
+   "even": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.5480028991071166,
+      "normalizedError": 0.21920115964284664,
+      "drawnWidthsMm": [
+       1.4042553191489364,
+       1.4042553191489362,
+       1.4042553191489364
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.1546320031865048,
+      "pathEndpointMeanErrorMm": 0.2799807319279529,
+      "pathLengthMm": 107.05699417196732,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 32
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.5480028991071166,
+      "normalizedError": 0.21920115964284664,
+      "drawnWidthsMm": [
+       1.4042553191489364,
+       1.4042553191489362,
+       1.4042553191489364
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.1546320031865048,
+      "pathEndpointMeanErrorMm": 0.2799807319279529,
+      "pathLengthMm": 107.05699417196732,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 32
+    },
+    "text": "Width error 0.5 mm · start/mid/end 1.4/1.4/1.4 vs 0.9/2.5/0.9 mm · path 0.2 mm"
+   },
+   "heavy": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 1.3977296174683211,
+      "normalizedError": 0.5590918469873285,
+      "drawnWidthsMm": [
+       3,
+       3,
+       3
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.127141589513836,
+      "pathEndpointMeanErrorMm": 0.21658353185100526,
+      "pathLengthMm": 106.83566569425315,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 2
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 1.3977296174683211,
+      "normalizedError": 0.5590918469873285,
+      "drawnWidthsMm": [
+       3,
+       3,
+       3
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.127141589513836,
+      "pathEndpointMeanErrorMm": 0.21658353185100526,
+      "pathLengthMm": 106.83566569425315,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 2
+    },
+    "text": "Width error 1.4 mm · start/mid/end 3.0/3.0/3.0 vs 0.9/2.5/0.9 mm · path 0.1 mm"
+   },
+   "noPressure": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0,
+      "normalizedError": 0,
+      "drawnWidthsMm": [
+       null,
+       null,
+       null
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 0,
+      "widthSampleCount": 0,
+      "pathRmsMm": 0.14910547983991196,
+      "pathEndpointMeanErrorMm": 0.1484217839989657,
+      "pathLengthMm": 106.8104414183565,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "No pressure reported — use Apple Pencil"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0,
+      "normalizedError": 0,
+      "drawnWidthsMm": [
+       null,
+       null,
+       null
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 0,
+      "widthSampleCount": 0,
+      "pathRmsMm": 0.14910547983991196,
+      "pathEndpointMeanErrorMm": 0.1484217839989657,
+      "pathLengthMm": 106.8104414183565,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "No pressure reported — use Apple Pencil"
+    },
+    "text": "Width error 0.0 mm · start/mid/end —/—/— vs 0.9/2.5/0.9 mm · path 0.1 mm"
+   },
+   "offLine": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.08837285299973573,
+      "normalizedError": 0.03534914119989429,
+      "drawnWidthsMm": [
+       1.195982938879185,
+       2.336066421810874,
+       1.0616891547527518
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 77,
+      "pathRmsMm": 5.509951491217702,
+      "pathEndpointMeanErrorMm": 5.866258899858663,
+      "pathLengthMm": 107.00203111118304,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "Stay on the line — width is only scored along it"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.08837285299973573,
+      "normalizedError": 0.03534914119989429,
+      "drawnWidthsMm": [
+       1.195982938879185,
+       2.336066421810874,
+       1.0616891547527518
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 1,
+      "widthSampleCount": 77,
+      "pathRmsMm": 5.509951491217702,
+      "pathEndpointMeanErrorMm": 5.866258899858663,
+      "pathLengthMm": 107.00203111118304,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "Stay on the line — width is only scored along it"
+    },
+    "text": "Width error 0.1 mm · start/mid/end 1.2/2.3/1.1 vs 0.9/2.5/0.9 mm · path 5.5 mm"
+   },
+   "partial": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.6517237261365263,
+      "normalizedError": 0.26068949045461054,
+      "drawnWidthsMm": [
+       1.2812466809265997,
+       1.3960477102623399,
+       null
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 0.6,
+      "widthSampleCount": 46,
+      "pathRmsMm": 0.12136766137029519,
+      "pathEndpointMeanErrorMm": 21.84899931283762,
+      "pathLengthMm": 63.70661487064477,
+      "durationMs": 376
+     },
+     "executionPassed": false,
+     "executionReason": "Cover the whole line, end to end"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.6517237261365263,
+      "normalizedError": 0.26068949045461054,
+      "drawnWidthsMm": [
+       1.2812466809265997,
+       1.3960477102623399,
+       null
+      ],
+      "targetWidthsMm": [
+       0.8744905265048146,
+       2.5065223504789174,
+       0.8744905265048146
+      ],
+      "coverage": 0.6,
+      "widthSampleCount": 46,
+      "pathRmsMm": 0.12136766137029519,
+      "pathEndpointMeanErrorMm": 21.84899931283762,
+      "pathLengthMm": 63.70661487064477,
+      "durationMs": 376
+     },
+     "executionPassed": false,
+     "executionReason": "Cover the whole line, end to end"
+    },
+    "text": "Width error 0.7 mm · start/mid/end 1.3/1.4/— vs 0.9/2.5/0.9 mm · path 0.1 mm"
+   }
+  }
+ },
+ {
+  "index": 2,
+  "profile": "THIN_TO_THICK",
+  "cases": {
+   "matched": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.045392319499838664,
+      "normalizedError": 0.018156927799935465,
+      "drawnWidthsMm": [
+       0.8030854894313482,
+       1.624072993110071,
+       2.4582225150597874
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15161454357346732,
+      "pathEndpointMeanErrorMm": 0.17447007450136331,
+      "pathLengthMm": 62.92042007237018,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.045392319499838664,
+      "normalizedError": 0.018156927799935465,
+      "drawnWidthsMm": [
+       0.8030854894313482,
+       1.624072993110071,
+       2.4582225150597874
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15161454357346732,
+      "pathEndpointMeanErrorMm": 0.17447007450136331,
+      "pathLengthMm": 62.92042007237018,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 0.8/1.6/2.5 vs 0.6/1.6/2.6 mm · path 0.2 mm"
+   },
+   "reversed": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.046005108313555365,
+      "normalizedError": 0.018402043325422147,
+      "drawnWidthsMm": [
+       0.7752721218838453,
+       1.6240729931100713,
+       2.478955154160231
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.26932325106331206,
+      "pathEndpointMeanErrorMm": 0.3373513061542966,
+      "pathLengthMm": 63.447034347884944,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.046005108313555365,
+      "normalizedError": 0.018402043325422147,
+      "drawnWidthsMm": [
+       0.7752721218838453,
+       1.6240729931100713,
+       2.478955154160231
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.26932325106331206,
+      "pathEndpointMeanErrorMm": 0.3373513061542966,
+      "pathLengthMm": 63.447034347884944,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 0.8/1.6/2.5 vs 0.6/1.6/2.6 mm · path 0.3 mm"
+   },
+   "even": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.6222908936034414,
+      "normalizedError": 0.24891635744137655,
+      "drawnWidthsMm": [
+       1.4042553191489364,
+       1.4042553191489362,
+       1.4042553191489364
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15061452901200298,
+      "pathEndpointMeanErrorMm": 0.27998073192794987,
+      "pathLengthMm": 63.00011502171014,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 26
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.6222908936034414,
+      "normalizedError": 0.24891635744137655,
+      "drawnWidthsMm": [
+       1.4042553191489364,
+       1.4042553191489362,
+       1.4042553191489364
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15061452901200298,
+      "pathEndpointMeanErrorMm": 0.27998073192794987,
+      "pathLengthMm": 63.00011502171014,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 26
+    },
+    "text": "Width error 0.6 mm · start/mid/end 1.4/1.4/1.4 vs 0.6/1.6/2.6 mm · path 0.2 mm"
+   },
+   "heavy": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 1.488656248868944,
+      "normalizedError": 0.5954624995475777,
+      "drawnWidthsMm": [
+       3,
+       3,
+       3
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.1485889761783886,
+      "pathEndpointMeanErrorMm": 0.21658353185100832,
+      "pathLengthMm": 62.83598099121615,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 1
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 1.488656248868944,
+      "normalizedError": 0.5954624995475777,
+      "drawnWidthsMm": [
+       3,
+       3,
+       3
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.1485889761783886,
+      "pathEndpointMeanErrorMm": 0.21658353185100832,
+      "pathLengthMm": 62.83598099121615,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 1
+    },
+    "text": "Width error 1.5 mm · start/mid/end 3.0/3.0/3.0 vs 0.6/1.6/2.6 mm · path 0.1 mm"
+   },
+   "noPressure": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0,
+      "normalizedError": 0,
+      "drawnWidthsMm": [
+       null,
+       null,
+       null
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 0,
+      "widthSampleCount": 0,
+      "pathRmsMm": 0.15283904304228038,
+      "pathEndpointMeanErrorMm": 0.14842178399896097,
+      "pathLengthMm": 62.78690111610035,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "No pressure reported — use Apple Pencil"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0,
+      "normalizedError": 0,
+      "drawnWidthsMm": [
+       null,
+       null,
+       null
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 0,
+      "widthSampleCount": 0,
+      "pathRmsMm": 0.15283904304228038,
+      "pathEndpointMeanErrorMm": 0.14842178399896097,
+      "pathLengthMm": 62.78690111610035,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "No pressure reported — use Apple Pencil"
+    },
+    "text": "Width error 0.0 mm · start/mid/end —/—/— vs 0.6/1.6/2.6 mm · path 0.2 mm"
+   },
+   "offLine": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04798031047699109,
+      "normalizedError": 0.019192124190796436,
+      "drawnWidthsMm": [
+       0.8044617981359267,
+       1.6542924633587928,
+       2.47715456299875
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 5.989962753082512,
+      "pathEndpointMeanErrorMm": 5.866258899858655,
+      "pathLengthMm": 62.853569668848074,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "Stay on the line — width is only scored along it"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04798031047699109,
+      "normalizedError": 0.019192124190796436,
+      "drawnWidthsMm": [
+       0.8044617981359267,
+       1.6542924633587928,
+       2.47715456299875
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 5.989962753082512,
+      "pathEndpointMeanErrorMm": 5.866258899858655,
+      "pathLengthMm": 62.853569668848074,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "Stay on the line — width is only scored along it"
+    },
+    "text": "Width error 0.0 mm · start/mid/end 0.8/1.7/2.5 vs 0.6/1.6/2.6 mm · path 6.0 mm"
+   },
+   "partial": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.4708207234409208,
+      "normalizedError": 0.1883282893763683,
+      "drawnWidthsMm": [
+       0.8810791672878647,
+       2.297371431323449,
+       null
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 0.6,
+      "widthSampleCount": 46,
+      "pathRmsMm": 0.14051919366277799,
+      "pathEndpointMeanErrorMm": 12.879636343883883,
+      "pathLengthMm": 37.50489581537856,
+      "durationMs": 376
+     },
+     "executionPassed": false,
+     "executionReason": "Cover the whole line, end to end"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.4708207234409208,
+      "normalizedError": 0.1883282893763683,
+      "drawnWidthsMm": [
+       0.8810791672878647,
+       2.297371431323449,
+       null
+      ],
+      "targetWidthsMm": [
+       0.6262072634417564,
+       1.6283661659108475,
+       2.6305250683799386
+      ],
+      "coverage": 0.6,
+      "widthSampleCount": 46,
+      "pathRmsMm": 0.14051919366277799,
+      "pathEndpointMeanErrorMm": 12.879636343883883,
+      "pathLengthMm": 37.50489581537856,
+      "durationMs": 376
+     },
+     "executionPassed": false,
+     "executionReason": "Cover the whole line, end to end"
+    },
+    "text": "Width error 0.5 mm · start/mid/end 0.9/2.3/— vs 0.6/1.6/2.6 mm · path 0.1 mm"
+   }
+  }
+ },
+ {
+  "index": 9,
+  "profile": "THICK_TO_THIN",
+  "cases": {
+   "matched": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04573742904148253,
+      "normalizedError": 0.018294971616593013,
+      "drawnWidthsMm": [
+       2.4480025254735414,
+       1.5650246513482622,
+       0.7075867034683685
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.1547174339545596,
+      "pathEndpointMeanErrorMm": 0.17447007450136906,
+      "pathLengthMm": 75.49589054864538,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04573742904148253,
+      "normalizedError": 0.018294971616593013,
+      "drawnWidthsMm": [
+       2.4480025254735414,
+       1.5650246513482622,
+       0.7075867034683685
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.1547174339545596,
+      "pathEndpointMeanErrorMm": 0.17447007450136906,
+      "pathLengthMm": 75.49589054864538,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 2.4/1.6/0.7 vs 2.6/1.6/0.6 mm · path 0.2 mm"
+   },
+   "reversed": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04557087446218711,
+      "normalizedError": 0.018228349784874844,
+      "drawnWidthsMm": [
+       2.407811249951646,
+       1.5650246513482622,
+       0.7368197821156945
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.2875589074104671,
+      "pathEndpointMeanErrorMm": 0.3373513061542891,
+      "pathLengthMm": 75.96873655253997,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.04557087446218711,
+      "normalizedError": 0.018228349784874844,
+      "drawnWidthsMm": [
+       2.407811249951646,
+       1.5650246513482622,
+       0.7368197821156945
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.2875589074104671,
+      "pathEndpointMeanErrorMm": 0.3373513061542891,
+      "pathLengthMm": 75.96873655253997,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 96
+    },
+    "text": "Width error 0.0 mm · start/mid/end 2.4/1.6/0.7 vs 2.6/1.6/0.6 mm · path 0.3 mm"
+   },
+   "even": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.6088529037731985,
+      "normalizedError": 0.24354116150927937,
+      "drawnWidthsMm": [
+       1.4042553191489364,
+       1.4042553191489362,
+       1.4042553191489364
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15198114434413024,
+      "pathEndpointMeanErrorMm": 0.2799807319279566,
+      "pathLengthMm": 75.57437558956043,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 27
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.6088529037731985,
+      "normalizedError": 0.24354116150927937,
+      "drawnWidthsMm": [
+       1.4042553191489364,
+       1.4042553191489362,
+       1.4042553191489364
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.15198114434413024,
+      "pathEndpointMeanErrorMm": 0.2799807319279566,
+      "pathLengthMm": 75.57437558956043,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 27
+    },
+    "text": "Width error 0.6 mm · start/mid/end 1.4/1.4/1.4 vs 2.6/1.6/0.6 mm · path 0.2 mm"
+   },
+   "heavy": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 1.5444345671033728,
+      "normalizedError": 0.6177738268413491,
+      "drawnWidthsMm": [
+       3,
+       3,
+       3
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.14245712752522063,
+      "pathEndpointMeanErrorMm": 0.21658353185101423,
+      "pathLengthMm": 75.39258368642714,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 1
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 1.5444345671033728,
+      "normalizedError": 0.6177738268413491,
+      "drawnWidthsMm": [
+       3,
+       3,
+       3
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 0.14245712752522063,
+      "pathEndpointMeanErrorMm": 0.21658353185101423,
+      "pathLengthMm": 75.39258368642714,
+      "durationMs": 632
+     },
+     "executionPassed": true,
+     "accuracyScore": 1
+    },
+    "text": "Width error 1.5 mm · start/mid/end 3.0/3.0/3.0 vs 2.6/1.6/0.6 mm · path 0.1 mm"
+   },
+   "noPressure": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0,
+      "normalizedError": 0,
+      "drawnWidthsMm": [
+       null,
+       null,
+       null
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 0,
+      "widthSampleCount": 0,
+      "pathRmsMm": 0.1516138901643663,
+      "pathEndpointMeanErrorMm": 0.1484217839989634,
+      "pathLengthMm": 75.3511239950377,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "No pressure reported — use Apple Pencil"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0,
+      "normalizedError": 0,
+      "drawnWidthsMm": [
+       null,
+       null,
+       null
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 0,
+      "widthSampleCount": 0,
+      "pathRmsMm": 0.1516138901643663,
+      "pathEndpointMeanErrorMm": 0.1484217839989634,
+      "pathLengthMm": 75.3511239950377,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "No pressure reported — use Apple Pencil"
+    },
+    "text": "Width error 0.0 mm · start/mid/end —/—/— vs 2.6/1.6/0.6 mm · path 0.2 mm"
+   },
+   "offLine": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.05300228367808629,
+      "normalizedError": 0.02120091347123452,
+      "drawnWidthsMm": [
+       2.428500486656845,
+       1.5442414843156893,
+       0.6682567938113394
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 5.924451832639072,
+      "pathEndpointMeanErrorMm": 5.866258899858673,
+      "pathLengthMm": 75.45111920718585,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "Stay on the line — width is only scored along it"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.05300228367808629,
+      "normalizedError": 0.02120091347123452,
+      "drawnWidthsMm": [
+       2.428500486656845,
+       1.5442414843156893,
+       0.6682567938113394
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 1,
+      "widthSampleCount": 78,
+      "pathRmsMm": 5.924451832639072,
+      "pathEndpointMeanErrorMm": 5.866258899858673,
+      "pathLengthMm": 75.45111920718585,
+      "durationMs": 632
+     },
+     "executionPassed": false,
+     "executionReason": "Stay on the line — width is only scored along it"
+    },
+    "text": "Width error 0.1 mm · start/mid/end 2.4/1.5/0.7 vs 2.6/1.6/0.6 mm · path 5.9 mm"
+   },
+   "partial": {
+    "gateOn": {
+     "metrics": {
+      "widthRmsErrorMm": 0.4773622175118882,
+      "normalizedError": 0.19094488700475526,
+      "drawnWidthsMm": [
+       2.350843921053661,
+       0.8773936750849631,
+       null
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 0.6,
+      "widthSampleCount": 46,
+      "pathRmsMm": 0.13494792190766902,
+      "pathEndpointMeanErrorMm": 15.439122228732176,
+      "pathLengthMm": 44.97945897380945,
+      "durationMs": 376
+     },
+     "executionPassed": false,
+     "executionReason": "Cover the whole line, end to end"
+    },
+    "gateOff": {
+     "metrics": {
+      "widthRmsErrorMm": 0.4773622175118882,
+      "normalizedError": 0.19094488700475526,
+      "drawnWidthsMm": [
+       2.350843921053661,
+       0.8773936750849631,
+       null
+      ],
+      "targetWidthsMm": [
+       2.581763094291091,
+       1.5693178241490386,
+       0.5568725540069863
+      ],
+      "coverage": 0.6,
+      "widthSampleCount": 46,
+      "pathRmsMm": 0.13494792190766902,
+      "pathEndpointMeanErrorMm": 15.439122228732176,
+      "pathLengthMm": 44.97945897380945,
+      "durationMs": 376
+     },
+     "executionPassed": false,
+     "executionReason": "Cover the whole line, end to end"
+    },
+    "text": "Width error 0.5 mm · start/mid/end 2.4/0.9/— vs 2.6/1.6/0.6 mm · path 0.1 mm"
+   }
+  }
+ }
+]

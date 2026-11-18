@@ -1,0 +1,197 @@
+{
+ "landscape": [
+  {
+   "seed": "golden-a",
+   "index": 0,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 144.65716278161852,
+     "y": 415.21916711842636
+    },
+    "lengthMm": 35.004605339840055,
+    "amplitudeStartMm": 6.605374223873253,
+    "amplitudeEndMm": 7.867766535219065,
+    "thetaRad": 0.1959423624716054
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 1,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 710.2080739356577,
+     "y": 232.1053765000775
+    },
+    "lengthMm": 57.81726726680063,
+    "amplitudeStartMm": 12.281006243722135,
+    "amplitudeEndMm": 10.02620284242871,
+    "thetaRad": 3.7122268591834993
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 2,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 295.2290563102811,
+     "y": 229.55165780782698
+    },
+    "lengthMm": 37.664972201921046,
+    "amplitudeStartMm": 6.184577740172338,
+    "amplitudeEndMm": 6.599841766503035,
+    "thetaRad": 1.6538388393802992
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 0,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 393.2382783574983,
+     "y": 424.30063335159787
+    },
+    "lengthMm": 32.755866332910955,
+    "amplitudeStartMm": 6.725361614777321,
+    "amplitudeEndMm": 7.770839047896757,
+    "thetaRad": 3.933399385644135
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 1,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 982.0912153173238,
+     "y": 460.99236969044426
+    },
+    "lengthMm": 35.11681327410042,
+    "amplitudeStartMm": 7.704320368950684,
+    "amplitudeEndMm": 9.168087766822087,
+    "thetaRad": 5.101841492839345
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 2,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 922.8779427824542,
+     "y": 484.6572463743388
+    },
+    "lengthMm": 69.65632218518294,
+    "amplitudeStartMm": 11.811549587222643,
+    "amplitudeEndMm": 13.867374369700045,
+    "thetaRad": 6.154703066875705
+   }
+  }
+ ],
+ "portrait": [
+  {
+   "seed": "golden-a",
+   "index": 0,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 233.93678005430846,
+     "y": 172.49467167146503
+    },
+    "lengthMm": 42.50334816612303,
+    "amplitudeStartMm": 8.82270388921131,
+    "amplitudeEndMm": 8.539753902420774,
+    "thetaRad": 0.9554312182538226
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 1,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 487.411482167989,
+     "y": 346.0359212012961
+    },
+    "lengthMm": 57.81726726680063,
+    "amplitudeStartMm": 12.281006243722135,
+    "amplitudeEndMm": 10.02620284242871,
+    "thetaRad": 3.7122268591834993
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 2,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 482.22057543862604,
+     "y": 829.9822163439355
+    },
+    "lengthMm": 49.6092699887231,
+    "amplitudeStartMm": 9.627796120011496,
+    "amplitudeEndMm": 8.267750605287592,
+    "thetaRad": 4.764471920042468
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 0,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 283.2895719265565,
+     "y": 650.7098376871087
+    },
+    "lengthMm": 32.755866332910955,
+    "amplitudeStartMm": 6.725361614777321,
+    "amplitudeEndMm": 7.770839047896757,
+    "thetaRad": 3.933399385644135
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 1,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 662.4985313300043,
+     "y": 708.8747226907872
+    },
+    "lengthMm": 35.11681327410042,
+    "amplitudeStartMm": 7.704320368950684,
+    "amplitudeEndMm": 9.168087766822087,
+    "thetaRad": 5.101841492839345
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 2,
+   "target": {
+    "kind": "S_CURVE",
+    "centerCss": {
+     "x": 438.8401407280936,
+     "y": 618.9422348991968
+    },
+    "lengthMm": 66.5548686706461,
+    "amplitudeStartMm": 11.489146127136783,
+    "amplitudeEndMm": 9.822606762771413,
+    "thetaRad": 2.7939547037252237
+   }
+  }
+ ],
+ "tiny": {
+  "kind": "S_CURVE",
+  "centerCss": {
+   "x": 80,
+   "y": 70
+  },
+  "lengthMm": 16.69230769230769,
+  "amplitudeStartMm": 3.171538461538461,
+  "amplitudeEndMm": 3.171538461538461,
+  "thetaRad": 0
+ }
+}

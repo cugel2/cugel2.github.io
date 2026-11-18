@@ -1,0 +1,171 @@
+{
+ "landscape": [
+  {
+   "seed": "golden-a",
+   "index": 0,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 267.2252554902807,
+     "y": 208.90232146047055
+    },
+    "radiusMm": 10.519373410847038,
+    "landmarkPhaseRad": 3.6021017216294884
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 1,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 552.6128115763887,
+     "y": 268.25755578428505
+    },
+    "radiusMm": 14.50712934602052,
+    "landmarkPhaseRad": 4.143412847604943
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 2,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 811.9501584280282,
+     "y": 537.8418185971676
+    },
+    "radiusMm": 14.759148395853117,
+    "landmarkPhaseRad": 4.370606831192009
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 0,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 159.9665692463517,
+     "y": 398.1225765472277
+    },
+    "radiusMm": 15.788897019345313,
+    "landmarkPhaseRad": 3.671877956181161
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 1,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 656.617254761979,
+     "y": 280.28182760048657
+    },
+    "radiusMm": 20.749088950222358,
+    "landmarkPhaseRad": 2.675648394306852
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 2,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 454.666448370181,
+     "y": 173.34573314543812
+    },
+    "radiusMm": 17.33015631325543,
+    "landmarkPhaseRad": 5.791794756779338
+   }
+  }
+ ],
+ "portrait": [
+  {
+   "seed": "golden-a",
+   "index": 0,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 202.13982421625403,
+     "y": 309.25371455810966
+    },
+    "radiusMm": 10.519373410847038,
+    "landmarkPhaseRad": 3.6021017216294884
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 1,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 385.9234336329624,
+     "y": 403.34548353105777
+    },
+    "radiusMm": 14.50712934602052,
+    "landmarkPhaseRad": 4.143412847604943
+   }
+  },
+  {
+   "seed": "golden-a",
+   "index": 2,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 552.931253856793,
+     "y": 830.6988663338125
+    },
+    "radiusMm": 14.759148395853117,
+    "landmarkPhaseRad": 4.370606831192009
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 0,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 479.7857661312446,
+     "y": 565.8365609212779
+    },
+    "radiusMm": 23.68206667713821,
+    "landmarkPhaseRad": 4.7922753452295845
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 1,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 452.9001169409603,
+     "y": 422.4067342983559
+    },
+    "radiusMm": 20.749088950222358,
+    "landmarkPhaseRad": 2.675648394306852
+   }
+  },
+  {
+   "seed": "golden-b",
+   "index": 2,
+   "target": {
+    "kind": "CIRCLE",
+    "centerCss": {
+     "x": 322.84802696090185,
+     "y": 252.88830161150543
+    },
+    "radiusMm": 17.33015631325543,
+    "landmarkPhaseRad": 5.791794756779338
+   }
+  }
+ ],
+ "tiny": {
+  "kind": "CIRCLE",
+  "centerCss": {
+   "x": 80,
+   "y": 70
+  },
+  "radiusMm": 8.346153846153845,
+  "landmarkPhaseRad": 0
+ }
+}
