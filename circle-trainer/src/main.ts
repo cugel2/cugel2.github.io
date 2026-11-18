@@ -2,6 +2,7 @@ import "./styles.css";
 
 import { arrowLabelCss, BOX_EDGES, BOX_FACES, BOX_STROKES_REQUIRED, boxAreas, boxShading, nonHingeEdgeIndices, swingArrowCss } from "./core/box";
 import { analyseBoxStrokes } from "./core/boxMetrics";
+import { actionAfterResize, backingOutOfDate, relayoutBox, shiftStroke, type CanvasBox } from "./core/canvasSize";
 import { polylineLength } from "./core/geometry";
 import { rawSampleIdentity } from "./core/input";
 import { isTap, type TapPoint } from "./core/tap";
@@ -100,7 +101,7 @@ import {
   startupMode,
 } from "./core/dailyFlow";
 
-const APP_VERSION = "0.15.1";
+const APP_VERSION = "0.15.2";
 const SCHEMA_VERSION = "3" as const;
 const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 const DEFAULT_RULER_WIDTH_CSS_PX = 378;
@@ -358,6 +359,11 @@ let activeSampleKeys = new Set<string>();
 let completedStroke: RawStroke | null = null;
 /** Accepted strokes of the current Box trial, in drawing order. */
 let boxStrokes: RawStroke[] = [];
+/** The canvas size (CSS px) and drawing hand the current target was laid out for. */
+let targetCanvas: CanvasBox | null = null;
+let targetHandedness: Handedness = DEFAULT_HANDEDNESS;
+/** Times the size watcher found the canvas's pixel size out of date (shown in Diagnostics). */
+let lateCanvasResizes = 0;
 let boxTipsOpen = readBoxTipsOpen();
 let lastAnalysis: AnalysisResult<PrimitiveMetrics> | null = null;
 let sessionReps = 0;
@@ -441,6 +447,59 @@ function resizeCanvas(): void {
   configureContext();
   redrawAll();
   configureRuler();
+}
+
+/** How long the canvas size must stay still before a target is judged against it. */
+const RESIZE_SETTLE_MS = 350;
+let resizeSettleTimer: number | undefined;
+
+/**
+ * The canvas changed size: match its pixel size and redraw at once (so the Pencil stays aligned), then, once the
+ * size has settled (on the iPad a rotation arrives in steps, the height last), make a new target only if nothing
+ * is drawn yet and the old one no longer suits the canvas (actionAfterResize). Strokes, a half-drawn box and
+ * feedback are kept.
+ */
+function handleCanvasResize(): void {
+  if (copyActive) return; // The Copy view lays itself out; leaving Copy resizes the canvas.
+  const bounds = canvas.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) return;
+  resizeCanvas();
+  window.clearTimeout(resizeSettleTimer);
+  resizeSettleTimer = window.setTimeout(judgeTargetAfterResize, RESIZE_SETTLE_MS);
+}
+
+function judgeTargetAfterResize(): void {
+  if (copyActive) return;
+  const bounds = canvas.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) return;
+  if (backingOutOfDate(bounds, { width: canvas.width, height: canvas.height }, window.devicePixelRatio || 1)) resizeCanvas();
+  const size = { width: bounds.width, height: bounds.height };
+  const action = actionAfterResize({ state: trialState, target, generatedFor: targetCanvas, canvas: size, cssPxPerMm: cssPxPerMm() });
+  if (action === "WAIT") {
+    resizeSettleTimer = window.setTimeout(judgeTargetAfterResize, RESIZE_SETTLE_MS);
+    return;
+  }
+  if (action === "NEW_TARGET") {
+    beginNewTrial();
+    return;
+  }
+  if (action !== "RELAYOUT_BOX" || target?.kind !== "BOX") return;
+  const moved = relayoutBox(target, size, cssPxPerMm(), targetHandedness);
+  if (!moved) {
+    // Each box is made to fit the halves of the screen it was made on; a landscape box often does not fit the
+    // smaller portrait halves. Before any edge: a fresh box. With edges drawn: keep its layout, so turning the
+    // iPad back lines everything up again.
+    if (trialState === "READY" && boxStrokes.length === 0) beginNewTrial();
+    else if (trialState === "READY") showToast("This box doesn't fit this way round — turn the iPad back to finish it");
+    return;
+  }
+  // The same box in the new halves; edges drawn so far move with the drawing half, so they score the same.
+  const lastWasCompleted = completedStroke !== null && completedStroke === boxStrokes.at(-1);
+  boxStrokes = boxStrokes.map((stroke) => shiftStroke(stroke, moved.answerShiftCss));
+  if (lastWasCompleted) completedStroke = boxStrokes.at(-1) ?? null;
+  target = moved.target;
+  targetCanvas = size;
+  redrawAll();
 }
 
 function drawLandmark(point: { x: number; y: number }): void {
@@ -545,7 +604,8 @@ function drawHinge(corners: readonly { x: number; y: number }[], hingeEdgeIndex:
 }
 
 function drawBoxDivider(): void {
-  const bounds = canvas.getBoundingClientRect();
+  // Divide the canvas the box was laid out for, so a kept box and its divider always agree.
+  const bounds = targetCanvas ?? canvas.getBoundingClientRect();
   const { landscape } = boxAreas({ width: bounds.width, height: bounds.height });
   context.save();
   context.strokeStyle = "rgba(23, 23, 23, 0.1)";
@@ -1073,6 +1133,8 @@ function beginNewTrial(): void {
   }
   doneCard.hidden = true;
   const bounds = canvas.getBoundingClientRect();
+  targetCanvas = { width: bounds.width, height: bounds.height };
+  targetHandedness = handedness;
   target = generateTarget(
     activeExercise,
     { width: bounds.width, height: bounds.height },
@@ -1488,6 +1550,12 @@ function timestampHistogram(stroke: RawStroke | null): string {
   return `<4:${buckets[0]} · <8:${buckets[1]} · <16:${buckets[2]} · <33:${buckets[3]} · 33+:${buckets[4]}`;
 }
 
+function canvasBoxText(): string {
+  const bounds = canvas.getBoundingClientRect();
+  const stale = backingOutOfDate(bounds, { width: canvas.width, height: canvas.height }, window.devicePixelRatio || 1);
+  return `${Math.round(bounds.width * 10) / 10} × ${Math.round(bounds.height * 10) / 10}${stale ? " (pixels out of date)" : ""}`;
+}
+
 function buildDiagnosticReport(): Record<string, string | number | boolean> {
   const device = getDeviceSnapshot();
   const stroke = completedStroke;
@@ -1513,6 +1581,12 @@ function buildDiagnosticReport(): Record<string, string | number | boolean> {
     "Out-of-order batches repaired": runtime.reorderedSampleCount,
     "Finger touches ignored": runtime.ignoredTouchCount,
     "Drawing hand": handedness === "LEFT" ? "Left" : "Right",
+    "Drawing canvas (CSS px)": canvasBoxText(),
+    "Drawing canvas (pixels)": `${canvas.width} × ${canvas.height}`,
+    "Canvas size watcher fixes": lateCanvasResizes,
+    "Window inner height": window.innerHeight,
+    "Visual viewport": window.visualViewport ? `${Math.round(window.visualViewport.height)} high, offset ${Math.round(window.visualViewport.offsetTop)}` : "Not available",
+    "--app-height": document.documentElement.style.getPropertyValue("--app-height") || "Not set",
     "Calibration": calibration ? `${calibration.cssPxPerMm.toFixed(4)} CSS px/mm` : "Not calibrated",
     "Last normalized error": lastAnalysis ? lastAnalysis.metrics.normalizedError.toFixed(5) : "No scored trial",
     "Saved input strokes": savedStrokeCount,
@@ -1659,11 +1733,15 @@ function wireControls(): void {
   canvas.addEventListener("pointerup", (event) => { if (!endFeedbackTap(event, false)) void finishStroke(event, false); });
   canvas.addEventListener("pointercancel", (event) => { if (!endFeedbackTap(event, true)) void finishStroke(event, true); });
   canvas.addEventListener("contextmenu", (event) => event.preventDefault());
-  window.addEventListener("resize", () => {
-    if (copyActive) return; // The Copy view lays itself out.
-    resizeCanvas();
-    if (trialState !== "DRAWING") beginNewTrial();
-  });
+  window.addEventListener("resize", handleCanvasResize);
+  // The Home Screen app corrects its height late (--app-height), without a window resize, so also watch the
+  // canvas itself and resize whenever its pixel size no longer matches its box.
+  new ResizeObserver(() => {
+    const bounds = canvas.getBoundingClientRect();
+    if (copyActive || !backingOutOfDate(bounds, { width: canvas.width, height: canvas.height }, window.devicePixelRatio || 1)) return;
+    lateCanvasResizes += 1;
+    handleCanvasResize();
+  }).observe(canvas);
   document.addEventListener("visibilitychange", () => {
     const visible = document.visibilityState === "visible";
     practiceClock.setVisible(visible, Date.now());
