@@ -125,6 +125,25 @@ note links on photo pages.
 Note bodies support a small Markdown subset: paragraphs, `[links](https://...)`
 or `[links](/notes/)`, `**bold**`, and `*italic*`. Raw HTML is escaped.
 
+## Copyist
+
+`copyist/` is a typing tool: you copy out a text and it inks from grey to black as
+you go. It is plain HTML, CSS and JavaScript with no build step. Progress and
+your own uploaded texts stay in the browser (localStorage and IndexedDB).
+
+The library in `copyist/texts/` is generated from Project Gutenberg plain-text
+files (#10 King James Bible, #100 Complete Works of Shakespeare, #731–736
+Gibbon). The source files are not committed. To rebuild, put them in one folder
+as `kjv.txt`, `shakespeare.txt` and `gibbon1.txt`…`gibbon6.txt`, then run:
+
+```sh
+node scripts/copyist-texts.mjs path/to/that/folder
+```
+
+The script strips the Gutenberg wrapper, introductions, cast lists and Gibbon's
+footnotes, and writes one JSON file per Bible book, play or poem, and Gibbon
+chapter, plus `copyist/texts/manifest.json`.
+
 ## Local Development
 
 Serve the folder with any static server, or open the HTML files directly.
