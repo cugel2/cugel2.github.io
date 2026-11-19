@@ -10,8 +10,14 @@ import { sameView, type View } from "./docSpace";
 
 export type CompareView = "MINE" | "BOTH" | "REFERENCE";
 
-/** Draw from memory: how long you may study the reference (0 = off). */
+/** Copy's Memory setting up to 0.18.x: how long you could study the reference (0 = off). Still read from stored copies. */
 export const MEMORY_SECONDS = [0, 15, 30, 60, 120] as const;
+/** Memory mode's study times (0.19.0+). */
+export const STUDY_SECONDS = [15, 30, 60, 120, 300] as const;
+/** Memory's study time when Copy had no Memory setting to carry over. */
+export const DEFAULT_STUDY_SECONDS = 60;
+/** Every study time a stored session may hold. */
+const STORED_SECONDS: readonly number[] = [0, 15, 30, 60, 120, 300];
 /** How long a Peek shows the reference again. */
 export const PEEK_MS = 3000;
 
@@ -30,6 +36,12 @@ export interface CopyPoint {
 
 export interface CopyStroke {
   points: CopyPoint[];
+}
+
+/** An earlier attempt at the same framing in Memory, kept when Again starts the next one. */
+export interface Attempt {
+  strokes: CopyStroke[];
+  peeks: number;
 }
 
 export interface CopySession {
@@ -55,13 +67,17 @@ export interface CopySession {
   /** While a Peek shows the reference, when it hides again. */
   peekUntil: number | null;
   peeks: number;
+  /** Memory: earlier attempts at this framing, oldest first (0.19.0+; absent in older stored copies). */
+  attempts: Attempt[];
+  /** Memory: show the earlier attempts, faint, while comparing. */
+  showEarlier: boolean;
   updatedAt: number;
 }
 
 export function newSession(bookId: string | null, frameAspect: number, view: View | null, now = Date.now()): CopySession {
   return {
     version: 1, bookId, frameAspect, view, lockedView: null, strokes: [], compare: null, bothOpacity: 0.5, tint: true,
-    memorySeconds: 0, memoryStartedAt: null, peekUntil: null, peeks: 0, updatedAt: now,
+    memorySeconds: 0, memoryStartedAt: null, peekUntil: null, peeks: 0, attempts: [], showEarlier: true, updatedAt: now,
   };
 }
 
@@ -72,7 +88,79 @@ export function newCopy(session: CopySession, frameAspect: number, now = Date.no
     bothOpacity: session.bothOpacity,
     tint: session.tint,
     memorySeconds: session.memorySeconds,
+    showEarlier: session.showEarlier,
   };
+}
+
+// ----- Copy and Memory (0.19.0) -----
+
+/**
+ * Copy no longer draws from memory: a stored copy (perhaps mid-exercise from Copy's old Memory setting) opens as a
+ * plain copy, strokes and framing kept.
+ */
+export function asPlainCopy(session: CopySession): CopySession {
+  if (session.memorySeconds === 0 && session.memoryStartedAt === null && session.attempts.length === 0) return session;
+  return { ...session, memorySeconds: 0, memoryStartedAt: null, peekUntil: null, peeks: 0, attempts: [] };
+}
+
+/** Memory always studies first: a session without a valid study time gets the default. */
+export function asMemory(session: CopySession): CopySession {
+  return (STUDY_SECONDS as readonly number[]).includes(session.memorySeconds) ? session : { ...session, memorySeconds: DEFAULT_STUDY_SECONDS };
+}
+
+/**
+ * Memory's first session, from Copy's: the same book and place, the compare settings, and Copy's old Memory
+ * setting as the study time (the default when it was off). Copy's strokes stay with Copy.
+ */
+export function seedMemory(copy: CopySession | null, now = Date.now()): CopySession | null {
+  if (!copy?.bookId) return null;
+  const study = (STUDY_SECONDS as readonly number[]).includes(copy.memorySeconds) ? copy.memorySeconds : DEFAULT_STUDY_SECONDS;
+  return {
+    ...newSession(copy.bookId, copy.frameAspect, copy.view ?? copy.lockedView, now),
+    bothOpacity: copy.bothOpacity,
+    tint: copy.tint,
+    memorySeconds: study,
+  };
+}
+
+/** Memory's study time; anything else keeps the current one. Starts the exercise over, as before. */
+export function setStudySeconds(session: CopySession, seconds: number): CopySession {
+  if (!(STUDY_SECONDS as readonly number[]).includes(seconds)) return session;
+  return { ...session, memorySeconds: seconds, memoryStartedAt: null, peekUntil: null, peeks: 0 };
+}
+
+/** "15 s", "1 min", "5 min". */
+export function formatStudy(seconds: number): string {
+  return seconds < 60 ? `${seconds} s` : `${Math.round(seconds / 60)} min`;
+}
+
+/** Again needs an attempt drawn on a locked framing. */
+export function canAgain(session: CopySession): boolean {
+  return session.memorySeconds > 0 && session.lockedView !== null && session.strokes.length > 0;
+}
+
+/**
+ * Again: the attempt just drawn is kept as an earlier one, and the same framing is studied afresh at once (back to
+ * frame if the reference was moved while comparing). The next attempt starts with no strokes and no peeks.
+ */
+export function again(session: CopySession, now = Date.now()): CopySession {
+  if (!canAgain(session)) return session;
+  return {
+    ...session,
+    attempts: [...session.attempts, { strokes: session.strokes, peeks: session.peeks }],
+    strokes: [],
+    view: { ...session.lockedView! },
+    memoryStartedAt: now,
+    peekUntil: null,
+    peeks: 0,
+    compare: null,
+    updatedAt: now,
+  };
+}
+
+/** Which attempt is being drawn, from 1. */
+export function attemptNumber(session: CopySession): number {
+  return session.attempts.length + 1;
 }
 
 // ----- draw from memory -----
@@ -146,7 +234,8 @@ export function addStroke(session: CopySession, stroke: CopyStroke, now = Date.n
  * the reference can be reframed and the next stroke locks the new framing.
  */
 function releaseIfEmpty(session: CopySession): CopySession {
-  return session.strokes.length > 0 ? session : { ...session, lockedView: null, compare: null, memoryStartedAt: null, peekUntil: null, peeks: 0 };
+  // A later attempt in Memory keeps the framing and its study: the earlier attempts depend on it.
+  return session.strokes.length > 0 || session.attempts.length > 0 ? session : { ...session, lockedView: null, compare: null, memoryStartedAt: null, peekUntil: null, peeks: 0 };
 }
 
 export function undoStroke(session: CopySession, now = Date.now()): CopySession {
@@ -203,17 +292,34 @@ function isView(value: unknown): value is View {
   return typeof view === "object" && view !== null && [view.x, view.y, view.w].every(Number.isFinite) && view.w > 0;
 }
 
-/** Validates a stored session; anything malformed gives null rather than a broken copy. */
-export function parseSession(value: unknown): CopySession | null {
-  const raw = value as Partial<CopySession> | null;
-  if (!raw || raw.version !== 1 || !Number.isFinite(raw.frameAspect) || (raw.frameAspect ?? 0) <= 0) return null;
-  if (!Array.isArray(raw.strokes)) return null;
+function parseStrokes(value: unknown): CopyStroke[] | null {
+  if (!Array.isArray(value)) return null;
   const strokes: CopyStroke[] = [];
-  for (const stroke of raw.strokes) {
+  for (const stroke of value as CopyStroke[]) {
     if (!stroke || !Array.isArray(stroke.points)) return null;
     const points = stroke.points.filter((point) => Number.isFinite(point?.x) && Number.isFinite(point?.y));
     if (points.length > 0) strokes.push({ points });
   }
+  return strokes;
+}
+
+/** Earlier attempts; a malformed one is dropped rather than failing the whole copy. */
+function parseAttempts(value: unknown): Attempt[] {
+  if (!Array.isArray(value)) return [];
+  const attempts: Attempt[] = [];
+  for (const item of value as Attempt[]) {
+    const strokes = parseStrokes(item?.strokes);
+    if (strokes && strokes.length > 0) attempts.push({ strokes, peeks: Number.isFinite(item.peeks) ? Math.max(0, Math.floor(item.peeks)) : 0 });
+  }
+  return attempts;
+}
+
+/** Validates a stored session; anything malformed gives null rather than a broken copy. */
+export function parseSession(value: unknown): CopySession | null {
+  const raw = value as Partial<CopySession> | null;
+  if (!raw || raw.version !== 1 || !Number.isFinite(raw.frameAspect) || (raw.frameAspect ?? 0) <= 0) return null;
+  const strokes = parseStrokes(raw.strokes);
+  if (!strokes) return null;
   const compare = raw.compare === "MINE" || raw.compare === "BOTH" || raw.compare === "REFERENCE" ? raw.compare : null;
   const lockedView = isView(raw.lockedView) ? raw.lockedView : null;
   return {
@@ -226,10 +332,12 @@ export function parseSession(value: unknown): CopySession | null {
     compare: lockedView ? compare : null,
     bothOpacity: Number.isFinite(raw.bothOpacity) ? Math.min(1, Math.max(0.1, raw.bothOpacity!)) : 0.5,
     tint: raw.tint !== false,
-    memorySeconds: (MEMORY_SECONDS as readonly number[]).includes(raw.memorySeconds as number) ? raw.memorySeconds! : 0,
+    memorySeconds: STORED_SECONDS.includes(raw.memorySeconds as number) ? raw.memorySeconds! : 0,
     memoryStartedAt: Number.isFinite(raw.memoryStartedAt) ? raw.memoryStartedAt! : null,
     peekUntil: null,
     peeks: Number.isFinite(raw.peeks) ? Math.max(0, Math.floor(raw.peeks!)) : 0,
+    attempts: lockedView ? parseAttempts(raw.attempts) : [],
+    showEarlier: raw.showEarlier !== false,
     updatedAt: Number.isFinite(raw.updatedAt) ? raw.updatedAt! : 0,
   };
 }

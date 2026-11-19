@@ -1,22 +1,28 @@
 /**
- * Copy mode: a reference pane (finger pans and pinches) and a drawing pane
- * (Pencil draws), each with a frame of the same size. Self-contained: main.ts
- * only shows and hides it and passes shared services in. No target, score or
- * trial record.
+ * The screen Copy and Memory share (0.19.0): a reference pane (finger pans and
+ * pinches) and a drawing pane (Pencil draws), each with a frame of the same
+ * size. Each mode keeps its own drawing in progress (a "slot") and its own
+ * place in each book; one book is open at a time, so switching to a mode on a
+ * different book reopens that book. Self-contained: the shell shows it for one
+ * mode or the other and passes shared services in. No target, score or trial
+ * record.
  */
 import type { Handedness } from "../core/types";
 import { COPY_FALLBACK_WIDTH_MM, COPY_WIDTH_RANGE, drawVariableWidthStroke, pressureWidthsMm } from "../core/strokeRender";
 import {
-  addStroke, backToFrame, blink, canCompare, clearStrokes, fromFrameUnits, isOffFrame, memoryPhase, newCopy, newSession, parseSession,
-  peek, referenceCovered, referenceMovable, setCompare, setMemorySeconds, setView, startMemory, startStroke, studyRemainingMs,
-  toFrameUnits, undoStroke, type CompareView, type CopyPoint, type CopySession, type CopyStroke,
+  addStroke, again, asMemory, asPlainCopy, attemptNumber, backToFrame, blink, canAgain, canCompare, clearStrokes, formatStudy,
+  fromFrameUnits, isOffFrame, memoryPhase, newCopy, newSession, parseSession, peek, referenceCovered, referenceMovable, seedMemory,
+  setCompare, setStudySeconds, setView, startMemory, startStroke, studyRemainingMs, toFrameUnits, undoStroke,
+  type CompareView, type CopyPoint, type CopySession, type CopyStroke,
 } from "./copySession";
 import {
   clampView, fitPage, layoutPages, moveView, pageAt, pageTiles, sameView, viewHeight, zoomAbout,
   type Area, type DocLayout, type DocRect, type FrameSize, type Point, type View,
 } from "./docSpace";
 import { GestureTracker } from "./gestures";
-import { addBook, bookKindOf, getBook, listBooks, loadCurrentCopy, removeBook, saveCurrentCopy, updateBook, type BookMeta } from "./library";
+import { addBook, bookKindOf, getBook, listBooks, loadSlots, removeBook, saveSlot, updateBook, type BookMeta, type StudioKind } from "./library";
+
+export type { StudioKind };
 import { imageSource, type PageSource } from "./pageSource";
 import { openPdfPageSource } from "./pdfSource";
 
@@ -28,6 +34,8 @@ export interface CopyElements {
   drawingCanvas: HTMLCanvasElement;
   fileInput: HTMLInputElement;
   emptyState: HTMLElement;
+  emptyTitle: HTMLElement;
+  emptyText: HTMLElement;
   referenceBar: HTMLElement;
   drawingBar: HTMLElement;
   drawTools: HTMLElement;
@@ -60,6 +68,8 @@ export interface CopyElements {
   memoryText: HTMLElement;
   memoryStartButton: HTMLButtonElement;
   memoryPeekButton: HTMLButtonElement;
+  memoryAgainButton: HTMLButtonElement;
+  memoryEarlierButton: HTMLButtonElement;
 }
 
 export interface CopyServices {
@@ -70,13 +80,14 @@ export interface CopyServices {
   /** A finger moved or zoomed the reference: counts toward practice time like a stroke. Called often; keep it cheap. */
   onGesture(): void;
   /** Compare was turned on, a new copy started, or the Save sheet closed: a natural place to say time is up. */
-  onCheckpoint(): void;
+  onCheckpoint(kind: StudioKind): void;
   showToast(message: string): void;
   setStatus(text: string): void;
 }
 
 export interface CopyView {
-  show(): void;
+  /** Shows the screen for Copy or Memory, switching to that mode's drawing (and book) if another was showing. */
+  show(kind: StudioKind): void;
   hide(): void;
   isDrawing(): boolean;
   setHandedness(): void;
@@ -95,6 +106,12 @@ const TINT_PAPER_LEVEL = 225;
 const SHARPEN_DELAY_MS = 150;
 const BACKDROP = "#ebe7de";
 const DIM = "rgba(235, 231, 222, 0.78)";
+/** Memory's earlier attempts, drawn faint under the latest while comparing. */
+const EARLIER_ALPHA = 0.28;
+const EMPTY_TEXT: Record<StudioKind, { title: string; text: string }> = {
+  COPY: { title: "Copy", text: "Copy from a book (PDF) or a picture: a photo of a page, a screenshot, a scan. Your first stroke fixes the framing that Compare uses." },
+  MEMORY: { title: "Memory", text: "Draw from memory: frame a page of a book (PDF) or a picture, study it, then draw it with the reference covered." },
+};
 
 interface FrameRect { left: number; top: number; width: number; height: number }
 
@@ -116,9 +133,21 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   const drawingContext = context2d(elements.drawingCanvas);
   const baked = document.createElement("canvas");
   const bakedContext = context2d(baked);
+  const earlierBaked = document.createElement("canvas");
+  const earlierContext = context2d(earlierBaked);
 
   let visible = false;
   let loaded = false;
+  /** Which mode the screen shows. */
+  let kind: StudioKind = "COPY";
+  /** Each mode's drawing in progress; `session` is the shown mode's, kept in its slot when switching away. */
+  const slots: Record<StudioKind, CopySession | null> = { COPY: null, MEMORY: null };
+  /** Bumped on every switch, so a book still opening for a mode left meanwhile is dropped. */
+  let activation = 0;
+  /** A mode's book is being opened after a switch: neither the empty state nor the panes are ready. */
+  let opening = false;
+  /** Memory has never been used (nothing stored for it): its first opening starts from Copy's book and place. */
+  let memoryUnused = false;
   let session: CopySession | null = null;
   let source: PageSource | null = null;
   let layout: DocLayout | null = null;
@@ -299,6 +328,11 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
           context.drawImage(session.tint ? capture.tinted : capture.original, 0, 0, frame.width, frame.height);
           context.globalAlpha = 1;
         }
+        if (compare !== null && showsEarlier(session)) {
+          context.globalAlpha = EARLIER_ALPHA;
+          context.drawImage(earlierBaked, 0, 0, frame.width, frame.height);
+          context.globalAlpha = 1;
+        }
         context.drawImage(baked, 0, 0, frame.width, frame.height);
         if (active) drawStroke(context, active.points, frame.width, 1);
       }
@@ -337,6 +371,16 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     bakedContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     bakedContext.clearRect(0, 0, frame.width, frame.height);
     for (const stroke of session?.strokes ?? []) drawStroke(bakedContext, stroke.points, frame.width, 1);
+    earlierBaked.width = baked.width;
+    earlierBaked.height = baked.height;
+    earlierContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    earlierContext.clearRect(0, 0, frame.width, frame.height);
+    for (const attempt of session?.attempts ?? []) for (const stroke of attempt.strokes) drawStroke(earlierContext, stroke.points, frame.width, 1);
+  }
+
+  /** Memory's earlier attempts are shown (faint) while comparing, unless switched off. */
+  function showsEarlier(current: CopySession): boolean {
+    return current.attempts.length > 0 && current.showEarlier;
   }
 
   // ----- compare capture -----
@@ -492,14 +536,26 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     const id = bookId;
     const view = session?.view;
     if (!id || !view) return;
-    bookSaveTimer = window.setTimeout(() => void updateBook(id, { lastView: view }).catch(() => undefined), AUTOSAVE_DELAY_MS * 2);
+    const place = kind === "MEMORY" ? { memoryLastView: view } : { lastView: view };
+    bookSaveTimer = window.setTimeout(() => void updateBook(id, place).catch(() => undefined), AUTOSAVE_DELAY_MS * 2);
   }
 
   function scheduleSave(): void {
     window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
-      if (session) void saveCurrentCopy(session).catch(() => services.showToast("The copy could not be saved"));
+      if (session) void saveSlot(kind, session).catch(() => services.showToast("The drawing could not be saved"));
     }, AUTOSAVE_DELAY_MS);
+  }
+
+  /** Saves the shown mode's drawing now (before switching away or hiding). */
+  function flushSave(): void {
+    window.clearTimeout(saveTimer);
+    if (session) void saveSlot(kind, session).catch(() => undefined);
+  }
+
+  /** The shown mode has a drawing on an open book. */
+  function ready(): boolean {
+    return source !== null && session !== null && session.bookId === bookId;
   }
 
   function updateControls(): void {
@@ -508,21 +564,24 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     elements.undoButton.disabled = strokes === 0;
     elements.clearButton.disabled = strokes === 0;
     elements.newButton.disabled = !session || (strokes === 0 && !session.lockedView);
-    elements.compareButton.disabled = !session || !canCompare(session);
+    elements.compareButton.disabled = !session || !compareAllowed(session);
     elements.compareButton.setAttribute("aria-pressed", String(comparing !== null));
     elements.compareButton.textContent = comparing ? "Draw" : "Compare";
     elements.saveButton.disabled = strokes === 0;
     elements.compareBar.hidden = comparing === null;
     elements.drawTools.hidden = comparing !== null;
-    elements.drawingBar.hidden = source === null;
+    elements.drawingBar.hidden = !ready();
     for (const button of elements.compareButtons) button.setAttribute("aria-pressed", String(button.dataset.compare === comparing));
     elements.opacityInput.value = String(Math.round((session?.bothOpacity ?? 0.5) * 100));
     elements.opacityInput.disabled = comparing !== "BOTH";
     elements.tintButton.setAttribute("aria-pressed", String(session?.tint ?? true));
     elements.tintButton.disabled = comparing !== "BOTH";
     elements.backToFrameButton.hidden = !session || !isOffFrame(session);
-    elements.emptyState.hidden = source !== null;
-    elements.referenceBar.hidden = source === null;
+    elements.emptyState.hidden = ready() || opening;
+    elements.emptyTitle.textContent = EMPTY_TEXT[kind].title;
+    elements.emptyText.textContent = EMPTY_TEXT[kind].text;
+    elements.referenceBar.hidden = !ready();
+    elements.newButton.textContent = kind === "MEMORY" ? "New" : "New copy";
     elements.bookName.textContent = bookName;
     const pages = source?.pageCount ?? 0;
     elements.pageButton.hidden = pages < 2;
@@ -532,33 +591,48 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   }
 
   function updateMemoryControls(): void {
+    const memory = kind === "MEMORY";
     const phase = session ? memoryPhase(session) : "OFF";
-    elements.memorySelect.value = String(session?.memorySeconds ?? 0);
+    // The study time is Memory's setting; Copy has none since 0.19.0.
+    elements.memorySelect.hidden = !memory;
+    elements.memorySelect.value = String(session?.memorySeconds ?? 60);
     elements.memorySelect.disabled = !session;
-    // This bar at the foot of the reference pane holds the memory controls and Back to frame.
-    const showMemory = phase !== "OFF" && source !== null && (session?.compare ?? null) === null;
+    const comparing = (session?.compare ?? null) !== null;
+    // This bar at the foot of the reference pane holds the memory controls and Back to frame; while comparing in
+    // Memory it holds Again and the earlier attempts' switch.
+    const showMemory = memory && phase !== "OFF" && ready() && (!comparing || session!.memoryStartedAt !== null);
     if (session && !referenceMovable(session)) elements.backToFrameButton.hidden = true;
     elements.memoryBar.hidden = !showMemory && elements.backToFrameButton.hidden;
     elements.memoryText.hidden = !showMemory;
-    elements.memoryStartButton.hidden = !showMemory || phase !== "READY";
-    elements.memoryPeekButton.hidden = !showMemory || (phase !== "HIDDEN" && phase !== "PEEK");
+    elements.memoryStartButton.hidden = !showMemory || comparing || phase !== "READY";
+    elements.memoryPeekButton.hidden = !showMemory || comparing || (phase !== "HIDDEN" && phase !== "PEEK");
     elements.memoryPeekButton.disabled = phase === "PEEK";
-    const peeks = session?.peeks ?? 0;
-    const peekText = peeks === 0 ? "no peeks" : peeks === 1 ? "1 peek" : `${peeks} peeks`;
+    elements.memoryAgainButton.hidden = !showMemory || !comparing || !canAgain(session!);
+    elements.memoryEarlierButton.hidden = !showMemory || !comparing || session!.attempts.length === 0;
+    elements.memoryEarlierButton.setAttribute("aria-pressed", String(session?.showEarlier ?? true));
+    if (!showMemory || !session) return;
+    const attempt = attemptNumber(session) > 1 ? `Attempt ${attemptNumber(session)} · ` : "";
+    const peekText = peeksText(session.peeks);
+    const earlier = session.attempts.length > 0 ? ` · before: ${session.attempts.map((item) => peeksText(item.peeks)).join(", ")}` : "";
     elements.memoryText.textContent =
-      phase === "READY" ? `Frame it, then study it for ${session!.memorySeconds} s`
-      : phase === "STUDY" ? `Study it: hidden in ${Math.ceil(studyRemainingMs(session!) / 1000)} s`
-      : phase === "PEEK" ? `Peeking · ${peekText}`
-      : `From memory · ${peekText}`;
+      comparing ? `${attempt}${peekText}${earlier}`
+      : phase === "READY" ? `Frame it, then study it for ${formatStudy(session.memorySeconds)}`
+      : phase === "STUDY" ? `${attempt}Study it: hidden in ${formatCountdown(studyRemainingMs(session))}`
+      : phase === "PEEK" ? `${attempt}Peeking · ${peekText}`
+      : `${attempt}From memory · ${peekText}`;
   }
 
   function updateStatus(): void {
-    if (!source || !session) statusText = "Copy · choose a PDF or a picture to copy from";
+    const strokes = session ? `${session.strokes.length} ${session.strokes.length === 1 ? "stroke" : "strokes"}` : "";
+    if (opening) statusText = kind === "MEMORY" ? "Memory · opening the book…" : "Copy · opening the book…";
+    else if (!ready() || !session) statusText = kind === "MEMORY" ? "Memory · choose a PDF or a picture to draw from memory" : "Copy · choose a PDF or a picture to copy from";
     else if (session.compare === "MINE" || session.compare === "REFERENCE") statusText = "Comparing · tap the frame with the Pencil to flip";
-    else if (memoryPhase(session) === "READY") statusText = "From memory · frame the reference, then tap Start";
-    else if (memoryPhase(session) === "STUDY") statusText = "From memory · study it; drawing starts when it hides";
-    else if (memoryPhase(session) === "HIDDEN" || memoryPhase(session) === "PEEK") statusText = `From memory · ${session.strokes.length} ${session.strokes.length === 1 ? "stroke" : "strokes"}`;
     else if (session.compare === "BOTH") statusText = "Comparing · reference under your lines";
+    else if (memoryPhase(session) === "READY") statusText = "Memory · frame the reference, then tap Start";
+    else if (memoryPhase(session) === "STUDY") statusText = "Memory · study it; drawing starts when it hides";
+    else if (memoryPhase(session) === "HIDDEN" || memoryPhase(session) === "PEEK") {
+      statusText = attemptNumber(session) > 1 ? `Memory · attempt ${attemptNumber(session)} · ${strokes}` : `Memory · ${strokes}`;
+    }
     else if (!session.lockedView) statusText = "Copy · frame the reference with a finger, then draw";
     else if (isOffFrame(session)) statusText = "Copy · moved: Compare uses the framing of your first stroke";
     else statusText = `Copy · ${session.strokes.length} ${session.strokes.length === 1 ? "stroke" : "strokes"}`;
@@ -573,8 +647,9 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   }
 
   /** Opens a stored book or picture as the reference. Returns its record, or null if it is gone. */
-  async function openBook(id: string): Promise<BookMeta | null> {
+  async function openBook(id: string, stillWanted: () => boolean = () => true): Promise<BookMeta | null | "STALE"> {
     const record = await getBook(id);
+    if (!stillWanted()) return "STALE";
     if (!record) return null;
     const reacquire = async () => {
       const again = await getBook(id);
@@ -600,6 +675,11 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
         // Safari can lose track of a stored file; a fresh read usually works.
         next = await imageSource(await reacquire());
       }
+    }
+    // A switch to the other mode while this was opening: that mode opens its own book.
+    if (!stillWanted()) {
+      next.dispose();
+      return "STALE";
     }
     source?.dispose();
     dropSharpTiles();
@@ -627,7 +707,9 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     }
     recoveries.push(now);
     try {
-      if (!await openBook(id)) throw new Error("gone");
+      const opened = await openBook(id);
+      if (opened === "STALE") return;
+      if (!opened) throw new Error("gone");
       rebuildCapture();
       scheduleSharpen();
       requestRender();
@@ -647,46 +729,119 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     capture = null;
   }
 
+  /**
+   * Reads both modes' drawings once. Copy's opens as a plain copy (Copy lost its Memory setting in 0.19.0); Memory,
+   * never used before, starts from Copy's book, place and old Memory setting.
+   */
   async function restore(): Promise<void> {
     loaded = true;
     try {
-      const stored = parseSession(await loadCurrentCopy());
-      if (stored?.bookId && await openBook(stored.bookId)) {
-        // Reopen ready to draw, not mid-compare.
-        session = { ...stored, compare: null };
-        measure();
-        if (!session.view && layout) session = setView(session, fitPage(layout, frameSize()));
-      }
+      const stored = await loadSlots();
+      const copy = parseSession(stored.COPY);
+      slots.COPY = copy ? asPlainCopy(copy) : null;
+      memoryUnused = stored.MEMORY === undefined;
+      const memory = parseSession(stored.MEMORY);
+      slots.MEMORY = memory ? asMemory(memory) : null;
     } catch {
-      services.showToast("The last copy could not be reopened");
+      services.showToast("The last drawing could not be reopened");
     }
+    session = null;
+    await activate(kind);
+  }
+
+  /**
+   * Shows the given mode's drawing: at once when its book is the one open, otherwise after opening its book.
+   * Reopens ready to draw, not mid-compare.
+   */
+  async function activate(next: StudioKind): Promise<void> {
+    if (session) {
+      flushSave();
+      slots[kind] = session;
+    }
+    kind = next;
+    if (next === "MEMORY" && memoryUnused) {
+      // Copy's book and place as it is now; Copy's strokes stay with Copy.
+      memoryUnused = false;
+      slots.MEMORY = seedMemory(slots.COPY);
+    }
+    const generation = ++activation;
+    const target = slots[next];
+    active = null;
+    if (!target?.bookId) {
+      session = null;
+      opening = false;
+      finishActivation();
+      return;
+    }
+    if (target.bookId !== bookId || !source) {
+      session = null;
+      opening = true;
+      source?.dispose();
+      dropSharpTiles();
+      source = null;
+      layout = null;
+      bookId = null;
+      bookName = "";
+      capture = null;
+      finishActivation();
+      let opened: BookMeta | null | "STALE" = null;
+      try {
+        opened = await openBook(target.bookId, () => generation === activation);
+      } catch {
+        opened = null;
+      }
+      if (opened === "STALE" || generation !== activation) return;
+      opening = false;
+      if (!opened) {
+        services.showToast("That book could not be opened; choose it again from Books…");
+        finishActivation();
+        return;
+      }
+    }
+    session = { ...target, compare: null };
     measure();
+    if (!session.view && layout) session = setView(session, fitPage(layout, frameSize()));
+    finishActivation();
+  }
+
+  function finishActivation(): void {
+    measure();
+    rebake();
+    rebuildCapture();
     updateControls();
     requestRender();
     scheduleSharpen();
+    ensureMemoryTicker();
   }
 
   /** Starts a copy from a stored book, where you last were in it. */
   async function startFromBook(id: string): Promise<void> {
     if (session && session.bookId === id) return;
-    if (session && session.strokes.length > 0 && !window.confirm("Start a new copy from this one? The current copy will be replaced.")) return;
-    let meta: BookMeta | null;
+    const drawn = (session?.strokes.length ?? 0) > 0 || (session?.attempts.length ?? 0) > 0;
+    if (session && drawn && !window.confirm(`Start a new ${noun()} from this one? The current ${noun()} will be replaced.`)) return;
+    const startKind = kind;
+    let meta: BookMeta | null | "STALE";
     try {
-      meta = await openBook(id);
+      // The other mode's book may already be open: reuse it rather than reading it again.
+      meta = source && bookId === id ? (await listBooks()).find((book) => book.id === id) ?? null : await openBook(id, () => kind === startKind);
     } catch {
       services.showToast("That file could not be opened");
       return;
     }
+    if (meta === "STALE" || kind !== startKind) return;
     if (!meta) {
       services.showToast("That file is no longer stored");
       return;
     }
     // Compare and memory settings carry over to the new book.
-    const previous = session;
+    const previous = session ?? slots[kind];
     session = newSession(id, naturalAspect(), null);
-    if (previous) session = { ...session, bothOpacity: previous.bothOpacity, tint: previous.tint, memorySeconds: previous.memorySeconds };
+    if (previous) session = { ...session, bothOpacity: previous.bothOpacity, tint: previous.tint, memorySeconds: previous.memorySeconds, showEarlier: previous.showEarlier };
+    if (kind === "MEMORY") session = asMemory(session);
     measure();
-    const remembered = isStoredView(meta.lastView) ? clampView(meta.lastView, layout!, frameSize()) : fitPage(layout!, frameSize());
+    // Each mode remembers its own place in a book; Memory starts where Copy was until it has a place of its own.
+    const place = kind === "MEMORY" && isStoredView(meta.memoryLastView) ? meta.memoryLastView : meta.lastView;
+    const remembered = isStoredView(place) ? clampView(place, layout!, frameSize()) : fitPage(layout!, frameSize());
     update(setView(session, remembered), { rebake: true });
   }
 
@@ -755,9 +910,10 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       text.append(name, details);
       const open = document.createElement("button");
       open.type = "button";
-      open.className = book.id === bookId ? "secondary-button" : "primary-button";
-      open.textContent = book.id === bookId ? "Open now" : "Open";
-      open.disabled = book.id === bookId;
+      const openNow = ready() && book.id === session?.bookId;
+      open.className = openNow ? "secondary-button" : "primary-button";
+      open.textContent = openNow ? "Open now" : "Open";
+      open.disabled = openNow;
       open.addEventListener("click", () => { elements.libraryDialog.close(); void startFromBook(book.id); });
       const remove = document.createElement("button");
       remove.type = "button";
@@ -770,15 +926,24 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   }
 
   async function removeFromLibrary(book: BookMeta): Promise<void> {
-    const current = book.id === bookId;
-    const warning = current ? " Your copy from it will be removed too." : "";
+    if (session) slots[kind] = session;
+    const users = (["COPY", "MEMORY"] as const).filter((each) => slots[each]?.bookId === book.id);
+    const names = users.map((each) => (each === "COPY" ? "copy" : "Memory drawing"));
+    const warning = names.length > 0 ? ` Your ${names.join(" and ")} from it will be removed too.` : "";
     if (!window.confirm(`Remove “${book.name}” from this device?${warning}`)) return;
     try {
       await removeBook(book.id);
-      if (current) {
+      for (const each of users) {
+        slots[each] = null;
+        await saveSlot(each, null);
+      }
+      if (book.id === bookId) {
         closeSource();
-        await saveCurrentCopy(null);
         measure();
+        updateControls();
+        requestRender();
+      } else if (users.includes(kind)) {
+        session = null;
         updateControls();
         requestRender();
       }
@@ -942,26 +1107,42 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     if (session) update(undoStroke(session), { rebake: true });
   }
 
+  /** "copy" or "drawing", for the confirmations. */
+  function noun(): string {
+    return kind === "MEMORY" ? "drawing" : "copy";
+  }
+
   function clearAll(): void {
     if (!session || session.strokes.length === 0) return;
-    if (!window.confirm("Clear every stroke of this copy?")) return;
+    const what = session.attempts.length > 0 ? "this attempt (earlier attempts stay)" : `this ${noun()}`;
+    if (!window.confirm(`Clear every stroke of ${what}?`)) return;
     update(clearStrokes(session), { rebake: true });
   }
 
   function startNewCopy(): void {
     if (!session) return;
-    if (session.strokes.length > 0 && !window.confirm("Start a new copy? This one will be replaced.")) return;
+    const drawn = session.strokes.length > 0 || session.attempts.length > 0;
+    if (drawn && !window.confirm(`Start a new ${noun()}? This one will be replaced.`)) return;
     session = newCopy(session, naturalAspect());
     measure();
     update(session, { rebake: true });
-    services.onCheckpoint();
+    services.onCheckpoint(kind);
+  }
+
+  /**
+   * Compare needs a framing; in Memory it also needs a stroke in this attempt, or Compare would show the reference
+   * before drawing, an uncounted peek.
+   */
+  function compareAllowed(current: CopySession): boolean {
+    return canCompare(current) && (kind !== "MEMORY" || current.strokes.length > 0 || current.compare !== null);
   }
 
   function toggleCompare(): void {
     if (!session) return;
+    if (!session.compare && !compareAllowed(session)) return;
     const turningOn = !session.compare;
     update(setCompare(session, session.compare ? null : "BOTH"), { save: false });
-    if (turningOn) services.onCheckpoint();
+    if (turningOn) services.onCheckpoint(kind);
   }
 
   // ----- Save to Photos -----
@@ -976,7 +1157,19 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
     const width = aspect >= 1 ? SAVE_LONG_SIDE_PX : Math.round(SAVE_LONG_SIDE_PX * aspect);
     const height = Math.round(width / aspect);
     const widthScale = width / frame.width;
+    // Memory's earlier attempts go in faint, as Compare shows them (when they are switched on).
+    let earlier: HTMLCanvasElement | null = null;
+    if (showsEarlier(session)) {
+      earlier = blankCanvas(width, height, false);
+      const earlierTarget = context2d(earlier);
+      for (const attempt of session.attempts) for (const stroke of attempt.strokes) drawStroke(earlierTarget, stroke.points, width, widthScale);
+    }
     const drawStrokes = (target: CanvasRenderingContext2D) => {
+      if (earlier) {
+        target.globalAlpha = EARLIER_ALPHA;
+        target.drawImage(earlier, 0, 0);
+        target.globalAlpha = 1;
+      }
       for (const stroke of session!.strokes) drawStroke(target, stroke.points, width, widthScale);
     };
     const drawing = blankCanvas(width, height);
@@ -1009,7 +1202,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       drawStrokes(over);
     }
     const stamp = new Date().toISOString().slice(0, 10);
-    const base = `${(bookName || "copy").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").slice(0, 40) || "copy"}-${stamp}`;
+    const base = `${kind === "MEMORY" ? "memory-" : ""}${(bookName || "copy").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").slice(0, 40) || "copy"}-${stamp}`;
     const png = async (canvas: HTMLCanvasElement | null, suffix: string) =>
       canvas ? new File([await toPng(canvas)], `${base}${suffix}.png`, { type: "image/png" }) : null;
     return {
@@ -1119,7 +1312,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   elements.saveDrawingButton.addEventListener("click", () => shareExport("drawing"));
   elements.saveSideBySideButton.addEventListener("click", () => shareExport("sideBySide"));
   elements.saveOverlayButton.addEventListener("click", () => shareExport("overlay"));
-  elements.saveDialog.addEventListener("close", () => { hidePreview(); services.onCheckpoint(); });
+  elements.saveDialog.addEventListener("close", () => { hidePreview(); services.onCheckpoint(kind); });
   elements.libraryButton.addEventListener("click", openLibrary);
   elements.memorySelect.addEventListener("change", () => {
     if (!session) return;
@@ -1127,8 +1320,13 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       elements.memorySelect.value = String(session.memorySeconds);
       return;
     }
-    update(setMemorySeconds(session, Number(elements.memorySelect.value)));
+    update(setStudySeconds(session, Number(elements.memorySelect.value)));
   });
+  elements.memoryAgainButton.addEventListener("click", () => {
+    if (!session || !canAgain(session)) return;
+    update(again(session, Date.now()), { rebake: true });
+  });
+  elements.memoryEarlierButton.addEventListener("click", () => { if (session) update({ ...session, showEarlier: !session.showEarlier }); });
   elements.memoryStartButton.addEventListener("click", () => { if (session) update(startMemory(session, Date.now())); });
   elements.memoryPeekButton.addEventListener("click", () => { if (session) update(peek(session, Date.now())); });
   elements.pageButton.addEventListener("click", jumpToPage);
@@ -1136,13 +1334,18 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
   new ResizeObserver(() => { if (visible && !active) { measure(); requestRender(); } }).observe(elements.stage);
 
   return {
-    show() {
+    show(next: StudioKind) {
       visible = true;
       elements.stage.hidden = false;
+      if (!loaded) {
+        kind = next;
+        void restore();
+      } else if (next !== kind) {
+        void activate(next);
+      }
       measure();
       updateControls();
       requestRender();
-      if (!loaded) void restore();
       ensureMemoryTicker();
     },
     hide() {
@@ -1154,7 +1357,7 @@ export function createCopyView(elements: CopyElements, services: CopyServices): 
       gestures.clear();
       mouseDrag = null;
       active = null;
-      if (session) void saveCurrentCopy(session).catch(() => undefined);
+      flushSave();
     },
     isDrawing: () => active !== null,
     setHandedness() {
@@ -1208,6 +1411,16 @@ function releaseCanvas(canvas: HTMLCanvasElement): void {
 function isStoredView(value: unknown): value is View {
   const view = value as View | null;
   return !!view && [view.x, view.y, view.w].every(Number.isFinite) && view.w > 0;
+}
+
+function peeksText(peeks: number): string {
+  return peeks === 0 ? "no peeks" : peeks === 1 ? "1 peek" : `${peeks} peeks`;
+}
+
+/** "45 s", or "4:05" from a minute up. */
+function formatCountdown(ms: number): string {
+  const seconds = Math.ceil(ms / 1000);
+  return seconds < 60 ? `${seconds} s` : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 function formatSize(bytes: number): string {

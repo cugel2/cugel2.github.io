@@ -30,7 +30,7 @@ import {
 import { planDay, planRepMinutes, timedMinutes, type DayPlan } from "../core/todayPlan";
 import { dayKey, formatClock, formatMinutes } from "../core/timer";
 import type { ExerciseType } from "../core/types";
-import { saveCopyBudget, saveCopyTime, saveDailyQueue, saveDailyTicks, saveDayMarks, saveFinishedDays, savePracticeTime } from "../storage";
+import { saveCopyBudget, saveCopyTime, saveDailyQueue, saveDailyTicks, saveDayMarks, saveFinishedDays, saveMemoryTime, savePracticeTime } from "../storage";
 import { activities, app, requiredElement, setStatus, showToast } from "./state";
 
 /**
@@ -69,7 +69,9 @@ const todayLeft = requiredElement<HTMLElement>("#todayLeft");
 export function updatePracticeTime(): void {
   const now = Date.now();
   practiceTime.textContent = `${formatClock(app.practiceClock.sessionTotalMs(now))} · ${formatMinutes(app.practiceClock.todayTotalMs(now))} today`;
-  if (app.copyActive) activities.copy.setTime(copyTimeText(copyClockState(dayInput(now))) ?? practiceTime.textContent);
+  if (app.studio === "COPY") activities.copy.setTime(copyTimeText(copyClockState(dayInput(now))) ?? practiceTime.textContent);
+  // Memory is not part of Today yet, so it has no countdown: it shows the practice clock, as Copy does when Off.
+  if (app.studio === "MEMORY") activities.memory.setTime(practiceTime.textContent);
 }
 
 export let lastSavedPracticeMs = -1;
@@ -79,13 +81,15 @@ export function persistPracticeTime(): void {
   lastSavedPracticeMs = app.practiceClock.todayTotalMs(now);
   void savePracticeTime(app.practiceClock.snapshot(now)).catch(() => undefined);
   void saveCopyTime(app.copyClock.snapshot(now)).catch(() => undefined);
+  void saveMemoryTime(app.memoryClock.snapshot(now)).catch(() => undefined);
 }
 
-/** Pencil or finger activity: the practice clock, and Copy's clock while Copy is open. */
+/** Pencil or finger activity: the practice clock, and Copy's or Memory's clock while that one is open. */
 export function recordActivity(options: { save: boolean; show: boolean }): void {
   const now = Date.now();
   app.practiceClock.recordActivity(now);
-  if (app.copyActive) app.copyClock.recordActivity(now);
+  if (app.studio === "COPY") app.copyClock.recordActivity(now);
+  if (app.studio === "MEMORY") app.memoryClock.recordActivity(now);
   if (options.save) persistPracticeTime();
   if (options.show) updatePracticeTime();
 }
@@ -137,20 +141,25 @@ export function showDoneCard(queue: DailyQueueState = todayQueue()): void {
   const day = dayInput(now, queue);
   const card = todayCard(day) ?? "DONE";
   const totalMs = app.practiceClock.todayTotalMs(now);
+  // Memory time is practice time but not drill time (Memory is not part of Today yet).
+  const memoryMs = app.memoryClock.todayTotalMs(now);
+  const drillsMs = drillMs(totalMs, day.copyMs + memoryMs);
   if (card === "NOTHING_TICKED") {
     doneTitle.textContent = "Nothing ticked for Today";
     doneDetail.textContent = "Choose which modes make up the daily queue.";
     doneNote.textContent = "Today's queue is built from the ticked modes.";
   } else if (card === "HANDOFF") {
-    doneTitle.textContent = `Drills done · ${formatMinutes(drillMs(totalMs, day.copyMs))}`;
+    doneTitle.textContent = `Drills done · ${formatMinutes(drillsMs)}`;
     doneDetail.textContent = `${queue.order.length} reps. Next, a stretch of copying.`;
     doneNote.textContent = "Copy carries on where you left it.";
     doneCopyButton.textContent = `Start copy · ${Math.ceil(copyLeftMs(day) / 60_000)} min`;
   } else {
     doneTitle.textContent = `Done for today · ${formatMinutes(totalMs)}`;
-    doneDetail.textContent = day.copyMs >= 60_000
-      ? `${queue.order.length} reps · ${formatMinutes(drillMs(totalMs, day.copyMs))} drills · ${formatMinutes(day.copyMs)} copying`
-      : `${queue.order.length} reps`;
+    const parts = [`${queue.order.length} reps`];
+    if (day.copyMs >= 60_000 || memoryMs >= 60_000) parts.push(`${formatMinutes(drillsMs)} drills`);
+    if (day.copyMs >= 60_000) parts.push(`${formatMinutes(day.copyMs)} copying`);
+    if (memoryMs >= 60_000) parts.push(`${formatMinutes(memoryMs)} memory`);
+    doneDetail.textContent = parts.join(" · ");
     doneNote.textContent = "Pick any mode above for free practice. It doesn't count toward the queue; a new one starts at 4 am.";
   }
   recordFinishedDay(now);
@@ -241,7 +250,7 @@ export function setDayMark(mark: "handoffDeclined" | "doneCardShown"): void {
 
 /** Compare, Save or New copy in Copy: once Copy time is up, say so, once a day. */
 export function copyCheckpoint(): void {
-  if (!app.copyActive || dayDoneDialog.open) return;
+  if (app.studio !== "COPY" || dayDoneDialog.open) return;
   const card = copyCardAtCheckpoint(dayInput(Date.now()));
   if (!card) return;
   setDayMark("doneCardShown");
@@ -276,7 +285,7 @@ function setCopyBudget(minutes: number): void {
   app.copyBudgetMin = minutes;
   renderCopyBudget();
   void saveCopyBudget(minutes).catch(() => showToast("Copy time setting could not be saved"));
-  if (!app.copyActive && !doneCard.hidden) showDoneCard(todayQueue());
+  if (app.studio === null && !doneCard.hidden) showDoneCard(todayQueue());
   updatePracticeTime();
 }
 
@@ -312,7 +321,7 @@ async function setDailyTick(type: ExerciseType, ticked: boolean): Promise<void> 
   renderDailyTicks();
   void saveDailyTicks(app.dailyTicks).catch(() => showToast("Today's ticks could not be saved"));
   // A Today rep in progress (a stroke, or a box partly drawn) is kept: the new ticks apply from the next rep.
-  const inToday = app.selectedMode === "TODAY" && !app.copyActive;
+  const inToday = app.selectedMode === "TODAY" && app.studio === null;
   const midTrial = inToday && activities.drills.isBusy();
   const { queue, outcome } = retickQueue(app.dailyQueue, todayPlan().reps, now, midTrial, finishedNow);
   if (outcome === "FINISHED") {

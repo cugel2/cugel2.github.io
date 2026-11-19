@@ -25,6 +25,7 @@
           <div class="mode-switch" role="group" aria-label="Practice mode">
             <button type="button" class="mode-tab" id="todayModeButton" aria-pressed="true">Today</button>
             <button type="button" class="mode-tab" id="copyModeButton" aria-pressed="false">Copy</button>
+            <button type="button" class="mode-tab" id="memoryModeButton" aria-pressed="false">Memory</button>
             <select id="practiceModeSelect" class="mode-select" aria-label="Single drill">
               <option value="" disabled>Drills</option>
               <option value="LINE">Lines</option>
@@ -125,18 +126,18 @@
         <div class="corner-note" id="scaleStatus">Scale not calibrated</div>
       </section>
 
-      <section class="copy-stage" id="copyStage" data-hand="left" aria-label="Copy from a reference" hidden>
+      <section class="copy-stage" id="copyStage" data-hand="left" aria-label="Copy or draw from memory" hidden>
         <div class="copy-pane copy-reference" id="copyReferencePane">
           <canvas id="copyReferenceCanvas" aria-label="Reference: drag with a finger to move, pinch to zoom"></canvas>
           <div class="copy-bar" id="copyReferenceBar" hidden>
             <span class="copy-book" id="copyBookName"></span>
             <button type="button" class="pill-button" id="copyPageButton" title="Go to a page" hidden>p. 1</button>
-            <select class="pill-button pill-select" id="copyMemorySelect" aria-label="Draw from memory" title="Draw from memory: study the reference, then it is hidden">
-              <option value="0">Memory off</option>
-              <option value="15">Memory 15 s</option>
-              <option value="30">Memory 30 s</option>
-              <option value="60">Memory 60 s</option>
-              <option value="120">Memory 120 s</option>
+            <select class="pill-button pill-select" id="copyMemorySelect" aria-label="Study time" title="How long you study the reference before it is hidden" hidden>
+              <option value="15">Study 15 s</option>
+              <option value="30">Study 30 s</option>
+              <option value="60">Study 1 min</option>
+              <option value="120">Study 2 min</option>
+              <option value="300">Study 5 min</option>
             </select>
             <button type="button" class="pill-button" id="copyNewButton" title="Start again: clear the drawing and reframe">New copy</button>
             <button type="button" class="pill-button" id="copyLibraryButton" title="Your stored books and pictures">Books…</button>
@@ -146,12 +147,14 @@
             <span id="copyMemoryText"></span>
             <button type="button" class="pill-button primary-pill" id="copyMemoryStartButton">Start</button>
             <button type="button" class="pill-button" id="copyMemoryPeekButton" title="Show the reference for 3 seconds">Peek</button>
+            <button type="button" class="pill-button toggle-button" id="copyMemoryEarlierButton" aria-pressed="true" title="Show your earlier attempts, faint" hidden>Earlier</button>
+            <button type="button" class="pill-button primary-pill" id="copyMemoryAgainButton" title="Study the same framing again, then draw it afresh" hidden>Again</button>
           </div>
           <div class="copy-empty" id="copyEmpty">
-            <p class="eyebrow">Copy</p>
-            <p>Copy from a book (PDF) or a picture: a photo of a page, a screenshot, a scan.</p>
+            <p class="eyebrow" id="copyEmptyTitle">Copy</p>
+            <p id="copyEmptyText">Copy from a book (PDF) or a picture: a photo of a page, a screenshot, a scan. Your first stroke fixes the framing that Compare uses.</p>
             <label class="primary-button" for="copyFileInput">Choose a PDF or picture…</label>
-            <span>It is stored on this iPad. Drag the pages with a finger and pinch to zoom. Your first stroke fixes the framing that Compare uses.</span>
+            <span>It is stored on this iPad. Drag the pages with a finger and pinch to zoom.</span>
           </div>
           <input type="file" id="copyFileInput" class="visually-hidden" accept="application/pdf,.pdf,image/*" />
         </div>

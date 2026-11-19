@@ -1,5 +1,5 @@
 import { ALL_EXERCISE_TYPES } from "../activities/drills";
-import type { MountedCopy, MountedDrills } from "../activities/types";
+import type { MountedCopy, MountedDrills, MountedMemory } from "../activities/types";
 import { DEFAULT_COPY_BUDGET_MIN, type DayMarks } from "../core/dailyFlow";
 import { DEFAULT_DAILY_TICKS, type DailyQueueState } from "../core/dailyQueue";
 import { PracticeClock } from "../core/timer";
@@ -7,7 +7,7 @@ import { DEFAULT_HANDEDNESS, type DeviceSnapshot, type ExerciseType, type Handed
 
 /** The shell's shared state and constants (moved from main.ts in 0.17.0). */
 
-export const APP_VERSION = "0.18.2";
+export const APP_VERSION = "0.19.0";
 export const SCHEMA_VERSION = "4" as const;
 export const DEFAULT_CSS_PX_PER_MM = 96 / 25.4;
 export const VALID_MODES: readonly PracticeMode[] = [...ALL_EXERCISE_TYPES, "MIXED_BLOCKED", "MIXED_RANDOM", "TODAY"];
@@ -18,13 +18,18 @@ export const app = {
   calibration: null as PhysicalCalibration | null,
   correctionGateEnabled: false,
   handedness: DEFAULT_HANDEDNESS as Handedness,
-  /** The practice mode: a drill, Today, or a retired Mixed mode. Copy is not a mode; see copyActive. */
+  /** The practice mode: a drill, Today, or a retired Mixed mode. Copy and Memory are not modes; see studio. */
   selectedMode: FIRST_DRILL as PracticeMode,
-  /** Copy mode is not a practice mode: no target, score or trial. This flag sits beside selectedMode. */
-  copyActive: false,
+  /**
+   * Copy or Memory is open (they share one screen), or null for the drills. Neither is a practice mode: no target,
+   * score or trial. This sits beside selectedMode, which is where leaving them returns to.
+   */
+  studio: null as Studio | null,
   practiceClock: new PracticeClock({}, document.visibilityState === "visible"),
   /** Copy time only: runs while Copy is open and the page is visible, with the practice clock's idle rule. */
   copyClock: new PracticeClock({}, false),
+  /** Memory time only (0.19.0+), the same way while Memory is open. */
+  memoryClock: new PracticeClock({}, false),
   copyBudgetMin: DEFAULT_COPY_BUDGET_MIN,
   dayMarks: null as DayMarks | null,
   /** Days whose flow was finished (sorted day keys), shown as the seven-dot row on the Done cards. */
@@ -43,7 +48,19 @@ export const app = {
 export const activities = {
   drills: null as unknown as MountedDrills,
   copy: null as unknown as MountedCopy,
+  memory: null as unknown as MountedMemory,
 };
+
+/** Copy and Memory, the two modes on the shared reference-and-drawing screen. */
+export type Studio = "COPY" | "MEMORY";
+
+export function studioActivity(studio: Studio): MountedCopy | MountedMemory {
+  return studio === "COPY" ? activities.copy : activities.memory;
+}
+
+export function studioClock(studio: Studio): PracticeClock {
+  return studio === "COPY" ? app.copyClock : app.memoryClock;
+}
 
 export function cssPxPerMm(): number {
   return app.calibration?.cssPxPerMm ?? DEFAULT_CSS_PX_PER_MM;

@@ -296,6 +296,22 @@ export async function getCopyTime(): Promise<DailyTotals | null> {
   return Object.fromEntries(Object.entries(value).filter(([key, ms]) => /^\d{4}-\d{2}-\d{2}$/.test(key) && typeof ms === "number" && Number.isFinite(ms) && ms >= 0));
 }
 
+const MEMORY_TIME_KEY = "memory-time-by-day";
+
+/** Active Memory milliseconds per practice day (0.19.0+), kept like Copy time. */
+export async function saveMemoryTime(totals: DailyTotals): Promise<void> {
+  await putSetting(MEMORY_TIME_KEY, totals);
+}
+
+export async function getMemoryTime(): Promise<DailyTotals | null> {
+  return dailyTotalsFrom(await getSetting(MEMORY_TIME_KEY));
+}
+
+function dailyTotalsFrom(value: unknown): DailyTotals | null {
+  if (!value || typeof value !== "object") return null;
+  return Object.fromEntries(Object.entries(value).filter(([key, ms]) => /^\d{4}-\d{2}-\d{2}$/.test(key) && typeof ms === "number" && Number.isFinite(ms) && ms >= 0));
+}
+
 /** Copy time per day in minutes; 0 is Off. */
 export async function saveCopyBudget(minutes: number): Promise<void> {
   await putSetting(COPY_BUDGET_KEY, minutes);

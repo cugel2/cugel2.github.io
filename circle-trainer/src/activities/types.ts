@@ -11,8 +11,8 @@ export type { TodayPart, TodaySettings };
 export type OffersToday = (settings: TodaySettings) => TodayPart[];
 
 /**
- * An activity is one kind of screen (since 0.17.0): Drills (a target, strokes, a score, next) and Copy (a reference
- * beside a drawing frame, timed, not scored). The shell mounts each once and shows one at a time. An activity never
+ * An activity is one kind of screen (since 0.17.0): Drills (a target, strokes, a score, next), Copy (a reference
+ * beside a drawing frame, timed, not scored) and Memory (the same screen: study, then draw with the reference covered). The shell mounts each once and shows one at a time. An activity never
  * imports the shell: everything shared reaches it through its host. The shell imports an activity only through its
  * folder's index.ts.
  */
@@ -102,5 +102,11 @@ export interface CopyHost extends ActivityHost {
 
 export interface MountedCopy extends MountedActivity {
   /** The time part of Copy's status line. */
+  setTime(text: string): void;
+}
+
+/** Memory (0.19.0) shares Copy's screen; the shell lends it only the shared host. */
+export interface MountedMemory extends MountedActivity {
+  /** The time part of Memory's status line. */
   setTime(text: string): void;
 }

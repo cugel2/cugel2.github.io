@@ -60,6 +60,7 @@ function setHandedness(next: Handedness): void {
   app.handedness = next;
   applyHandedness();
   activities.copy.onHandedness();
+  activities.memory.onHandedness();
   void saveHandedness(next).catch(() => showToast("Hand setting could not be saved"));
   activities.drills.onHandedness();
 }

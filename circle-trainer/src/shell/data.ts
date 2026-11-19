@@ -58,6 +58,7 @@ export async function exportAllData(): Promise<void> {
       selectedMode: app.selectedMode, correctionGateEnabled: app.correctionGateEnabled, device: getDeviceSnapshot(), strokes: looseStrokes(strokes, strokeIdsInTrials(trials)), trials,
       practiceTimeByDay: app.practiceClock.snapshot(Date.now()),
       copyTimeByDay: app.copyClock.snapshot(Date.now()),
+      memoryTimeByDay: app.memoryClock.snapshot(Date.now()),
       finishedDays: app.finishedDays,
     };
     downloadJson(`circle-trainer-${dateStamp()}.json`, bundle, true);
@@ -171,8 +172,8 @@ async function deleteAllData(): Promise<void> {
     app.savedTrialCount = 0;
     activities.drills.clearHistory();
     dataDialog.close();
-    // In Copy the drills start afresh when Copy is left, so they are not reset behind it.
-    if (!app.copyActive) resetSession(app.selectedMode);
+    // In Copy or Memory the drills start afresh when it is left, so they are not reset behind it.
+    if (app.studio === null) resetSession(app.selectedMode);
     showToast("All practice data deleted");
   } catch { showToast("Saved data could not be deleted"); }
 }

@@ -29,7 +29,10 @@ export interface BookMeta {
   pageCount: number | null;
   /** Each page's size, measured on first open so later opens skip it. */
   pageSizes?: Array<{ width: number; height: number }>;
+  /** Where you were in it in Copy. */
   lastView: unknown;
+  /** Where you were in it in Memory (0.19.0+); absent until Memory has been used with it. */
+  memoryLastView?: unknown;
 }
 
 export interface BookRecord extends BookMeta {
@@ -169,17 +172,24 @@ export async function removeBook(id: string): Promise<void> {
   await done(transaction);
 }
 
-const CURRENT_COPY_KEY = "current";
+/** Copy and Memory share the screen and the library, and each keeps its own drawing in progress. */
+export type StudioKind = "COPY" | "MEMORY";
 
-/** The single autosaved copy in progress (see copySession.ts). Replaced when a new copy starts. */
-export async function saveCurrentCopy(session: unknown): Promise<void> {
+/** Keys in the copy store: Copy's has been "current" since 0.9.0; Memory's (0.19.0+) is new. */
+const SLOT_KEYS: Record<StudioKind, string> = { COPY: "current", MEMORY: "memory" };
+
+/** The autosaved drawing in progress of Copy or Memory (see copySession.ts). Replaced when a new one starts. */
+export async function saveSlot(kind: StudioKind, session: unknown): Promise<void> {
   const database = await openLibrary();
   const transaction = database.transaction(COPY, "readwrite");
-  transaction.objectStore(COPY).put(session, CURRENT_COPY_KEY);
+  transaction.objectStore(COPY).put(session, SLOT_KEYS[kind]);
   await done(transaction);
 }
 
-export async function loadCurrentCopy(): Promise<unknown> {
+/** Both drawings in progress. `undefined` means never saved (Memory before 0.19.0); null means removed. */
+export async function loadSlots(): Promise<Record<StudioKind, unknown>> {
   const database = await openLibrary();
-  return result<unknown>(database.transaction(COPY, "readonly").objectStore(COPY).get(CURRENT_COPY_KEY));
+  const store = database.transaction(COPY, "readonly").objectStore(COPY);
+  const [copy, memory] = await Promise.all([result<unknown>(store.get(SLOT_KEYS.COPY)), result<unknown>(store.get(SLOT_KEYS.MEMORY))]);
+  return { COPY: copy, MEMORY: memory };
 }

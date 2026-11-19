@@ -2,6 +2,7 @@ import "./styles.css";
 
 import { mountCopy } from "./activities/copy";
 import { mountDrills } from "./activities/drills";
+import { mountMemory } from "./activities/memory";
 import type { ActivityHost } from "./activities/types";
 import { DEFAULT_COPY_BUDGET_MIN, startupMode } from "./core/dailyFlow";
 import { DEFAULT_DAILY_TICKS, isQueueDone, queueRemaining } from "./core/dailyQueue";
@@ -18,6 +19,7 @@ import {
   getFinishedDays,
   getHandedness,
   getLastExport,
+  getMemoryTime,
   getPracticeMode,
   getPracticeTime,
   getStrokes,
@@ -26,7 +28,7 @@ import {
 import { watchAppHeight } from "./shell/appHeight";
 import { loadStoredCounts, showDataDialog, wireData } from "./shell/data";
 import { diagnosticsDialog, renderDiagnostics, wireDiagnostics } from "./shell/diagnostics";
-import { enterCopy, goToToday, readCopyActive, readModeDay, rememberCopyActive, resetSession, wireModes } from "./shell/modes";
+import { enterCopy, enterStudio, goToToday, readModeDay, readStudioActive, rememberStudioActive, resetSession, wireModes } from "./shell/modes";
 import { applyHandedness, calibrationDialog, configureRuler, updateCorrectionGateButton, updateScaleStatus, wireSettings } from "./shell/settings";
 import { activities, app, APP_VERSION, cssPxPerMm, FIRST_DRILL, requiredElement, setStatus, showToast, VALID_MODES } from "./shell/state";
 import {
@@ -46,7 +48,7 @@ import {
 
 /**
  * Bootstrap (0.17.0): mount the activities with what the shell lends them, wire the shell, load stored settings
- * and open the right mode. Everything else lives in src/shell/ (shared) and src/activities/ (Drills and Copy).
+ * and open the right mode. Everything else lives in src/shell/ (shared) and src/activities/ (Drills, Copy, Memory).
  */
 
 function mountActivities(): void {
@@ -69,6 +71,7 @@ function mountActivities(): void {
     today: todayForDrills,
   });
   activities.copy = mountCopy({ ...shared, checkpoint: copyCheckpoint });
+  activities.memory = mountMemory(shared);
 }
 
 function wireShell(): void {
@@ -83,7 +86,8 @@ function wireShell(): void {
   document.addEventListener("visibilitychange", () => {
     const visible = document.visibilityState === "visible";
     app.practiceClock.setVisible(visible, Date.now());
-    app.copyClock.setVisible(visible && app.copyActive, Date.now());
+    app.copyClock.setVisible(visible && app.studio === "COPY", Date.now());
+    app.memoryClock.setVisible(visible && app.studio === "MEMORY", Date.now());
     if (visible) checkDayRollover();
     if (!visible) persistPracticeTime();
     updatePracticeTime();
@@ -103,11 +107,12 @@ async function initialize(): Promise<void> {
   mountActivities();
   wireShell();
   try {
-    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials, storedCopyTime, storedCopyBudget, storedMarks, storedFinishedDays, storedLastExport] = await Promise.all([
+    const [storedCalibration, storedMode, storedCorrectionGate, storedHandedness, storedPracticeTime, storedTicks, storedQueue, strokes, trials, storedCopyTime, storedCopyBudget, storedMarks, storedFinishedDays, storedLastExport, storedMemoryTime] = await Promise.all([
       getCalibration(), getPracticeMode(), getCorrectionGateEnabled(), getHandedness(), getPracticeTime(), getDailyTicks(), getDailyQueue(), getStrokes(), getTrials(),
-      getCopyTime(), getCopyBudget(), getDayMarks(), getFinishedDays(), getLastExport(),
+      getCopyTime(), getCopyBudget(), getDayMarks(), getFinishedDays(), getLastExport(), getMemoryTime(),
     ]);
     app.copyClock = new PracticeClock(storedCopyTime ?? {}, false);
+    app.memoryClock = new PracticeClock(storedMemoryTime ?? {}, false);
     app.copyBudgetMin = storedCopyBudget ?? DEFAULT_COPY_BUDGET_MIN;
     app.dayMarks = storedMarks;
     app.finishedDays = storedFinishedDays;
@@ -133,11 +138,11 @@ async function initialize(): Promise<void> {
   applyHandedness();
   configureRuler();
   resetSession(app.selectedMode);
-  // Copy reopens after a reload the same day; a new day opens on Today while it has reps left.
-  const copyWasOpen = readCopyActive();
+  // Copy or Memory reopens after a reload the same day; a new day opens on Today while it has reps left.
+  const studioWasOpen = readStudioActive();
   const repsLeft = app.dailyQueue !== null && queueRemaining(app.dailyQueue) > 0;
-  if (copyWasOpen === "today" || (copyWasOpen === "earlier" && !repsLeft)) enterCopy();
-  else if (copyWasOpen === "earlier") rememberCopyActive(false);
+  if (studioWasOpen && (studioWasOpen.when === "today" || !repsLeft)) enterStudio(studioWasOpen.studio);
+  else if (studioWasOpen) rememberStudioActive(null);
   updatePracticeTime();
   if (new URLSearchParams(window.location.search).has("diagnostics") || window.location.hash === "#diagnostics") {
     renderDiagnostics();

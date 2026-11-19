@@ -1,4 +1,4 @@
-import { createCopyView } from "../../copy/copyView";
+import { mountStudio } from "../../copy/engine";
 import type { CopyHost, MountedCopy, OffersToday } from "../types";
 
 /** Copy's unit in Today and in the mode switch. */
@@ -11,57 +11,11 @@ export const todayParts: OffersToday = (settings) => {
 };
 
 /**
- * The Copy activity (0.17.0): a thin adapter around Copy's own view in src/copy/, which is unchanged. It finds
- * Copy's markup and lends the view the host's services.
+ * The Copy activity: a thin adapter around the screen it shares with Memory (src/copy/). Copy is plain copying since
+ * 0.19.0; its old Memory setting became Memory's study time.
  */
-function requiredElement<T extends Element>(selector: string): T {
-  const element = document.querySelector<T>(selector);
-  if (!element) throw new Error(`Missing required element: ${selector}`);
-  return element;
-}
-
 export function mountCopy(host: CopyHost): MountedCopy {
-  const view = createCopyView({
-    stage: requiredElement<HTMLElement>("#copyStage"),
-    referencePane: requiredElement<HTMLElement>("#copyReferencePane"),
-    drawingPane: requiredElement<HTMLElement>("#copyDrawingPane"),
-    referenceCanvas: requiredElement<HTMLCanvasElement>("#copyReferenceCanvas"),
-    drawingCanvas: requiredElement<HTMLCanvasElement>("#copyDrawingCanvas"),
-    fileInput: requiredElement<HTMLInputElement>("#copyFileInput"),
-    emptyState: requiredElement<HTMLElement>("#copyEmpty"),
-    referenceBar: requiredElement<HTMLElement>("#copyReferenceBar"),
-    drawingBar: requiredElement<HTMLElement>("#copyDrawingBar"),
-    drawTools: requiredElement<HTMLElement>("#copyDrawTools"),
-    bookName: requiredElement<HTMLElement>("#copyBookName"),
-    backToFrameButton: requiredElement<HTMLButtonElement>("#copyBackToFrameButton"),
-    compareBar: requiredElement<HTMLElement>("#copyCompareBar"),
-    compareButtons: Array.from(document.querySelectorAll<HTMLButtonElement>("#copyCompareBar button[data-compare]")),
-    opacityInput: requiredElement<HTMLInputElement>("#copyOpacityInput"),
-    tintButton: requiredElement<HTMLButtonElement>("#copyTintButton"),
-    undoButton: requiredElement<HTMLButtonElement>("#copyUndoButton"),
-    clearButton: requiredElement<HTMLButtonElement>("#copyClearButton"),
-    newButton: requiredElement<HTMLButtonElement>("#copyNewButton"),
-    compareButton: requiredElement<HTMLButtonElement>("#copyCompareButton"),
-    saveButton: requiredElement<HTMLButtonElement>("#copySaveButton"),
-    saveDialog: requiredElement<HTMLDialogElement>("#copySaveDialog"),
-    saveDrawingButton: requiredElement<HTMLButtonElement>("#copySaveDrawingButton"),
-    saveSideBySideButton: requiredElement<HTMLButtonElement>("#copySaveSideBySideButton"),
-    saveOverlayButton: requiredElement<HTMLButtonElement>("#copySaveOverlayButton"),
-    saveNote: requiredElement<HTMLElement>("#copySaveNote"),
-    savePreview: requiredElement<HTMLElement>("#copySavePreview"),
-    savePreviewImage: requiredElement<HTMLImageElement>("#copySavePreviewImage"),
-    saveDownloadLink: requiredElement<HTMLAnchorElement>("#copySaveDownloadLink"),
-    pageButton: requiredElement<HTMLButtonElement>("#copyPageButton"),
-    libraryButton: requiredElement<HTMLButtonElement>("#copyLibraryButton"),
-    libraryDialog: requiredElement<HTMLDialogElement>("#copyLibraryDialog"),
-    libraryList: requiredElement<HTMLElement>("#copyLibraryList"),
-    libraryNote: requiredElement<HTMLElement>("#copyLibraryNote"),
-    memorySelect: requiredElement<HTMLSelectElement>("#copyMemorySelect"),
-    memoryBar: requiredElement<HTMLElement>("#copyMemoryBar"),
-    memoryText: requiredElement<HTMLElement>("#copyMemoryText"),
-    memoryStartButton: requiredElement<HTMLButtonElement>("#copyMemoryStartButton"),
-    memoryPeekButton: requiredElement<HTMLButtonElement>("#copyMemoryPeekButton"),
-  }, {
+  const view = mountStudio("COPY", {
     pxPerMm: () => host.cssPxPerMm(),
     handedness: () => host.handedness(),
     onActivity: (ended) => host.recordActivity({ save: ended, show: true }),
@@ -72,7 +26,7 @@ export function mountCopy(host: CopyHost): MountedCopy {
     setStatus: (text) => host.setStatus(text),
   });
   return {
-    show: () => view.show(),
+    show: () => view.show("COPY"),
     hide: () => view.hide(),
     isBusy: () => view.isDrawing(),
     isDrawing: () => view.isDrawing(),
