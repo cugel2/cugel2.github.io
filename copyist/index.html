@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Copyist — John Braybrooke</title>
+  <meta name="description" content="Copy great prose by typing it out, to learn its rhythm.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="copyist.css?v=1">
+</head>
+<body>
+  <header class="bar" id="bar">
+    <a class="bar-name" href="/tools/">Copyist</a>
+    <label class="bar-text">
+      <span class="visually-hidden">Text</span>
+      <select id="text-select"></select>
+    </label>
+    <span class="bar-stats" id="stats"></span>
+    <div class="bar-actions">
+      <button type="button" id="smaller" aria-label="Smaller text">A−</button>
+      <button type="button" id="larger" aria-label="Larger text">A+</button>
+      <button type="button" id="toggle-stats">Hide stats</button>
+      <button type="button" id="restart">Start over</button>
+    </div>
+  </header>
+
+  <main class="viewport" id="viewport">
+    <div class="page" id="page"></div>
+    <div class="caret" id="caret" aria-hidden="true"></div>
+  </main>
+
+  <p class="hint" id="hint">Start typing. Space moves to the next word, Tab skips one, Esc shows the menu.</p>
+
+  <textarea id="input" class="capture" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Type the text here"></textarea>
+
+  <script src="samples.js?v=1"></script>
+  <script src="copyist.js?v=1"></script>
+</body>
+</html>
