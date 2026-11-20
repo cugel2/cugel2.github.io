@@ -20,7 +20,12 @@ const largeSmallDirectory = path.join(largeDirectory, "small");
 const thumbDirectory = path.join(cwd, "images", "thumbs");
 const thumbSmallDirectory = path.join(thumbDirectory, "small");
 
-const sourceExtensions = new Set([".avif", ".gif", ".jpeg", ".jpg", ".png", ".webp"]);
+// Original file types the build accepts. HEIC/HEIF is what iPhones save; sips
+// (built into macOS) reads all of these.
+export const SOURCE_EXTENSIONS = new Set([
+  ".avif", ".gif", ".heic", ".heif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"
+]);
+const sourceExtensions = SOURCE_EXTENSIONS;
 const REQUIRED_FIELDS = ["alt", "description", "date", "creator"];
 
 export function contentPathFor(id) {
@@ -91,15 +96,19 @@ export function exifDate(filePath) {
   return match ? `${match[1]}-${match[2]}-${match[3]}` : "";
 }
 
-export async function sourceIds() {
+// Original filenames in images/photos/, e.g. "15.jpg", in order.
+export async function sourceFilenames() {
   const entries = await readdir(photoDirectory, { withFileTypes: true });
 
   return entries
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
     .filter((name) => sourceExtensions.has(path.extname(name).toLowerCase()))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
-    .map((name) => path.basename(name, path.extname(name)));
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+}
+
+export async function sourceIds() {
+  return (await sourceFilenames()).map((name) => path.basename(name, path.extname(name)));
 }
 
 // Join images + metadata into enriched photo objects. Throws with a clear,

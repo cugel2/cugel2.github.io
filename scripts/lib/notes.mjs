@@ -127,7 +127,7 @@ export async function loadNotes(photos) {
     }
 
     if (!Array.isArray(relatedPhotos)) {
-      errors.push(`${file}: related_photos must be [] or an array like ["photo-00004"]`);
+      errors.push(`${file}: related_photos must be [] or an array like ["4", "7"]`);
     } else {
       for (const photoId of relatedPhotos) {
         if (!photoIds.has(photoId)) {

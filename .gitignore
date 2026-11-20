@@ -1,3 +1,5 @@
 .DS_Store
 images/photos/*
 !images/photos/.gitkeep
+images/new/*
+!images/new/.gitkeep

@@ -1,6 +1,6 @@
 import { mkdir, writeFile, access } from "node:fs/promises";
 import path from "node:path";
-import { sourceIds, contentPathFor, exifDate } from "./lib/photos.mjs";
+import { sourceFilenames, contentPathFor, exifDate } from "./lib/photos.mjs";
 
 // Create a metadata stub for any photo that doesn't have one yet, prefilling the
 // capture date from EXIF. Required fields (alt, description) are left blank on
@@ -27,10 +27,11 @@ notes: []
 
 await mkdir(path.join(process.cwd(), "content", "photos"), { recursive: true });
 
-const ids = await sourceIds();
+const filenames = await sourceFilenames();
 let created = 0;
 
-for (const id of ids) {
+for (const filename of filenames) {
+  const id = path.basename(filename, path.extname(filename));
   const target = contentPathFor(id);
   const exists = await access(target).then(() => true).catch(() => false);
 
@@ -38,7 +39,7 @@ for (const id of ids) {
     continue;
   }
 
-  const date = exifDate(path.join(photoDirectory, `${id}.jpg`));
+  const date = exifDate(path.join(photoDirectory, filename));
   await writeFile(target, stub(id, date));
   console.log(`scaffolded content/photos/${id}.md${date ? ` (date ${date})` : " (no EXIF date — fill in manually)"}`);
   created += 1;
