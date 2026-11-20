@@ -166,6 +166,7 @@ function photoPage(photo, previous, next, relatedNotes = []) {
         <a class="active" href="/" aria-current="page">Photos</a>
         <a href="/notes/">Notes</a>
         <a href="/about/">About</a>
+        <a href="/tools/">Tools</a>
       </nav>
     </header>
 
@@ -335,6 +336,7 @@ ${relatedPhotos.map(relatedPhotoThumb).join("\n")}
         <a href="/">Photos</a>
         <a class="active" href="/notes/" aria-current="page">Notes</a>
         <a href="/about/">About</a>
+        <a href="/tools/">Tools</a>
       </nav>
     </header>
 
@@ -415,6 +417,7 @@ ${notes
         <a href="/">Photos</a>
         <a class="active" href="/notes/" aria-current="page">Notes</a>
         <a href="/about/">About</a>
+        <a href="/tools/">Tools</a>
       </nav>
     </header>
 
@@ -494,6 +497,8 @@ function sitemap(photos, notes) {
     { loc: `${SITE_URL}/` },
     { loc: `${SITE_URL}/about/` },
     { loc: `${SITE_URL}/notes/` },
+    { loc: `${SITE_URL}/tools/` },
+    { loc: `${SITE_URL}/copyist/` },
     ...photos.map((photo) => ({ loc: photo.url, lastmod: photo.date })),
     ...notes.map((note) => ({ loc: note.url, lastmod: note.date }))
   ];
