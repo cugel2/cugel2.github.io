@@ -11,8 +11,8 @@
   --ghost: #bcb5a9;
   --quiet: #8f887d;
   --line: #ded9cf;
-  --mark: #b4532f;
-  --mark-soft: rgba(180, 83, 47, 0.38);
+  --mark: #d4b8a6;
+  --mark-soft: rgba(196, 160, 138, 0.45);
   --caret: #1557c0;
   --accent: #1557c0;
   --size: 22px;
@@ -32,8 +32,8 @@
     --ghost: #57534c;
     --quiet: #7d776d;
     --line: #2c2a26;
-    --mark: #e08a62;
-    --mark-soft: rgba(224, 138, 98, 0.45);
+    --mark: #7a6355;
+    --mark-soft: rgba(150, 120, 102, 0.45);
     --caret: #7fa7ec;
     --accent: #7fa7ec;
   }
@@ -218,7 +218,7 @@ body.show-bar .bar { opacity: 1; pointer-events: auto; }
 .c.pm, .w.px { position: relative; }
 .c.pm::after, .w.px::after {
   content: ""; position: absolute; left: 50%; bottom: -0.05em;
-  width: 0.3em; height: 0.3em; margin-left: -0.15em;
+  width: 0.2em; height: 0.2em; margin-left: -0.1em;
   border-radius: 50%; background: var(--mark);
 }
 .w.px::after { left: auto; right: -0.25em; margin-left: 0; }
