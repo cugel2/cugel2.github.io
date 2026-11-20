@@ -613,6 +613,27 @@ ${noteLines}
 `;
 }
 
+function redirectPage(target, title) {
+  const url = `${SITE_URL}${target}`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${escapeHtml(title)} — John Braybrooke</title>
+  <link rel="canonical" href="${escapeHtml(url)}">
+  <meta name="robots" content="noindex">
+  <meta http-equiv="refresh" content="0; url=${escapeHtml(target)}">
+  <script>window.location.replace(${JSON.stringify(target)});</script>
+</head>
+<body>
+  <p><a href="${escapeHtml(target)}">${escapeHtml(title)}</a></p>
+</body>
+</html>
+`;
+}
+
 // --- run ---------------------------------------------------------------------
 
 const photos = await loadPhotos();
@@ -630,6 +651,34 @@ for (let index = 0; index < photos.length; index += 1) {
 
   await mkdir(directory, { recursive: true });
   await writeFile(path.join(directory, "index.html"), photoPage(photo, previous, next, relatedNotes));
+}
+
+// Redirects from the old addresses. Until November 2026 photo pages lived at
+// /photos/photo-00001/ … /photos/photo-00014/; those links may have been shared,
+// so each still-published photo from that range keeps a tiny page at its old
+// address that forwards to the new one (/photos/1/). Nothing new is added here:
+// photos after 14 only ever had the short address. If an old photo is removed,
+// its redirect is removed with it.
+const LAST_OLD_STYLE_ID = 14;
+const oldStyleId = (id) => `photo-${String(id).padStart(5, "0")}`;
+const redirectIds = new Set(
+  photos.filter((photo) => Number(photo.id) <= LAST_OLD_STYLE_ID).map((photo) => oldStyleId(photo.id))
+);
+
+for (const photo of photos) {
+  if (!redirectIds.has(oldStyleId(photo.id))) {
+    continue;
+  }
+
+  const directory = path.join(cwd, "photos", oldStyleId(photo.id));
+  await mkdir(directory, { recursive: true });
+  await writeFile(path.join(directory, "index.html"), redirectPage(`/photos/${photo.id}/`, photo.title || "Photograph"));
+}
+
+for (const entry of await readdir(path.join(cwd, "photos"), { withFileTypes: true })) {
+  if (entry.isDirectory() && /^photo-\d{5}$/.test(entry.name) && !redirectIds.has(entry.name)) {
+    await rm(path.join(cwd, "photos", entry.name), { recursive: true, force: true });
+  }
 }
 
 // Notes index and standalone note pages.

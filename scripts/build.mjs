@@ -1,11 +1,13 @@
 import { readdir, unlink, rm } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path from "node:path";
+import { SOURCE_EXTENSIONS } from "./lib/photos.mjs";
 
-// One command for the whole site. After you add or delete files in
-// images/photos/, run `node scripts/build.mjs` and it will:
-//   1. rename any new source files to photo-00001.jpg, photo-00002.jpg, ...
-//   2. regenerate the grid thumbnails and the large viewer/zoom images
+// One command for the whole site: `node scripts/build.mjs`. It will:
+//   1. number any new originals (dropped into images/new/ or images/photos/)
+//      as 1.jpg, 2.jpg, ... in images/photos/
+//   2. make the grid thumbnails and large viewer/zoom images for new or changed
+//      photos only (unchanged photos are left alone, so git sees no churn)
 //   3. scaffold a metadata stub (content/photos/<id>.md) for any new photo,
 //      prefilling its EXIF capture date; the build then fails until you fill in
 //      the alt text and description
@@ -18,9 +20,9 @@ import path from "node:path";
 // is generated and safe to delete; this script recreates it.
 
 const photoDirectory = path.join(process.cwd(), "images", "photos");
-const sourceExtensions = new Set([".avif", ".gif", ".jpeg", ".jpg", ".png", ".webp"]);
+const sourceExtensions = SOURCE_EXTENSIONS;
 const derivativeExtensions = new Set([".jpg", ".webp"]);
-const numberedPhoto = /^photo-\d{5}$/i;
+const numberedPhoto = /^\d+$/;
 
 // Directories holding generated images, paired with the prune pattern.
 const derivativeDirectories = [
@@ -71,7 +73,7 @@ async function pruneOrphans() {
       const extension = path.extname(entry.name).toLowerCase();
       const basename = path.basename(entry.name, extension);
 
-      // Only touch generated photo-NNNNN files, and only when no source remains.
+      // Only touch generated numbered files, and only when no source remains.
       if (!derivativeExtensions.has(extension) || !numberedPhoto.test(basename)) {
         continue;
       }
@@ -99,12 +101,17 @@ async function pruneOrphans() {
   console.log(`Pruned ${removed} orphaned item${removed === 1 ? "" : "s"}.`);
 }
 
-await run("node", ["scripts/rename-photos.mjs"]);
-await run("node", ["scripts/build-photo-thumbnails.mjs"]);
-await run("node", ["scripts/build-photo-large.mjs"]);
-await run("node", ["scripts/scaffold-photos.mjs"]);
-await pruneOrphans();
-await run("node", ["scripts/build-photo-manifest.mjs"]);
-await run("node", ["scripts/build-site.mjs"]);
+try {
+  await run("node", ["scripts/rename-photos.mjs"]);
+  await run("node", ["scripts/build-photo-images.mjs"]);
+  await run("node", ["scripts/scaffold-photos.mjs"]);
+  await pruneOrphans();
+  await run("node", ["scripts/build-photo-manifest.mjs"]);
+  await run("node", ["scripts/build-site.mjs"]);
+} catch {
+  // The step that failed has already printed why.
+  console.error("Build stopped before the pages were rebuilt.");
+  process.exit(1);
+}
 
 console.log("Done.");
