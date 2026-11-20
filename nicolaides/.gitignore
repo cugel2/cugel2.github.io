@@ -1,0 +1,5 @@
+node_modules/
+# The research package and fetched manifests (inputs to scripts/, not served)
+research/
+# Practice-data exports saved into the folder
+nicolaides-*.json

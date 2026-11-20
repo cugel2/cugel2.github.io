@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Brush test · Nicolaides</title>
+    <style>
+      html, body { margin: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; background: #e9e5dc; font-family: -apple-system, sans-serif; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+      header { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; background: #f4f1ea; border-bottom: 1px solid #d9d3c7; }
+      header h1 { font-size: 1rem; margin: 0 10px 0 0; }
+      button, select { font: inherit; min-height: 36px; padding: 0 10px; border: 1px solid #d9d3c7; border-radius: 8px; background: #fff; }
+      button[aria-pressed="true"] { background: #1c1a17; color: #fff; }
+      #stage { position: relative; flex: 1; min-height: 0; }
+      #stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; touch-action: none; }
+      footer { flex: 0 0 34px; display: flex; align-items: center; gap: 12px; padding: 0 12px; font-size: 0.8rem; color: #77716a; background: #f4f1ea; }
+      footer a { color: #1557c0; }
+    </style>
+    <script type="module" src="./main.ts"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Brush test</h1>
+      <span id="brushes"></span>
+      <select id="paper" aria-label="Paper">
+        <option value="#fffdf7">Cream paper</option>
+        <option value="#c9c1b3">Grey toned paper</option>
+        <option value="#b9a58a">Brown manila</option>
+      </select>
+      <select id="colour" aria-label="Colour">
+        <option value="#1c1a17">Black</option>
+        <option value="#ffffff">White</option>
+        <option value="#7b4a2a">Burnt sienna</option>
+        <option value="#c49a4a">Yellow ochre</option>
+      </select>
+      <button type="button" id="clear">Clear</button>
+    </header>
+    <div id="stage"></div>
+    <footer>
+      <span id="info">Pencil only. Each brush is p5.brush's own preset.</span>
+      <a href="https://reearth.github.io/hokusai/" target="_blank" rel="noopener">Compare: Hokusai (MyPaint brushes) demo</a>
+      <a href="../">Back to Nicolaides</a>
+    </footer>
+  </body>
+</html>
