@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Copyist — John Braybrooke</title>
+  <meta name="description" content="Copy great prose by typing it out, to learn its rhythm.">
+  <link rel="canonical" href="https://johnbraybrooke.com/copyist/">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="copyist.css?v=2">
+</head>
+<body class="view-library">
+
+  <!-- Library -->
+  <section class="shelf" id="library" aria-labelledby="library-title">
+    <header class="shelf-header">
+      <a class="shelf-site" href="/tools/">John Braybrooke · Tools</a>
+      <h1 id="library-title">Copyist</h1>
+      <p>Type out great prose to learn its rhythm. Your place is kept on this device.</p>
+    </header>
+    <ul class="book-list" id="book-list"></ul>
+
+    <h2 class="shelf-sub">Your own texts</h2>
+    <ul class="book-list" id="own-list"></ul>
+    <details class="add-text" id="add-text">
+      <summary>Add a text</summary>
+      <div class="add-body">
+        <label class="field">
+          <span>A plain-text file (.txt). Project Gutenberg files are cleaned up automatically.</span>
+          <input type="file" id="add-file" accept=".txt,text/plain">
+        </label>
+        <p class="or">or paste it</p>
+        <label class="field">
+          <span>Title</span>
+          <input type="text" id="add-title" placeholder="Title">
+        </label>
+        <label class="field">
+          <span class="visually-hidden">Text</span>
+          <textarea id="add-paste" rows="7" placeholder="Paste the text here"></textarea>
+        </label>
+        <button type="button" class="btn" id="add-save">Add</button>
+        <p class="add-status" id="add-status" role="status"></p>
+      </div>
+    </details>
+
+    <footer class="shelf-footer">
+      <p class="stats-line" id="library-stats"></p>
+      <div class="settings">
+        <label>Font <select class="font-select"></select></label>
+        <label><input type="checkbox" class="stats-toggle"> Daily count</label>
+      </div>
+    </footer>
+  </section>
+
+  <!-- Contents of one text -->
+  <section class="shelf" id="contents" aria-labelledby="contents-title" hidden>
+    <header class="shelf-header">
+      <a class="shelf-site" href="#/">← Copyist</a>
+      <h1 id="contents-title"></h1>
+      <p id="contents-sub"></p>
+    </header>
+    <div id="contents-list"></div>
+    <footer class="shelf-footer" id="contents-footer"></footer>
+  </section>
+
+  <!-- Reader -->
+  <header class="bar" id="bar" hidden>
+    <a class="bar-back" id="bar-back" href="#/">←</a>
+    <span class="bar-where" id="bar-where"></span>
+    <span class="bar-stats" id="bar-stats"></span>
+    <div class="bar-actions">
+      <label><span class="visually-hidden">Font</span><select class="font-select"></select></label>
+      <button type="button" id="smaller" aria-label="Smaller text">A−</button>
+      <button type="button" id="larger" aria-label="Larger text">A+</button>
+      <button type="button" id="restart">Start over</button>
+    </div>
+  </header>
+
+  <main class="viewport" id="viewport" hidden>
+    <div class="page" id="page"></div>
+  </main>
+  <div class="caret" id="caret" aria-hidden="true"></div>
+  <div class="end-note" id="end-note" hidden></div>
+  <p class="hint gone" id="hint">Start typing. Space moves to the next word, Tab skips one, Esc shows the menu.</p>
+  <p class="loading" id="loading" hidden>Opening…</p>
+
+  <textarea id="input" class="capture" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Type the text here"></textarea>
+
+  <script src="copyist.js?v=2"></script>
+</body>
+</html>
