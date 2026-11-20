@@ -31,6 +31,7 @@ From Northwestern University Libraries' [Muybridge in Motion](https://nulib-ds.g
 - Brush marks are random, so each stroke is cut into overlapping spline pieces with a seed per piece (`src/core/strokePieces.ts`); live drawing and every re-draw (Undo, the gallery, Save to Photos) cut and seed them identically, from samples rounded as they are stored, so a sheet always looks as it was drawn.
 - The sheet's canvas is made at the sheet's own size and shown scaled to fit, so rotating never redraws it, and the Pencil is mapped through where the canvas is on screen.
 - Several drawings go on one sheet until **New sheet**; a new block starts a new sheet.
+- Whenever a sheet with drawing on it is set aside (New sheet, or its block ending), a **Save last sheet to Photos** offer appears at the foot of the drawing pane for 30 seconds. It never stops the clock or the drawing; the picture is made ahead so one tap opens the share sheet (where sharing is unavailable it opens the sheet in the gallery viewer instead).
 - **Contour** (Exercises 1, 17, 18) is blind: the sheet's canvas is hidden while you draw (strokes still go onto it). **Peek** shows it for 3 seconds.
 - **The Flash Pose** (Exercise 5) shows each pose for one second, then covers it: "Draw it from memory". It stays covered while paused.
 - **Potential Gesture** (Exercise 4): draw what the figure does next; in each pose's last 10 seconds the plate's own later frame (four frames on, same camera) shows "What came next".

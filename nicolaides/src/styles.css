@@ -95,7 +95,12 @@ button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color:
 
 .pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
 .sheet-paper, .sheet-canvas { position: absolute; z-index: 0; }
-.card, .blind-note { z-index: 2; }
+.card, .blind-note, .save-offer { z-index: 2; }
+.save-offer {
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+  display: flex; gap: 6px; padding: 6px; border-radius: 14px;
+  background: rgba(255, 253, 247, 0.96); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+}
 .sheet-paper { box-shadow: 0 1px 8px rgba(0, 0, 0, 0.14); }
 .sheet-canvas { touch-action: none; }
 .reference-pane { display: flex; align-items: center; justify-content: center; background: #2b2926; }

@@ -13,7 +13,7 @@ import { createId, type Sheet } from "./core/sheet";
 import { MEDIA, type Medium, mediumFor } from "./core/brushes";
 import { allSheets, allValues, askToPersist, getSheet, getValue, putSheet, setValue } from "./core/storage";
 import { mountDrawing } from "./ui/drawing";
-import { dayTitle, mountGallery } from "./ui/gallery";
+import { dayTitle, drawingFile, mountGallery, shareToPhotos } from "./ui/gallery";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -183,6 +183,49 @@ function saveProgress(): void {
   void setValue("progress", { ...progress, seen: Date.now() });
 }
 
+// ----- Save to Photos when a sheet is set aside -----
+
+/** The sheet last set aside (New sheet, or its block ending) and its picture, while the offer shows. */
+let offered: { sheet: Sheet; file: File | null } | null = null;
+let offerTimer = 0;
+/** How long the offer stays up; drawing carries on underneath it. */
+const OFFER_MS = 30_000;
+
+function hideOffer(): void {
+  offered = null;
+  window.clearTimeout(offerTimer);
+  $("saveOffer").hidden = true;
+}
+
+function offerSave(set: Sheet): void {
+  if (!set.strokes.length) return;
+  const offer = { sheet: set, file: null as File | null };
+  offered = offer;
+  const button = $<HTMLButtonElement>("saveOfferButton");
+  button.disabled = true;
+  button.textContent = "Preparing last sheet…";
+  $("saveOffer").hidden = false;
+  window.clearTimeout(offerTimer);
+  offerTimer = window.setTimeout(hideOffer, OFFER_MS);
+  // Made ahead, so the tap can open the share sheet at once (Safari needs the tap).
+  window.setTimeout(() => {
+    void drawingFile(set).then((file) => {
+      if (offered !== offer) return;
+      offer.file = file;
+      button.disabled = false;
+      button.textContent = "Save last sheet to Photos";
+    });
+  }, 50);
+}
+
+$("saveOfferButton").addEventListener("click", () => {
+  if (!offered?.file) return;
+  const set = offered.sheet;
+  if (!shareToPhotos(offered.file, toast)) void gallery.openSheet(set);
+  hideOffer();
+});
+$("saveOfferClose").addEventListener("click", hideOffer);
+
 function flushSheet(): void {
   window.clearTimeout(saveTimer);
   if (sheet && sheet.strokes.length) void putSheet(sheet);
@@ -258,6 +301,7 @@ async function enterStep(): Promise<void> {
   const context = progress.complete ? "" : contextFor();
   if (context !== sheetContext) {
     flushSheet();
+    if (sheet) offerSave(sheet);
     sheet = null;
     sheetContext = "";
     const step = currentDrawStep();
@@ -429,6 +473,7 @@ $("skipPoseButton").addEventListener("click", async () => {
 
 $("newSheetButton").addEventListener("click", () => {
   flushSheet();
+  if (sheet) offerSave(sheet);
   sheet = null;
   sheetContext = "";
   drawing.setSheet(null, currentMedium());

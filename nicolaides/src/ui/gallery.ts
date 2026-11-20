@@ -52,6 +52,29 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+/** The sheet drawn about 2,000 px on its long side. */
+function drawingCanvas(sheet: Sheet): HTMLCanvasElement {
+  const long = 2000;
+  const canvas = document.createElement("canvas");
+  renderSheet(canvas, sheet, sheet.aspect >= 1 ? long / sheet.aspect : long);
+  return canvas;
+}
+
+/** The sheet as a PNG file for Photos. */
+export async function drawingFile(sheet: Sheet, canvas = drawingCanvas(sheet)): Promise<File> {
+  const stamp = new Date(sheet.created).toISOString().slice(0, 10);
+  return new File([await toPng(canvas)], `nicolaides-${sheet.day}-${stamp}-${sheet.id.slice(0, 6)}.png`, { type: "image/png" });
+}
+
+/** Opens the share sheet for `file` (call from a tap); false where sharing files is not available. */
+export function shareToPhotos(file: File, onError: (text: string) => void): boolean {
+  if (!canShare(file)) return false;
+  navigator.share({ files: [file] }).catch((error: unknown) => {
+    if (!(error instanceof DOMException && error.name === "AbortError")) onError("The share sheet could not open");
+  });
+  return true;
+}
+
 const sheetName = (s: Sheet) => s.ex.map((id) => exerciseName(id, COURSE)).join(" + ");
 const timeOf = (ms: number) => new Date(ms).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
@@ -147,12 +170,9 @@ export function mountGallery(host: GalleryHost) {
 
   /** Made when the viewer opens, so the tap can share at once (Safari needs the tap). */
   async function prepareFiles(sheet: Sheet): Promise<void> {
-    const long = 2000;
-    const width = sheet.aspect >= 1 ? long / sheet.aspect : long;
-    const drawing = document.createElement("canvas");
-    renderSheet(drawing, sheet, width);
+    const drawing = drawingCanvas(sheet);
     const stamp = new Date(sheet.created).toISOString().slice(0, 10);
-    files.drawing = new File([await toPng(drawing)], `nicolaides-${sheet.day}-${stamp}.png`, { type: "image/png" });
+    files.drawing = await drawingFile(sheet, drawing);
     if (open !== sheet) return;
     saveDrawing.disabled = false;
     const data = host.muybridge();
@@ -184,12 +204,7 @@ export function mountGallery(host: GalleryHost) {
 
   function share(file: File | undefined): void {
     if (!file) return;
-    if (canShare(file)) {
-      navigator.share({ files: [file] }).catch((error: unknown) => {
-        if (!(error instanceof DOMException && error.name === "AbortError")) host.toast("The share sheet could not open");
-      });
-      return;
-    }
+    if (shareToPhotos(file, host.toast)) return;
     fallback.src = URL.createObjectURL(file);
     fallback.hidden = false;
   }
